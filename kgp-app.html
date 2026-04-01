@@ -656,11 +656,21 @@ function latLonToXY(lat, lon, w, h) {
 
 function initMap() {
   const svg = document.getElementById('map-svg');
-  if (!svg || svg.dataset.init) return;
-  svg.dataset.init = '1';
+  if (!svg) return;
+  if (svg.dataset.init) return;
 
-  const W = svg.clientWidth || window.innerWidth || 400;
-  const H = svg.clientHeight || window.innerHeight - 120 || 500;
+  // Poczekaj aż kontener ma wymiary — kluczowe dla GitHub Pages
+  const container = document.getElementById('map-container');
+  const W = container ? container.clientWidth : window.innerWidth;
+  const H = container ? container.clientHeight : (window.innerHeight - 120);
+
+  if (W < 10 || H < 10) {
+    // Jeszcze nie gotowe — spróbuj za chwilę
+    setTimeout(initMap, 100);
+    return;
+  }
+
+  svg.dataset.init = '1';
   const NS = 'http://www.w3.org/2000/svg';
 
   // Czyść i ustaw wymiary
@@ -954,7 +964,7 @@ async function renderPlan() {
           <div style="font-weight:600;font-size:13px">🚂 ${peak.station.name}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">${peak.station.info}</div>
         </div>
-        <a href="https://e-podroznik.pl" target="_blank" class="btn btn-secondary btn-full" style="text-decoration:none;display:flex">🔗 Otwórz e-podróżnik.pl</a>
+        <button class="btn btn-secondary btn-full" onclick="openEpodroznik('${peak.station.name.replace(/'/g,'`')}')">🔗 Otwórz e-podróżnik.pl</button>
       ` : peak.parking.map(pk => `
         <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px">
           <div style="font-weight:600;font-size:13px">🅿️ ${pk.name}</div>
@@ -1137,7 +1147,7 @@ function renderSummit() {
       </div>
       <div class="card-pad">
         ${peak.stamps.map(s => {
-          const d = state.userLat ? Math.round(dist(state.userLat, state.userLon, peak.lat, peak.lon)/100)/10 : null;
+    const d = state.userLat ? Math.round(dist(state.userLat, state.userLon, peak.lat, peak.lon)/100)/10 : null;
           return `<div class="stamp-item">
             <div class="stamp-icon-wrap">${s.type}</div>
             <div class="stamp-info">
@@ -1145,7 +1155,7 @@ function renderSummit() {
               <div class="stamp-note">${s.note}</div>
               ${d ? `<div class="stamp-dist">~${d} km od Ciebie</div>` : ''}
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="openMaps(${peak.lat},${peak.lon})">🧭</button>
+            <button class="btn btn-secondary btn-sm" onclick="openNavigation(${peak.lat},${peak.lon},'${s.name.replace(/'/g,'`')}')">🧭 Nawiguj</button>
           </div>`;
         }).join('')}
       </div>
@@ -1224,15 +1234,36 @@ function conquerPeak(peakId) {
     goto('next_suggest');
   }, 2000);
 }
-function openMaps(lat, lon) {
-  window.open(`https://maps.google.com?q=${lat},${lon}`, '_blank');
+function openMaps(lat, lon, label) {
+  // geo: URI otwiera natywną nawigację na Androidzie (Google Maps, HERE, itp.)
+  const geoUri = `geo:${lat},${lon}?q=${lat},${lon}(${encodeURIComponent(label||'Cel')})`;
+  window.location.href = geoUri;
 }
+
+function openNavigation(lat, lon, label) {
+  // Nawigacja turn-by-turn — otwiera Google Maps w trybie nawigacji
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=walking`;
+  window.open(url, '_blank');
+}
+
+function openEpodroznik(stationName) {
+  // Pobierz adres startowy z pola input
+  const startInput = document.getElementById('startAddr');
+  const from = startInput ? startInput.value : state.homeAddr;
+  // Wyczyść nazwę stacji (usuń "PKP", "PKS" itp dla lepszego wyszukiwania)
+  const to = stationName.replace(/ PKP| PKS| Główny/g, '').trim();
+  // e-podróżnik obsługuje parametry GET
+  const url = `https://www.e-podroznik.pl/public/wyniki.do?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  window.open(url, '_blank');
+}
+
 function returnToParking(peakId) {
   const p = PEAKS.find(pk=>pk.id===peakId);
-  if (p.parking[0]) {
-    const pk = p.parking[0];
-    window.open(`https://maps.google.com?q=${pk.name}&near=${p.lat},${p.lon}`, '_blank');
-  }
+  if (!p || !p.parking[0]) return;
+  const pk = p.parking[0];
+  // Szukaj parkingu po nazwie — dokładniejsze niż koordynaty szczytu
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pk.name + ', Polska')}&travelmode=driving`;
+  window.open(url, '_blank');
 }
 
 // JOURNAL PAGE
@@ -1278,16 +1309,22 @@ function renderJournal() {
 
     ${state.journal.length > 0 ? `
     <div class="card">
-      <div class="card-pad" style="border-bottom:1px solid var(--border)"><div class="section-title">Historia</div></div>
+      <div class="card-pad" style="border-bottom:1px solid var(--border)">
+        <div class="section-title">Historia</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:-8px;margin-bottom:4px">
+          📱 Zdjęcia przechowywane lokalnie w przeglądarce (localStorage). Nie znikną po zamknięciu — ale wyczyść się przy czyszczeniu danych przeglądarki. Zrób backup zdjęć zapisując je do galerii telefonu.
+        </div>
+      </div>
       ${state.journal.map(entry => `
         <div class="journal-item">
-          <div class="journal-photo">
-            ${entry.photo ? `<img src="${entry.photo}" alt="szczyt">` : '📷'}
+          <div class="journal-photo" style="cursor:${entry.photo?'pointer':'default'}" onclick="${entry.photo?`downloadPhoto(${entry.peakId})`:''}">
+            ${entry.photo ? `<img src="${entry.photo}" alt="szczyt" style="width:100%;height:100%;border-radius:10px;object-fit:cover">` : '📷'}
           </div>
           <div class="journal-info">
             <div class="journal-name">${entry.name} <span style="color:var(--accent);font-family:var(--font-display);font-size:16px">${entry.height}m</span></div>
             <div class="journal-date">📅 ${entry.date} o ${entry.time}</div>
             ${entry.note ? `<div class="journal-note">"${entry.note}"</div>` : ''}
+            ${entry.photo ? `<button onclick="downloadPhoto(${entry.peakId})" style="background:none;border:none;font-size:11px;color:var(--blue);cursor:pointer;padding:2px 0;margin-top:2px;display:block">⬇️ Zapisz zdjęcie</button>` : ''}
           </div>
           <button onclick="removePeak(${entry.peakId})" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);padding:4px" title="Usuń">×</button>
         </div>`).join('')}
@@ -1313,6 +1350,19 @@ function removePeak(peakId) {
   state.journal = state.journal.filter(e=>e.peakId!==peakId);
   save();
   goto('journal');
+}
+
+function downloadPhoto(peakId) {
+  const entry = state.journal.find(e=>e.peakId===peakId);
+  if (!entry || !entry.photo) return;
+  // Utwórz link do pobrania i kliknij go automatycznie
+  const a = document.createElement('a');
+  a.href = entry.photo;
+  a.download = `KGP_${entry.name.replace(/ /g,'_')}_${entry.date.replace(/\./g,'-')}.jpg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('📥 Zdjęcie zapisane!');
 }
 
 // NEXT SUGGESTIONS
