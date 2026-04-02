@@ -180,6 +180,27 @@ function showRouteOnMap(type) {
   goto('map');
 }
 
+async function navigateToParking(parkingName) {
+  const coords = await geocodeParking(parkingName);
+  if (!coords) {
+    showToast('❌ Nie znaleziono parkingu');
+    return;
+  }
+  let startLon, startLat;
+  if (state.userLat && state.userLon) {
+    startLon = state.userLon; startLat = state.userLat;
+  } else if (state.homeAddr && state.homeAddr.trim()) {
+    const homeCoords = await geocodeParking(state.homeAddr);
+    if (homeCoords) { startLon = homeCoords.lon; startLat = homeCoords.lat; }
+  }
+  if (startLon) {
+    const url = `https://mapy.com/fnc/v1/route?start=${startLon},${startLat}&end=${coords.lon},${coords.lat}&routeType=car_fast`;
+    window.open(url, '_blank');
+  } else {
+    window.open(`https://mapy.com/search?q=${encodeURIComponent(parkingName + ', Polska')}`, '_blank');
+  }
+}
+
 // ============================================================
 // LEAFLET MAP
 // ============================================================
@@ -280,6 +301,8 @@ function initMap() {
     }).addTo(leafletMap).bindTooltip('Ty', { permanent: true, direction: 'top' });
   }
 
-  const bounds = L.latLngBounds(PEAKS.map(p => [p.lat, p.lon]));
-  leafletMap.fitBounds(bounds, { padding: [20, 20] });
+  if (!pendingRoute) {
+    const bounds = L.latLngBounds(PEAKS.map(p => [p.lat, p.lon]));
+    leafletMap.fitBounds(bounds, { padding: [20, 20] });
+  }
 }

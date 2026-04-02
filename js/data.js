@@ -109,7 +109,7 @@ const PEAKS = [
     stamps:[{name:"Schronisko Andrzejówka",type:"🏠",note:"Przy parkingu - najpierw pieczątka!"}],
     photo:"Na szczycie przy tablicy - szybkie wejście ~20 min od schroniska" },
   { id:18, name:"Wielka Sowa", height:1015, range:"Góry Sowie", difficulty:2, lat:50.6802, lon:16.4855, season:[3,4,5,6,7,8,9,10,11,12], terrain:"forest",
-    parking:[{name:"Ludwikowice Kłodzkie",note:"Parking przy starcie szlaku"}],
+    parking:[{name:"Rzeczka - Przełęcz Walimska",note:"Najbliższy parking, szlak ~1.5h"},{name:"Ludwikowice Kłodzkie",note:"Dłuższa trasa ~3h"}],
     station:{name:"Głuszyca Górna PKP", info:"Koleje Dolnośląskie, szlak ~3h"},
     trail:{dist:9, up:100, down:95, ascent:500},
     stamps:[{name:"Skrzynka na szczycie",type:"📬",note:"Niebieska skrzynka na rzeźbie sowy - zawsze dostępna"},{name:"Schronisko Sowa Sokolec",type:"🏠",note:"Weekendy 11-17"},{name:"Schronisko Zygmuntówka",type:"🏠",note:"Jugów"}],
@@ -182,7 +182,7 @@ const PEAKS = [
 const SUPABASE_URL = 'https://bocwhfubyuwpsdcvqiqb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__szHGpjSyOWzCDXQMSD6eA_TKu8ClW0';
 const MAPY_API_KEY = 'BObGLXgTLrca8IyrEW2Lw-3F4VfKzMAmO2KMjqLanFU';
-const GEMINI_API_KEY = 'AIzaSyBt1hv59tULDNJAL0nuoEzOl1pOUJEu0iI';
+const GEMINI_API_KEY = ''; // TODO: dodaj nowy klucz z restrykcją HTTP referrer
 
 // Nazwy szczytów do generowania kodów sync
 const PEAK_NAMES_FOR_CODE = [

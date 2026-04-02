@@ -44,7 +44,8 @@ function getStateForSync() {
     paceMultiplier: state.paceMultiplier,
     homeAddr: state.homeAddr,
     selectedRoutes: state.selectedRoutes,
-    userName: state.userName
+    userName: state.userName,
+    iceContact: state.iceContact
   };
 }
 
@@ -83,6 +84,7 @@ async function pullFromCloud() {
     state.homeAddr = d.homeAddr || '';
     state.selectedRoutes = d.selectedRoutes || {};
     state.userName = d.userName || '';
+    state.iceContact = d.iceContact || '';
     _skipSync = true;
     save();
     _skipSync = false;

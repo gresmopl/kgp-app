@@ -40,6 +40,7 @@ IDEAS.md            - pomysły i plan rozwoju (48+ funkcji)
 - Style inline w HTML renderowanym przez JS (nie dodawaj klas CSS dla jednorazowych stylów)
 - Emoji jako ikony (nie używaj bibliotek ikon)
 - Polski język w UI, komentarze w kodzie mogą być po polsku lub angielsku
+- W tekstach UI używaj krótkiego myślnika `-`, NIE długiego `—`
 
 ## Klucze API (publiczne, domain-restricted)
 - Klucze API są w `js/data.js` — to normalne dla frontendu (publishable keys)

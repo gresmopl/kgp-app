@@ -25,6 +25,13 @@ function renderSettings() {
     </div>
 
     <div class="card card-pad">
+      <div class="section-title">🆘 Kontakt ICE</div>
+      <label class="label">Numer telefonu osoby bliskiej (na wypadek SOS)</label>
+      <input class="input" type="tel" value="${esc(state.iceContact)}" placeholder="np. 600123456" onchange="state.iceContact=this.value;save()">
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">Wyświetlany na ekranie SOS jako szybki kontakt</div>
+    </div>
+
+    <div class="card card-pad">
       <div class="section-title">🚗 Transport</div>
       <label class="label">Preferowany środek transportu</label>
       <div style="display:flex;gap:8px;margin-top:6px">

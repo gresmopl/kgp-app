@@ -1,7 +1,7 @@
 // ============================================================
 // ROUTER
 // ============================================================
-const navMap = {map:'nav-map',list:'nav-list',plan:'nav-plan',summit:'nav-summit',journal:'nav-journal',settings:'nav-settings'};
+const navMap = {map:'nav-map',list:'nav-list',plan:'nav-plan',summit:'nav-summit',journal:'nav-journal',settings:'nav-settings',sos:'nav-sos'};
 
 async function goto(page, skipHistory) {
   if (!skipHistory && state.currentPage !== page) {
@@ -22,6 +22,7 @@ async function goto(page, skipHistory) {
     case 'summit': html = renderSummit(); break;
     case 'journal':html = renderJournal(); break;
     case 'settings': html = renderSettings(); break;
+    case 'sos': html = renderSOS(); break;
     case 'next_suggest': html = renderNextSuggestPage(); break;
   }
 
@@ -34,6 +35,18 @@ async function goto(page, skipHistory) {
   if (page === 'plan') {
     const peak = state.selectedPeak || getTodo()[0] || PEAKS[0];
     loadWeather(peak);
+    loadSunTimes(peak);
+  }
+  if (page === 'sos') {
+    // Załaduj zachód słońca dla SOS
+    const peak = state.nearbyPeak ? PEAKS.find(p => p.id === state.nearbyPeak) : (state.selectedPeak || PEAKS[0]);
+    fetchSunTimes(peak.lat, peak.lon).then(sun => {
+      if (sun) {
+        state._todaySunset = sun.sunset;
+        const el = document.querySelector('#sun-sos');
+        if (el) el.textContent = `Zachód słońca: ${sun.sunset}`;
+      }
+    });
   }
 }
 
@@ -55,6 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
   history.replaceState({page:'map'}, '', '#map');
   startGPS();
   goto('map', true);
+  if (shouldShowOnboarding()) {
+    document.body.insertAdjacentHTML('beforeend', renderOnboarding());
+  }
   if (navigator.onLine && getProfileId()) {
     if (localStorage.getItem('kgp_sync_pending')) syncToCloud();
     processPhotoQueue();

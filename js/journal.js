@@ -41,6 +41,78 @@ function renderJournal() {
         : `<div style="font-size:13px;color:var(--text2)">Do tytułu Zdobywcy brakuje Ci</div><div style="font-family:var(--font-display);font-size:36px;color:var(--green)">${28-done} szczytów</div>`}
     </div>` : ''}
 
+    ${renderProgressPanorama()}
+
+    ${(() => {
+      const streak = getStreakInfo();
+      if (!streak) return '';
+      return `
+      <div class="card card-pad">
+        <div class="section-title">📊 Twoja passa</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-val">${streak.daysSinceLast}</div>
+            <div class="stat-label">Dni od ostatniego szczytu</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">${streak.thisMonthCount}</div>
+            <div class="stat-label">Szczyty w tym miesiącu</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">${streak.bestMonth}</div>
+            <div class="stat-label">Rekord miesiąca</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">${streak.maxGap}</div>
+            <div class="stat-label">Najdłuższa przerwa (dni)</div>
+          </div>
+        </div>
+      </div>`;
+    })()}
+
+    ${(() => {
+      const forecast = getCompletionForecast();
+      if (!forecast) return '';
+      if (forecast.done) return '<div class="card card-pad" style="text-align:center"><div style="font-family:var(--font-display);font-size:24px;color:var(--green)">🏆 Korona zdobyta!</div></div>';
+      return `
+      <div class="card card-pad">
+        <div class="section-title">📈 Prognoza ukończenia</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6">
+          Twoje tempo: <b style="color:var(--accent)">${forecast.peaksPerMonth} szczytów/miesiąc</b><br>
+          Przy tym tempie ukończysz KGP za ~<b style="color:var(--green)">${forecast.daysNeeded} dni</b> (${forecast.completionDate})
+        </div>
+      </div>`;
+    })()}
+
+    ${(() => {
+      const bench = getBenchmarkComparison();
+      if (!bench) return '';
+      return `
+      <div class="card card-pad">
+        <div class="section-title">🏅 Na tle innych zdobywców</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6">
+          Aktywność: <b style="color:var(--text)">${bench.monthsActive} miesięcy</b><br>
+          Tempo: <b style="color:var(--accent)">${bench.userPace} szczytów/miesiąc</b><br>
+          ${bench.aheadOrBehind >= 0
+            ? `Jesteś <b style="color:var(--green)">+${bench.aheadOrBehind} szczytów</b> przed średnią`
+            : `Jesteś <b style="color:var(--red)">${bench.aheadOrBehind} szczytów</b> za średnią`}<br>
+          Szybciej niż <b style="color:var(--accent)">${bench.percentile}%</b> zdobywców
+        </div>
+      </div>`;
+    })()}
+
+    ${(() => {
+      const memory = getYearAgoMemory();
+      if (!memory) return '';
+      return `
+      <div class="card card-pad" style="border-color:var(--accent)44">
+        <div class="section-title">📅 ${memory.yearsAgo === 1 ? 'Rok' : memory.yearsAgo + ' lata'} temu dziś...</div>
+        <div style="font-size:14px;font-weight:600">${memory.entry.name} <span style="color:var(--accent)">${memory.entry.height}m</span></div>
+        ${memory.entry.photo ? `<img src="${memory.entry.photo}" style="width:100%;border-radius:10px;max-height:150px;object-fit:cover;margin-top:8px">` : ''}
+        ${memory.entry.note ? `<div style="font-size:12px;color:var(--text2);margin-top:6px;font-style:italic">"${esc(memory.entry.note)}"</div>` : ''}
+      </div>`;
+    })()}
+
     ${state.journal.length > 0 ? `
     <div class="card">
       <div class="card-pad" style="border-bottom:1px solid var(--border)">
@@ -58,6 +130,7 @@ function renderJournal() {
             <div class="journal-name">${entry.name} <span style="color:var(--accent);font-family:var(--font-display);font-size:16px">${entry.height}m</span></div>
             <div class="journal-date">📅 ${entry.date} o ${entry.time}</div>
             ${entry.note ? `<div class="journal-note">"${esc(entry.note)}"</div>` : ''}
+            ${entry.dedication ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🎁 ${esc(entry.dedication)}</div>` : ''}
             ${entry.photo ? `<button onclick="downloadPhoto(${entry.peakId})" style="background:none;border:none;font-size:11px;color:var(--blue);cursor:pointer;padding:2px 0;margin-top:2px;display:block">⬇️ Zapisz zdjęcie</button>` : ''}
           </div>
           <button onclick="removePeak(${entry.peakId})" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);padding:4px" title="Usuń">×</button>

@@ -100,6 +100,7 @@ async function renderPlan() {
         <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px">
           <div style="font-weight:600;font-size:13px">🅿️ ${pk.name}</div>
           <div style="font-size:12px;color:var(--accent);margin-top:3px">⚠️ ${pk.note}</div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="navigateToParking('${pk.name.replace(/'/g,'`')}')">🚗 Wyznacz dojazd</button>
         </div>
       `).join(''); })()}
       <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="margin-top:8px;background:var(--blue,#4a90d9)">
@@ -111,6 +112,36 @@ async function renderPlan() {
       <div class="section-title">🌤️ Prognoza 7 dni</div>
       <div id="weather-content"><div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">Ładowanie prognozy... ☁️</div></div>
     </div>
+
+    <div class="card card-pad" id="sun-section">
+      <div class="section-title">🌅 Wschód / zachód słońca</div>
+      <div id="sun-content" style="font-size:13px;color:var(--text2)">Ładowanie...</div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="section-title">🔥 Szacunkowe spalanie kalorii</div>
+      <div style="font-family:var(--font-display);font-size:28px;color:var(--accent)">${estimateCalories(peak)} kcal</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">Szacunek dla ~70kg osoby (podejście + zejście). Tempo: ${state.paceMultiplier}×</div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="section-title">📷 Kamery górskie</div>
+      <a href="${getCameraSearchUrl(peak)}" target="_blank" class="btn btn-secondary btn-full" style="text-decoration:none">
+        📹 Szukaj kamer - ${peak.name}
+      </a>
+    </div>
+
+    ${getNearbyFood(peak.id) ? `
+    <div class="card card-pad">
+      <div class="section-title">🍽️ Gdzie zjeść po zejściu</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">${getNearbyFood(peak.id).type}</span>
+        <div>
+          <div style="font-weight:600;font-size:13px">${getNearbyFood(peak.id).name}</div>
+          <div style="font-size:11px;color:var(--text2)">${getNearbyFood(peak.id).dist}</div>
+        </div>
+      </div>
+    </div>` : ''}
 
     <div class="card card-pad">
       <div class="section-title">🧠 Optimizer Weekendu</div>
@@ -315,6 +346,12 @@ function renderSummit() {
       <textarea class="input" id="summit-note" rows="3" placeholder="Pogoda, widoki, towarzysze..." style="resize:none;line-height:1.5"></textarea>
     </div>
 
+    <div class="card card-pad">
+      <div class="label" style="margin-bottom:8px">Dedykacja (opcjonalnie)</div>
+      <input class="input" type="text" id="summit-dedication" placeholder="Ten szczyt dedykuję...">
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">Pojawi się na karcie zdobycia</div>
+    </div>
+
     <button class="btn btn-green btn-full" id="conquer-btn" onclick="conquerPeak(${peak.id})" disabled>
       ✅ Oznacz jako zdobyty
     </button>
@@ -374,13 +411,14 @@ function photoSelected(input, peakId) {
 function conquerPeak(peakId) {
   if (state.conquered.includes(peakId)) return;
   const note = document.getElementById('summit-note')?.value || '';
+  const dedication = document.getElementById('summit-dedication')?.value || '';
   const peak = PEAKS.find(p=>p.id===peakId);
   state.conquered.push(peakId);
   const entry = {
     peakId, name: peak.name, height: peak.height, range: peak.range,
     date: new Date().toLocaleDateString('pl-PL'),
     time: new Date().toLocaleTimeString('pl-PL', {hour:'2-digit',minute:'2-digit'}),
-    note, photo: state.pendingPhoto || null,
+    note, dedication, photo: state.pendingPhoto || null,
     gpsLat: state.userLat, gpsLon: state.userLon
   };
   state.journal.unshift(entry);
