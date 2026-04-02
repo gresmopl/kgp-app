@@ -26,12 +26,26 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 
 ```
 kgp-app/
-├── index.html       # Cala aplikacja (SPA)
-├── manifest.json    # Konfiguracja PWA
-├── sw.js            # Service Worker
-├── schema.sql       # Schemat bazy danych Supabase
-├── .gitignore       # Wykluczenia git
-└── README.md        # Dokumentacja
+├── index.html          # HTML + nawigacja (SPA)
+├── css/
+│   └── style.css       # Wszystkie style CSS
+├── js/
+│   ├── data.js         # PEAKS[], klucze API, stale
+│   ├── state.js        # Stan aplikacji, localStorage, save()
+│   ├── utils.js        # Funkcje pomocnicze, GPS, toast, confetti
+│   ├── sync.js         # Supabase sync, login, upload zdjec
+│   ├── weather.js      # Prognoza pogody (Open-Meteo API)
+│   ├── map.js          # Leaflet mapa, Mapy.com routing
+│   ├── ui.js           # Strony: lista, plan, szczyt, modal
+│   ├── journal.js      # Dziennik, eksport/import
+│   ├── settings.js     # Ustawienia
+│   └── router.js       # Nawigacja SPA, init
+├── manifest.json       # Konfiguracja PWA
+├── sw.js               # Service Worker
+├── schema.sql          # Schemat bazy danych Supabase
+├── IDEAS.md            # Pomysly i plan rozwoju
+├── .gitignore          # Wykluczenia git
+└── README.md           # Dokumentacja
 ```
 
 ## Uruchomienie lokalne
