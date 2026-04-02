@@ -713,6 +713,169 @@ window.addEventListener('online', () => {
 });
 
 // ============================================================
+// MAPY.COM ROUTING
+// ============================================================
+const MAPY_API_KEY = 'BObGLXgTLrca8IyrEW2Lw-3F4VfKzMAmO2KMjqLanFU';
+const MAPY_BASE = 'https://api.mapy.com/v1/routing/route';
+
+async function getRoute_Mapy(startLon, startLat, endLon, endLat, type = 'foot_hiking', waypoints = []) {
+  const params = new URLSearchParams({
+    start: `${startLon},${startLat}`,
+    end: `${endLon},${endLat}`,
+    routeType: type,
+    format: 'geojson',
+    lang: 'pl',
+    apiKey: MAPY_API_KEY
+  });
+  if (waypoints.length > 0) {
+    params.set('waypoints', waypoints.map(w => `${w.lon},${w.lat}`).join(';'));
+  }
+  try {
+    const res = await fetch(`${MAPY_BASE}?${params}`);
+    if (!res.ok) throw new Error(`Mapy API: ${res.status}`);
+    return await res.json();
+  } catch(e) {
+    console.error('Mapy routing error:', e);
+    return null;
+  }
+}
+
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}min`;
+  return `${m}min`;
+}
+
+function formatDistance(meters) {
+  if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+  return `${Math.round(meters)} m`;
+}
+
+let routeLayer = null;
+let pendingRoute = null;
+
+function drawRouteOnMap(geojson, color = '#e8a020') {
+  pendingRoute = { geojson, color };
+  if (!leafletMap) return;
+  applyRouteToMap();
+}
+
+function applyRouteToMap() {
+  if (!pendingRoute || !leafletMap) return;
+  if (routeLayer) leafletMap.removeLayer(routeLayer);
+  routeLayer = L.geoJSON(pendingRoute.geojson, {
+    style: { color: pendingRoute.color, weight: 5, opacity: 0.85, dashArray: null, lineCap: 'round', lineJoin: 'round' }
+  }).addTo(leafletMap);
+  leafletMap.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
+  pendingRoute = null;
+}
+
+async function navigateToPeak(peakId) {
+  const peak = PEAKS.find(p => p.id === peakId);
+  if (!peak) return;
+  const parking = getRoute(peak).parking;
+
+  if (!navigator.onLine) {
+    showToast('⚠️ Nawigacja wymaga internetu');
+    return;
+  }
+
+  let results = {};
+
+  // Etap 1: Dojazd autem (jeśli mamy pozycję GPS)
+  if (state.userLat && state.userLon) {
+    showToast('🗺️ Wyznaczam trasę...');
+    const parkingCoords = await geocodeParking(parking.name);
+    if (parkingCoords) {
+      const carRoute = await getRoute_Mapy(state.userLon, state.userLat, parkingCoords.lon, parkingCoords.lat, 'car_fast');
+      if (carRoute) {
+        results.car = {
+          distance: formatDistance(carRoute.length),
+          duration: formatDuration(carRoute.duration),
+          geometry: carRoute.geometry
+        };
+      }
+    }
+  }
+
+  // Etap 2: Szlak pieszy (parking → szczyt)
+  const parkingForHike = getRoute(peak).parking;
+  let hikeLon, hikeLat;
+  const parkingCoords2 = await geocodeParking(parkingForHike.name);
+  if (parkingCoords2) {
+    hikeLon = parkingCoords2.lon;
+    hikeLat = parkingCoords2.lat;
+  } else {
+    hikeLon = peak.lon - 0.01;
+    hikeLat = peak.lat - 0.005;
+  }
+
+  const hikeRoute = await getRoute_Mapy(hikeLon, hikeLat, peak.lon, peak.lat, 'foot_hiking');
+  if (hikeRoute) {
+    results.hike = {
+      distance: formatDistance(hikeRoute.length),
+      duration: formatDuration(hikeRoute.duration),
+      geometry: hikeRoute.geometry
+    };
+  }
+
+  showNavigationResult(peak, results);
+}
+
+async function geocodeParking(name) {
+  try {
+    const res = await fetch(`https://api.mapy.com/v1/geocode?query=${encodeURIComponent(name + ', Polska')}&lang=pl&limit=1&apiKey=${MAPY_API_KEY}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.items && data.items.length > 0) {
+      const pos = data.items[0].position;
+      return { lat: pos.lat, lon: pos.lon };
+    }
+    return null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function showNavigationResult(peak, results) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:500px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--accent)">🗺️ Trasa na ${peak.name}</div>
+        <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2)">×</button>
+      </div>
+
+      ${results.car ? `
+      <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-weight:600;color:var(--blue);margin-bottom:6px">🚗 Dojazd autem do parkingu</div>
+        <div style="display:flex;gap:16px;font-size:14px">
+          <span>📏 ${results.car.distance}</span>
+          <span>⏱️ ${results.car.duration}</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="drawRouteOnMap(${JSON.stringify(results.car.geometry).replace(/"/g,'&quot;')}, '#4a90d9');this.closest('.modal-overlay').remove();goto('map')">🗺️ Pokaż na mapie</button>
+      </div>` : ''}
+
+      <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-weight:600;color:var(--green);margin-bottom:6px">🥾 Szlak pieszy na szczyt</div>
+        ${results.hike ? `
+        <div style="display:flex;gap:16px;font-size:14px">
+          <span>📏 ${results.hike.distance}</span>
+          <span>⏱️ ${results.hike.duration}</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="drawRouteOnMap(${JSON.stringify(results.hike.geometry).replace(/"/g,'&quot;')}, '#4caf7d');this.closest('.modal-overlay').remove();goto('map')">🗺️ Pokaż szlak na mapie</button>
+        ` : '<div style="font-size:13px;color:var(--text2)">Nie udało się wyznaczyć trasy pieszej</div>'}
+      </div>
+
+      <button class="btn btn-secondary btn-full" onclick="this.closest('.modal-overlay').remove()">Zamknij</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ============================================================
 // WEATHER SCORING
 // ============================================================
 function scoreWeather(code, wind, precip, terrain) {
@@ -1063,6 +1226,9 @@ async function renderPlan() {
           <div style="font-size:12px;color:var(--accent);margin-top:3px">⚠️ ${pk.note}</div>
         </div>
       `).join(''); })()}
+      <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="margin-top:8px;background:var(--blue,#4a90d9)">
+        🗺️ Wyznacz trasę (Mapy.com)
+      </button>
     </div>
 
     <div class="card card-pad" id="weather-section">
@@ -1309,6 +1475,10 @@ function renderSummit() {
       ✅ Oznacz jako zdobyty
     </button>
     <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:-6px">Zrób najpierw zdjęcie aby aktywować</div>
+
+    <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="background:var(--blue,#4a90d9)">
+      🗺️ Wyznacz trasę (Mapy.com)
+    </button>
 
     <button class="btn btn-secondary btn-full" onclick="returnToParking(${peak.id})">
       🧭 Wróć do parkingu
@@ -1702,7 +1872,7 @@ async function goto(page, skipHistory) {
   screen.scrollTop = 0;
 
   if (page === 'map') {
-    requestAnimationFrame(() => initMap());
+    requestAnimationFrame(() => { initMap(); applyRouteToMap(); });
   }
   if (page === 'plan') {
     const peak = state.selectedPeak || getTodo()[0] || PEAKS[0];
