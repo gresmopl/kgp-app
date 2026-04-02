@@ -147,7 +147,7 @@ function showNavigationResult(peak, results) {
 
       ${results.car ? `
       <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px">
-        <div style="font-weight:600;color:var(--blue);margin-bottom:6px">🚗 Dojazd autem do parkingu</div>
+        <div style="font-weight:600;color:var(--blue);margin-bottom:6px">🚗 Dojazd samochodem do parkingu</div>
         <div style="display:flex;gap:16px;font-size:14px">
           <span>📏 ${results.car.distance}</span>
           <span>⏱️ ${results.car.duration}</span>

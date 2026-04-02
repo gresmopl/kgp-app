@@ -125,7 +125,7 @@ function renderJournal() {
     </div>`}
 
     <div style="text-align:center;margin-bottom:6px">
-      <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejscie</button>
+      <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejście</button>
     </div>
 
     ${renderGroupChallenge()}

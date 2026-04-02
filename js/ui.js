@@ -7,8 +7,12 @@ function renderList() {
   let peaks = PEAKS;
   if (state.filter === 'done') peaks = PEAKS.filter(p => isDone(p.id));
   if (state.filter === 'todo') peaks = PEAKS.filter(p => !isDone(p.id));
-  if (state.filter === 'tatry') peaks = PEAKS.filter(p => p.range.includes('Tatry') || p.range.includes('Beskid') || p.range.includes('Bieszczady') || p.range.includes('Gorce') || p.range.includes('Pieniny'));
-  if (state.filter === 'sudety') peaks = PEAKS.filter(p => ['Karkonosze','Góry Izerskie','Góry Stołowe','Góry Kaczawskie','Góry Wałbrzyskie','Góry Kamienne','Góry Sowie','Góry Bardzkie','Góry Bystrzyckie','Góry Orlickie','Góry Bialskie','Góry Złote','Góry Opawskie','Rudawy Janowickie','Masyw Śnieżnika','Masyw Ślęży'].includes(p.range));
+  const _karpaty = p => p.range.includes('Tatry') || p.range.includes('Beskid') || p.range.includes('Bieszczady') || p.range.includes('Gorce') || p.range.includes('Pieniny');
+  const _sudety = p => ['Karkonosze','Góry Izerskie','Góry Stołowe','Góry Kaczawskie','Góry Wałbrzyskie','Góry Kamienne','Góry Sowie','Góry Bardzkie','Góry Bystrzyckie','Góry Orlickie','Góry Bialskie','Góry Złote','Góry Opawskie','Rudawy Janowickie','Masyw Śnieżnika','Masyw Ślęży'].includes(p.range);
+  const _inne = p => !_karpaty(p) && !_sudety(p);
+  if (state.filter === 'tatry') peaks = PEAKS.filter(_karpaty);
+  if (state.filter === 'sudety') peaks = PEAKS.filter(_sudety);
+  if (state.filter === 'inne') peaks = PEAKS.filter(_inne);
 
   return `
   <div class="header">
@@ -22,12 +26,12 @@ function renderList() {
   <div class="chips">
     <span class="chip ${state.filter==='all'?'active':''}" onclick="setFilter('all')">Wszystkie (28)</span>
     <span class="chip ${state.filter==='todo'?'active':''}" onclick="setFilter('todo')">Do zdobycia (${28-done})</span>
-    <span class="chip ${state.filter==='done'?'active':''}" onclick="setFilter('done')">Zdobyte (${done})</span>
-    <span class="chip ${state.filter==='tatry'?'active':''}" onclick="setFilter('tatry')">Karpaty</span>
-    <span class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety</span>
+    <span class="chip ${state.filter==='tatry'?'active':''}" onclick="setFilter('tatry')">Karpaty (${PEAKS.filter(_karpaty).length})</span>
+    <span class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety (${PEAKS.filter(_sudety).length})</span>
+    <span class="chip ${state.filter==='inne'?'active':''}" onclick="setFilter('inne')">Inne (${PEAKS.filter(_inne).length})</span>
   </div>
   <div style="text-align:center;padding:0 14px 8px">
-    <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejscia</button>
+    <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejścia</button>
   </div>
   <div class="card" style="margin:0 14px 80px">
     ${peaks.sort((a,b)=>b.height-a.height).map(p => `

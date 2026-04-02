@@ -7,7 +7,7 @@
 // ============================================================
 function printPhotos() {
   const entries = state.journal.filter(e => e.photo);
-  if (entries.length === 0) { showToast('Brak zdjec do wydruku'); return; }
+  if (entries.length === 0) { showToast('Brak zdjęć do wydruku'); return; }
 
   const win = window.open('', '_blank');
   const styles = '@page{size:A4;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif}.page{page-break-after:always;display:grid;grid-template-columns:1fr 1fr;gap:8mm;padding:5mm}.page:last-child{page-break-after:auto}.photo-card{width:90mm;height:130mm;border:1px dashed #ccc;position:relative;overflow:hidden;break-inside:avoid}.photo-card img{width:100%;height:105mm;object-fit:cover;display:block}.photo-card .caption{padding:3mm;text-align:center;background:#fff}.photo-card .caption .name{font-size:14px;font-weight:700}.photo-card .caption .meta{font-size:10px;color:#666;margin-top:2px}.cut-guide{position:absolute;top:-1px;left:-1px;right:-1px;bottom:-1px;border:1px dashed #aaa;pointer-events:none}@media screen{body{background:#eee;padding:20px}.page{background:#fff;max-width:210mm;margin:0 auto 20px;box-shadow:0 2px 10px #0002}}';
@@ -46,17 +46,17 @@ function getPackingList(peak) {
     { name: 'Mapa / GPS', icon: '\u{1F5FA}', always: true },
     { name: 'Kurtka przeciwdeszczowa', icon: '\u{1F9E5}', always: true },
     { name: 'Apteczka', icon: '\u{1FA79}', always: true },
-    { name: 'Czolowka', icon: '\u{1F526}', cond: isLong || isHard, reason: 'Dluga trasa' },
+    { name: 'Czołówka', icon: '\u{1F526}', cond: isLong || isHard, reason: 'Długa trasa' },
     { name: 'Kije trekkingowe', icon: '\u{1F962}', cond: isHard || isAlpine, reason: peak.terrain },
     { name: 'Kask', icon: '\u{26D1}', cond: peak.id === 1, reason: 'Rysy - eksponowane' },
     { name: 'Raki / raczki', icon: '\u{1F9CA}', cond: isWinter && isAlpine, reason: 'Zima + alpejski' },
-    { name: 'Getry', icon: '\u{1F9BF}', cond: isWinter, reason: 'Snieg' },
-    { name: 'Ciepla bielizna termiczna', icon: '\u{1F9E4}', cond: isWinter, reason: 'Mroz' },
-    { name: 'Czapka + rekawice', icon: '\u{1F9E3}', cond: isWinter || isAlpine, reason: 'Zimno na szczycie' },
-    { name: 'Okulary przeciwsloneczne', icon: '\u{1F576}', cond: isAlpine || (month >= 5 && month <= 8), reason: 'Ochrona oczu' },
+    { name: 'Getry', icon: '\u{1F9BF}', cond: isWinter, reason: 'Śnieg' },
+    { name: 'Ciepła bielizna termiczna', icon: '\u{1F9E4}', cond: isWinter, reason: 'Mróz' },
+    { name: 'Czapka + rękawice', icon: '\u{1F9E3}', cond: isWinter || isAlpine, reason: 'Zimno na szczycie' },
+    { name: 'Okulary przeciwsłoneczne', icon: '\u{1F576}', cond: isAlpine || (month >= 5 && month <= 8), reason: 'Ochrona oczu' },
     { name: 'Krem z filtrem SPF50', icon: '\u{1F9F4}', cond: isAlpine && month >= 5, reason: 'Silne UV' },
-    { name: 'Bilet wstepu (park narodowy)', icon: '\u{1F3AB}', cond: [1,2,5,12,26].includes(peak.id), reason: 'Park narodowy' },
-    { name: 'Ksiazeczka KGP + dlugopis', icon: '\u{1F4D6}', always: true },
+    { name: 'Bilet wstępu (park narodowy)', icon: '\u{1F3AB}', cond: [1,2,5,12,26].includes(peak.id), reason: 'Park narodowy' },
+    { name: 'Książeczka KGP + długopis', icon: '\u{1F4D6}', always: true },
   ];
 
   return items.filter(i => i.always || i.cond);
@@ -66,8 +66,8 @@ function renderPackingList(peak) {
   const items = getPackingList(peak);
   return `
   <div class="card card-pad">
-    <div class="section-title">\u{1F392} Pakuj sie!</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Lista na podstawie: ${peak.terrain}, trudnosc ${peak.difficulty}/5, ${new Date().toLocaleDateString('pl-PL',{month:'long'})}</div>
+    <div class="section-title">\u{1F392} Pakuj się!</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Lista na podstawie: ${peak.terrain}, trudność ${peak.difficulty}/5, ${new Date().toLocaleDateString('pl-PL',{month:'long'})}</div>
     ${items.map(i => `
       <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:16px">${i.icon}</span>
@@ -81,21 +81,21 @@ function renderPackingList(peak) {
 // FEATURE 22: CIEKAWOSTKI O KGP
 // ============================================================
 const KGP_FUN_FACTS = [
-  'Rekord zdobycia wszystkich 28 szczytow KGP wynosi 3 dni 5 godzin i 25 minut (2019).',
-  'Rysy (2499m) to jedyny szczyt KGP powyzej 2000m n.p.m.',
-  'Lysica (614m) to najnizszy szczyt w Koronie Gor Polski.',
-  'Korona Gor Polski powstala w 1997 roku z inicjatywy Jerzego Galewskiego.',
-  'Aby oficjalnie zdobyc KGP, trzeba wejsc na 28 szczytow i zebrac pieczatki w ksiazeczce.',
-  'Najtrudniejsze szczyty KGP to Rysy i Babia Gora - wymagaja dobrej pogody i kondycji.',
-  'Najlatwiejsze szczyty KGP (Waligora, Skopiec) mozna zdobyc w 30-40 minut.',
-  'Lackowa w Beskidzie Niskim jest najmniej uczeszczanym szczytem KGP.',
-  'Szczeliniec Wielki w Gorach Stolowych to najwyzszy szczyt gor plaskich w Polsce.',
-  'Wysoka Kopa w Gorach Izerskich jest zamknieta - szczyt wylaczony z ruchu dla ochrony cietrzewia.',
-  'Laczne przewyzszenie wszystkich 28 tras KGP to ponad 14 000 metrow - prawie 2x Everest!',
-  'Sredni czas zdobycia pelnej Korony to ok. 2-3 lata.',
-  'Biskupia Kopa lezy na granicy polsko-czeskiej - z wiezy widac trzy kraje.',
-  'Sleza (718m) byla swieta gora starozytnych Slowian.',
-  'Turbacz w Gorcach oferuje jeden z najlepszych widokow na Tatry w Polsce.',
+  'Rekord zdobycia wszystkich 28 szczytów KGP wynosi 3 dni 5 godzin i 25 minut (2019).',
+  'Rysy (2499m) to jedyny szczyt KGP powyżej 2000m n.p.m.',
+  'Łysica (614m) to najniższy szczyt w Koronie Gór Polski.',
+  'Korona Gór Polski powstała w 1997 roku z inicjatywy Jerzego Galewskiego.',
+  'Aby oficjalnie zdobyć KGP, trzeba wejść na 28 szczytów i zebrać pieczątki w książeczce.',
+  'Najtrudniejsze szczyty KGP to Rysy i Babia Góra - wymagają dobrej pogody i kondycji.',
+  'Najłatwiejsze szczyty KGP (Waligóra, Skopiec) można zdobyć w 30-40 minut.',
+  'Lackowa w Beskidzie Niskim jest najmniej uczęszczanym szczytem KGP.',
+  'Szczeliniec Wielki w Górach Stołowych to najwyższy szczyt gór płaskich w Polsce.',
+  'Wysoka Kopa w Górach Izerskich jest zamknięta - szczyt wyłączony z ruchu dla ochrony cietrzewia.',
+  'Łączne przewyższenie wszystkich 28 tras KGP to ponad 14 000 metrów - prawie 2x Everest!',
+  'Średni czas zdobycia pełnej Korony to ok. 2-3 lata.',
+  'Biskupia Kopa leży na granicy polsko-czeskiej - z wieży widać trzy kraje.',
+  'Ślęża (718m) była świętą górą starożytnych Słowian.',
+  'Turbacz w Gorcach oferuje jeden z najlepszych widoków na Tatry w Polsce.',
 ];
 
 function getRandomFunFact() {
@@ -119,7 +119,7 @@ function renderFunFact() {
 // FEATURE 23: NAWIGACJA POWROTNA "DO AUTA"
 // ============================================================
 function saveParkingLocation() {
-  if (!state.userLat || !state.userLon) { showToast('Brak GPS - nie moge zapisac lokalizacji'); return; }
+  if (!state.userLat || !state.userLon) { showToast('Brak GPS - nie mogę zapisać lokalizacji'); return; }
   localStorage.setItem('kgp_parking_lat', state.userLat);
   localStorage.setItem('kgp_parking_lon', state.userLon);
   showToast('Lokalizacja parkingu zapisana!');
@@ -134,7 +134,7 @@ function getSavedParking() {
 
 function navigateToSavedParking() {
   const parking = getSavedParking();
-  if (!parking) { showToast('Nie zapisano lokalizacji parkingu'); return; }
+  if (!parking) { showToast('Nie zapisano lokalizacji parkingu!'); return; }
   if (state.userLat && state.userLon) {
     window.open('https://mapy.com/fnc/v1/route?start=' + state.userLon + ',' + state.userLat + '&end=' + parking.lon + ',' + parking.lat + '&routeType=foot_fast', '_blank');
   } else {
@@ -146,7 +146,7 @@ function renderParkingButtons() {
   const saved = getSavedParking();
   let html = '<div style="display:flex;gap:8px;margin-top:8px">';
   html += '<button class="btn btn-secondary btn-sm" style="flex:1" onclick="saveParkingLocation()">📍 Zapisz parking</button>';
-  if (saved) html += '<button class="btn btn-green btn-sm" style="flex:1" onclick="navigateToSavedParking()">🅿️ Wroc do auta</button>';
+  if (saved) html += '<button class="btn btn-green btn-sm" style="flex:1" onclick="navigateToSavedParking()">🅿️ Wróć do auta</button>';
   html += '</div>';
   if (saved) html += '<div style="font-size:10px;color:var(--text2);margin-top:4px">Zapisany parking: ' + saved.lat.toFixed(4) + ', ' + saved.lon.toFixed(4) + '</div>';
   return html;
@@ -179,7 +179,7 @@ function findBestWeatherDay(weatherData, peak) {
 
   if (bestIdx === -1 || bestScore <= 0) return null;
   const bestDate = new Date(weatherData.time[bestIdx] + 'T12:00:00');
-  const dayNames = ['niedziela','poniedzialek','wtorek','sroda','czwartek','piatek','sobota'];
+  const dayNames = ['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'];
   return {
     date: bestDate.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' }),
     dayName: dayNames[bestDate.getDay()],
@@ -211,14 +211,14 @@ function renderGroupChallenge() {
     return `
     <div class="card card-pad">
       <div class="section-title">👥 Wyzwanie grupowe</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Rywalizuj z przyjaciolmi! Stworz grupe lub dolacz do istniejacej.</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Rywalizuj z przyjaciółmi! Stwórz grupę lub dołącz do istniejącej.</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-green btn-sm" style="flex:1" onclick="createGroup()">🆕 Nowa grupa</button>
       </div>
       <div style="font-size:11px;color:var(--text2);margin-top:8px">Masz kod grupy? Wpisz go:</div>
       <div style="display:flex;gap:8px;margin-top:6px">
         <input class="input" id="group-code-input" placeholder="np. EKIPA2026" style="flex:1;font-size:13px">
-        <button class="btn btn-secondary btn-sm" onclick="joinGroup(document.getElementById('group-code-input').value)">Dolacz</button>
+        <button class="btn btn-secondary btn-sm" onclick="joinGroup(document.getElementById('group-code-input').value)">Dołącz</button>
       </div>
     </div>`;
   }
@@ -233,7 +233,7 @@ function renderGroupChallenge() {
       membersHtml += '<div style="font-family:var(--font-display);font-size:18px;color:var(--accent)">' + m.count + '/28</div></div>';
     });
   } else {
-    membersHtml = '<div style="font-size:12px;color:var(--text2)">Brak danych grupy. Synchronizuj aby zobaczyc ranking.</div>';
+    membersHtml = '<div style="font-size:12px;color:var(--text2)">Brak danych grupy. Synchronizuj aby zobaczyć ranking.</div>';
   }
 
   return `
@@ -244,8 +244,8 @@ function renderGroupChallenge() {
       <div style="font-family:var(--font-display);font-size:22px;color:var(--accent);letter-spacing:1px">${groupCode}</div>
     </div>
     ${membersHtml}
-    <button class="btn btn-secondary btn-sm btn-full" style="margin-top:10px" onclick="syncGroupData()">🔄 Synchronizuj grupe</button>
-    <button class="btn btn-sm btn-full" style="margin-top:6px;background:none;color:var(--red);font-size:11px" onclick="leaveGroup()">Opusc grupe</button>
+    <button class="btn btn-secondary btn-sm btn-full" style="margin-top:10px" onclick="syncGroupData()">🔄 Synchronizuj grupę</button>
+    <button class="btn btn-sm btn-full" style="margin-top:6px;background:none;color:var(--red);font-size:11px" onclick="leaveGroup()">Opuść grupę</button>
   </div>`;
 }
 
@@ -261,15 +261,15 @@ function joinGroup(code) {
   if (!code || code.trim().length < 3) { showToast('Podaj kod grupy'); return; }
   localStorage.setItem('kgp_group_code', code.trim().toUpperCase());
   syncGroupData();
-  showToast('Dolaczono do grupy!');
+  showToast('Dołączono do grupy!');
   goto('journal');
 }
 
 function leaveGroup() {
-  if (!confirm('Opuscic grupe?')) return;
+  if (!confirm('Opuścić grupę?')) return;
   localStorage.removeItem('kgp_group_code');
   localStorage.removeItem('kgp_group_data');
-  showToast('Opuszczono grupe');
+  showToast('Opuszczono grupę');
   goto('journal');
 }
 
@@ -277,7 +277,7 @@ async function syncGroupData() {
   const code = localStorage.getItem('kgp_group_code');
   if (!code) return;
   const profileId = getProfileId();
-  if (!profileId) { showToast('Potrzebujesz kodu sync aby korzystac z grup'); return; }
+  if (!profileId) { showToast('Potrzebujesz kodu sync aby korzystać z grup'); return; }
 
   try {
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -294,7 +294,7 @@ async function syncGroupData() {
     }
   } catch(e) {
     console.error('Group sync error:', e);
-    showToast('Blad synchronizacji grupy');
+    showToast('Błąd synchronizacji grupy');
   }
 }
 
@@ -306,7 +306,7 @@ let _trackingInterval = null;
 function startTrailTracking(peakId) {
   const peak = PEAKS.find(p => p.id === peakId);
   if (!peak) return;
-  if (!state.userLat || !state.userLon) { showToast('Wlacz GPS aby sledzic trase'); return; }
+  if (!state.userLat || !state.userLon) { showToast('Włącz GPS aby śledzić trasę'); return; }
 
   state._tracking = {
     peakId, startLat: state.userLat, startLon: state.userLon,
@@ -316,7 +316,7 @@ function startTrailTracking(peakId) {
   localStorage.setItem('kgp_tracking', JSON.stringify(state._tracking));
   updateTracker();
   _trackingInterval = setInterval(updateTracker, 10000);
-  showToast('Tracking rozpoczety!');
+  showToast('Tracking rozpoczęty!');
 }
 
 function stopTrailTracking() {
@@ -349,9 +349,9 @@ function updateTracker() {
     '<div class="progress-bar" style="margin-bottom:8px"><div class="progress-fill" style="width:' + progress + '%;background:var(--green)"></div></div>' +
     '<div class="stats-grid">' +
     '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + (distToTarget/1000).toFixed(1) + '</div><div class="stat-label">km do szczytu</div></div>' +
-    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + (etaMin > 0 ? '~' + etaMin : '?') + '</div><div class="stat-label">min pozostalo</div></div>' +
+    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + (etaMin > 0 ? '~' + etaMin : '?') + '</div><div class="stat-label">min pozostało</div></div>' +
     '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + elapsed + '</div><div class="stat-label">min w drodze</div></div>' +
-    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + progress + '%</div><div class="stat-label">postep trasy</div></div>' +
+    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + progress + '%</div><div class="stat-label">postęp trasy</div></div>' +
     '</div></div>';
 }
 
@@ -373,7 +373,7 @@ async function loadWarnings(peakId) {
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data } = await sb.from('warnings').select('*').eq('peak_id', peakId).order('created_at', { ascending: false }).limit(5);
     if (!data || data.length === 0) {
-      el.innerHTML = '<div style="font-size:12px;color:var(--text2)">Brak ostrzezen. Badz pierwszy!</div>';
+      el.innerHTML = '<div style="font-size:12px;color:var(--text2)">Brak ostrzeżeń. Bądź pierwszy!</div>';
       return;
     }
     el.innerHTML = data.map(w =>
@@ -382,29 +382,29 @@ async function loadWarnings(peakId) {
       '<div style="font-size:10px;color:var(--text2);margin-top:4px">' + (w.author || 'Anonim') + ' - ' + new Date(w.created_at).toLocaleDateString('pl-PL') + '</div></div>'
     ).join('');
   } catch(e) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text2)">Offline - brak dostepu do ostrzezen</div>';
+    el.innerHTML = '<div style="font-size:12px;color:var(--text2)">Offline - brak dostępu do ostrzeżeń</div>';
   }
 }
 
 async function addWarning(peakId) {
   const input = document.getElementById('warning-input');
   const msg = input && input.value ? input.value.trim() : '';
-  if (!msg) { showToast('Wpisz tresc ostrzezenia'); return; }
+  if (!msg) { showToast('Wpisz treść ostrzeżenia'); return; }
   try {
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     await sb.from('warnings').insert({ peak_id: peakId, message: msg, author: state.userName || 'Anonim', profile_id: getProfileId() });
     input.value = '';
-    showToast('Ostrzezenie dodane!');
+    showToast('Ostrzeżenie dodane!');
     loadWarnings(peakId);
-  } catch(e) { showToast('Nie udalo sie dodac ostrzezenia'); }
+  } catch(e) { showToast('Nie udało się dodać ostrzeżenia'); }
 }
 
 function renderWarningsSection(peakId) {
   return '<div class="card card-pad">' +
-    '<div class="section-title">⚠️ Ostrzezenia szlakowe</div>' +
-    '<div id="warnings-content" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Ladowanie...</div></div>' +
+    '<div class="section-title">⚠️ Ostrzeżenia szlakowe</div>' +
+    '<div id="warnings-content" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Ładowanie...</div></div>' +
     '<div style="display:flex;gap:8px">' +
-    '<input class="input" id="warning-input" placeholder="Np. Brak pieczatki, zamkniety szlak..." style="flex:1;font-size:12px">' +
+    '<input class="input" id="warning-input" placeholder="Np. Brak pieczątki, zamknięty szlak..." style="flex:1;font-size:12px">' +
     '<button class="btn btn-secondary btn-sm" onclick="addWarning(' + peakId + ')">Dodaj</button></div></div>';
 }
 
@@ -422,22 +422,22 @@ function openHistoryEntry() {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:500px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-family:var(--font-display);font-size:20px;color:var(--accent)">📝 Wpisz historyczne wejscie</div>
+        <div style="font-family:var(--font-display);font-size:20px;color:var(--accent)">📝 Wpisz historyczne wejście</div>
         <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2)">\u00d7</button>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Zdobyles juz szczyty wczesniej? Wpisz je tutaj - zdjecie i GPS nie sa wymagane.</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Zdobyłeś już szczyty wcześniej? Wpisz je tutaj - zdjęcie i GPS nie są wymagane.</div>
 
       <div style="margin-bottom:10px">
         <div class="label">Szczyt</div>
         <select class="input" id="hist-peak">
           ${all.map(p => `<option value="${p.id}" ${isDone(p.id)?'disabled':''}>
-            ${p.name} (${p.height}m) ${isDone(p.id)?'- juz zdobyty':''}
+            ${p.name} (${p.height}m) ${isDone(p.id)?'- już zdobyty':''}
           </option>`).join('')}
         </select>
       </div>
 
       <div style="margin-bottom:10px">
-        <div class="label">Data wejscia</div>
+        <div class="label">Data wejścia</div>
         <input class="input" type="date" id="hist-date" value="${new Date().toISOString().split('T')[0]}">
       </div>
 
@@ -447,7 +447,7 @@ function openHistoryEntry() {
       </div>
 
       <div style="margin-bottom:10px">
-        <div class="label">Zdjecie (opcjonalnie)</div>
+        <div class="label">Zdjęcie (opcjonalnie)</div>
         <input type="file" id="hist-photo" accept="image/*" class="input" style="padding:8px">
       </div>
 
@@ -456,10 +456,10 @@ function openHistoryEntry() {
         <input class="input" type="text" id="hist-dedication" placeholder="Ten szczyt dedykuje...">
       </div>
 
-      <button class="btn btn-green btn-full" onclick="saveHistoryEntry()">✅ Zapisz wejscie</button>
+      <button class="btn btn-green btn-full" onclick="saveHistoryEntry()">✅ Zapisz wejście</button>
 
       <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Szybkie dodawanie - zaznacz wiele szczytow naraz:</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Szybkie dodawanie - zaznacz wiele szczytów naraz:</div>
         <div id="hist-batch" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:200px;overflow-y:auto">
           ${todo.map(p => `
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 8px;background:var(--card2);border-radius:8px;cursor:pointer">
@@ -477,9 +477,14 @@ function openHistoryEntry() {
   document.body.appendChild(overlay);
 }
 
+function parseInputDate(dateInput) {
+  const parts = dateInput.split('-');
+  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+}
+
 function saveHistoryEntry() {
   const peakId = parseInt(document.getElementById('hist-peak').value);
-  if (state.conquered.includes(peakId)) { showToast('Ten szczyt juz jest zdobyty'); return; }
+  if (state.conquered.includes(peakId)) { showToast('Ten szczyt już jest zdobyty'); return; }
 
   const peak = PEAKS.find(p => p.id === peakId);
   const dateInput = document.getElementById('hist-date').value;
@@ -487,7 +492,7 @@ function saveHistoryEntry() {
   const dedication = document.getElementById('hist-dedication').value || '';
   const fileInput = document.getElementById('hist-photo');
 
-  const d = new Date(dateInput);
+  const d = parseInputDate(dateInput);
   const dateStr = d.toLocaleDateString('pl-PL');
 
   function doSave(photo) {
@@ -499,9 +504,9 @@ function saveHistoryEntry() {
     };
     state.journal.push(entry);
     state.journal.sort((a, b) => {
-      const da = a.date.split('.').reverse().join('-');
-      const db = b.date.split('.').reverse().join('-');
-      return db.localeCompare(da);
+      const pa = a.date.split('.').map(Number);
+      const pb = b.date.split('.').map(Number);
+      return (pb[2]*10000+pb[1]*100+pb[0]) - (pa[2]*10000+pa[1]*100+pa[0]);
     });
     save();
     if (photo) uploadPhoto(peakId, photo, 'summit');
@@ -524,10 +529,10 @@ function saveHistoryEntry() {
 
 function saveBatchHistory() {
   const checkboxes = document.querySelectorAll('#hist-batch input[type="checkbox"]:checked');
-  if (checkboxes.length === 0) { showToast('Zaznacz przynajmniej jeden szczyt'); return; }
+  if (checkboxes.length === 0) { showToast('Zaznacz przynajmniej jeden szczyt!'); return; }
 
   const dateInput = document.getElementById('hist-batch-date').value;
-  const d = new Date(dateInput);
+  const d = parseInputDate(dateInput);
   const dateStr = d.toLocaleDateString('pl-PL');
   let added = 0;
 
@@ -546,12 +551,12 @@ function saveBatchHistory() {
 
   if (added > 0) {
     state.journal.sort((a, b) => {
-      const da = a.date.split('.').reverse().join('-');
-      const db = b.date.split('.').reverse().join('-');
-      return db.localeCompare(da);
+      const pa = a.date.split('.').map(Number);
+      const pb = b.date.split('.').map(Number);
+      return (pb[2]*10000+pb[1]*100+pb[0]) - (pa[2]*10000+pa[1]*100+pa[0]);
     });
     save();
-    showToast('\u{1F389} Dodano ' + added + ' szczytow!');
+    showToast('\u{1F389} Dodano ' + added + ' szczytów!');
   }
   document.querySelector('.modal-overlay')?.remove();
   goto('journal');

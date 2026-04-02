@@ -35,8 +35,8 @@ function renderSettings() {
       <div class="section-title">🚗 Transport</div>
       <label class="label">Preferowany środek transportu</label>
       <div style="display:flex;gap:8px;margin-top:6px">
-        <button class="btn btn-sm ${state.transport==='car'?'btn-primary':'btn-secondary'}" style="flex:1" onclick="state.transport='car';save();goto('settings')">🚗 Auto</button>
-        <button class="btn btn-sm ${state.transport==='public'?'btn-primary':'btn-secondary'}" style="flex:1" onclick="state.transport='public';save();goto('settings')">🚌 Komunikacja</button>
+        <button class="btn btn-sm ${state.transport!=='pks'?'btn-primary':'btn-secondary'}" style="flex:1" onclick="state.transport='car';save();goto('settings')">🚗 Samochód</button>
+        <button class="btn btn-sm ${state.transport==='pks'?'btn-primary':'btn-secondary'}" style="flex:1" onclick="state.transport='pks';save();goto('settings')">🚂 PKP/PKS</button>
       </div>
     </div>
 
