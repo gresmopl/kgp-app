@@ -11,6 +11,12 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Dziennik zdobywcy** - historia wejsc ze zdjeciami i statystykami
 - **Synchronizacja** - dane zsynchronizowane miedzy urzadzeniami przez Supabase (kod sync)
 - **Tryb offline** - aplikacja dziala bez internetu, dane synchronizowane po polaczeniu
+- **Tryb SOS** - koordynaty GPS, telefon GOPR/TOPR, SMS z lokalizacja, najblizsze schronisko
+- **Wschod/zachod slonca** - ostrzezenie jesli zejscie po zmroku
+- **Kalkulator kalorii** - szacunkowe spalanie na trasie
+- **Passa zdobywcy** - streak, prognoza ukonczenia KGP, porownanie z innymi
+- **Dedykacja szczytu** - mozliwosc dedykowania zdobycia bliskiej osobie
+- **Onboarding** - ekran powitalny dla nowych uzytkownikow
 
 ## Stos technologiczny
 
@@ -39,6 +45,7 @@ kgp-app/
 │   ├── ui.js           # Strony: lista, plan, szczyt, modal
 │   ├── journal.js      # Dziennik, eksport/import
 │   ├── settings.js     # Ustawienia
+│   ├── features.js     # SOS, streak, prognoza, onboarding, kalorie
 │   └── router.js       # Nawigacja SPA, init
 ├── manifest.json       # Konfiguracja PWA
 ├── sw.js               # Service Worker
