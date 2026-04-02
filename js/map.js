@@ -67,7 +67,7 @@ async function navigateToPeak(peakId) {
   showToast('🗺️ Wyznaczam trasę...');
   let results = {};
 
-  let parkingCoords = await geocodeParking(parking.name);
+  let parkingCoords = parking.lat ? { lat: parking.lat, lon: parking.lon } : await geocodeParking(parking.name);
   if (!parkingCoords) {
     const simpleName = parking.name.split(' - ')[0].split(' – ')[0].trim();
     parkingCoords = await geocodeParking(simpleName);
@@ -180,8 +180,13 @@ function showRouteOnMap(type) {
   goto('map');
 }
 
-async function navigateToParking(parkingName) {
-  const coords = await geocodeParking(parkingName);
+async function navigateToParking(parkingName, parkingLat, parkingLon) {
+  let coords;
+  if (parkingLat && parkingLon) {
+    coords = { lat: parkingLat, lon: parkingLon };
+  } else {
+    coords = await geocodeParking(parkingName);
+  }
   if (!coords) {
     showToast('❌ Nie znaleziono parkingu');
     return;

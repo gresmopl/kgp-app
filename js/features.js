@@ -396,3 +396,384 @@ const NEARBY_FOOD = {
 function getNearbyFood(peakId) {
   return NEARBY_FOOD[peakId] || null;
 }
+
+// ============================================================
+// FEATURE 13: KARTA ZDOBYCIA (Canvas PNG)
+// ============================================================
+function generateConquestCard(peakId) {
+  const entry = state.journal.find(e => e.peakId === peakId);
+  if (!entry) return;
+  const done = state.conquered.length;
+  const pct = Math.round(done / 28 * 100);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext('2d');
+
+  const drawCard = (bgImg) => {
+    // Tło
+    if (bgImg) {
+      ctx.drawImage(bgImg, 0, 0, 1080, 1350);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0, 0, 1080, 1350);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 0, 1350);
+      grad.addColorStop(0, '#1a1a2e');
+      grad.addColorStop(0.5, '#0f2027');
+      grad.addColorStop(1, '#203a43');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1350);
+    }
+
+    // Góra - emoji góry
+    ctx.font = '120px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏔️', 540, 200);
+
+    // Nazwa szczytu
+    ctx.fillStyle = '#e8a020';
+    ctx.font = 'bold 72px Arial, sans-serif';
+    ctx.fillText(entry.name, 540, 340);
+
+    // Wysokość
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 96px Arial, sans-serif';
+    ctx.fillText(entry.height + ' m n.p.m.', 540, 460);
+
+    // Pasmo
+    ctx.fillStyle = '#9090b0';
+    ctx.font = '36px Arial, sans-serif';
+    ctx.fillText(entry.range, 540, 520);
+
+    // Data i godzina
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = '40px Arial, sans-serif';
+    ctx.fillText('📅 ' + entry.date + '  ⏰ ' + entry.time, 540, 620);
+
+    // Dedykacja
+    if (entry.dedication) {
+      ctx.fillStyle = '#e8a020';
+      ctx.font = 'italic 32px Arial, sans-serif';
+      ctx.fillText('🎁 ' + entry.dedication, 540, 700);
+    }
+
+    // Notatka
+    if (entry.note) {
+      ctx.fillStyle = '#c0c0d0';
+      ctx.font = 'italic 28px Arial, sans-serif';
+      const noteY = entry.dedication ? 760 : 700;
+      const words = entry.note.split(' ');
+      let line = '"';
+      let y = noteY;
+      words.forEach(w => {
+        if (ctx.measureText(line + w).width > 900) {
+          ctx.fillText(line, 540, y);
+          line = w + ' ';
+          y += 36;
+        } else {
+          line += w + ' ';
+        }
+      });
+      ctx.fillText(line.trim() + '"', 540, y);
+    }
+
+    // Pasek postępu
+    const barY = 1000;
+    ctx.fillStyle = '#2a2a45';
+    ctx.beginPath();
+    ctx.roundRect(140, barY, 800, 40, 20);
+    ctx.fill();
+    const grad2 = ctx.createLinearGradient(140, 0, 940, 0);
+    grad2.addColorStop(0, '#e8a020');
+    grad2.addColorStop(1, '#f0c060');
+    ctx.fillStyle = grad2;
+    ctx.beginPath();
+    ctx.roundRect(140, barY, 800 * (done / 28), 40, 20);
+    ctx.fill();
+
+    // Tekst postępu
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px Arial, sans-serif';
+    ctx.fillText(done + ' / 28', 540, barY + 100);
+    ctx.fillStyle = '#9090b0';
+    ctx.font = '28px Arial, sans-serif';
+    ctx.fillText('Korona Gór Polski - ' + pct + '%', 540, barY + 145);
+
+    // Imię
+    if (state.userName) {
+      ctx.fillStyle = '#e8e8f0';
+      ctx.font = '32px Arial, sans-serif';
+      ctx.fillText('Zdobywca: ' + state.userName, 540, barY + 220);
+    }
+
+    // Stopka
+    ctx.fillStyle = '#606080';
+    ctx.font = '24px Arial, sans-serif';
+    ctx.fillText('KGP App - Asystent Zdobywcy', 540, 1310);
+
+    // Pobierz
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `KGP_${entry.name.replace(/ /g, '_')}_${entry.date.replace(/\./g, '-')}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📸 Karta zdobycia pobrana!');
+    });
+  };
+
+  if (entry.photo) {
+    const img = new Image();
+    img.onload = () => drawCard(img);
+    img.onerror = () => drawCard(null);
+    img.src = entry.photo;
+  } else {
+    drawCard(null);
+  }
+}
+
+// ============================================================
+// FEATURE 14: SYSTEM OSIĄGNIĘĆ
+// ============================================================
+const ACHIEVEMENTS = [
+  { id: 'first', name: 'Pierwszy krok', icon: '👣', desc: 'Zdobyj pierwszy szczyt', check: () => state.conquered.length >= 1 },
+  { id: 'five', name: 'Piątka', icon: '🖐️', desc: 'Zdobyj 5 szczytów', check: () => state.conquered.length >= 5 },
+  { id: 'half', name: 'Półmetek', icon: '⚡', desc: 'Zdobyj 14 szczytów', check: () => state.conquered.length >= 14 },
+  { id: 'crown', name: 'Zdobywca Korony', icon: '👑', desc: 'Zdobyj wszystkie 28 szczytów', check: () => state.conquered.length >= 28 },
+  { id: 'winter', name: 'Zimowy wojownik', icon: '❄️', desc: 'Zdobyj szczyt w styczniu lub lutym', check: () => state.journal.some(e => { const d = parsePolishDate(e.date); return d && (d.getMonth() === 0 || d.getMonth() === 1); }) },
+  { id: 'dawn', name: 'Świt na szczycie', icon: '🌅', desc: 'Zdobyj szczyt przed 8:00', check: () => state.journal.some(e => { const [h] = (e.time || '12:00').split(':').map(Number); return h < 8; }) },
+  { id: 'marathon', name: 'Maraton', icon: '🏃', desc: '2 szczyty w jeden dzień', check: () => { const dates = state.journal.map(e => e.date); return dates.some(d => dates.filter(x => x === d).length >= 2); } },
+  { id: 'karpaty', name: 'Pełnia Karpat', icon: '🏔️', desc: 'Zdobyj wszystkie szczyty karpackie', check: () => { const karpatRanges = ['Tatry','Beskid Żywiecki','Gorce','Beskid Sądecki','Beskid Śląski','Beskid Wyspowy','Beskid Niski','Pieniny','Beskid Mały','Beskid Makowski','Bieszczady']; return PEAKS.filter(p => karpatRanges.includes(p.range)).every(p => isDone(p.id)); } },
+  { id: 'sudety', name: 'Pan Sudetów', icon: '⛰️', desc: 'Zdobyj wszystkie szczyty sudeckie', check: () => { const sudetRanges = ['Karkonosze','Góry Stołowe','Masyw Śnieżnika','Góry Sowie','Góry Bystrzyckie','Góry Wałbrzyskie','Góry Kamienne','Masyw Ślęży','Góry Opawskie']; return PEAKS.filter(p => sudetRanges.includes(p.range)).every(p => isDone(p.id)); } },
+  { id: 'rysy', name: 'Dach Polski', icon: '🇵🇱', desc: 'Zdobyj Rysy (2499m)', check: () => isDone(1) },
+  { id: 'hard', name: 'Twardziel', icon: '💪', desc: 'Zdobyj szczyt o trudności 5/5', check: () => state.conquered.some(id => { const p = PEAKS.find(pk => pk.id === id); return p && p.difficulty === 5; }) },
+  { id: 'speed', name: 'Sprinter', icon: '⚡', desc: '3 szczyty w jednym miesiącu', check: () => { const mc = {}; state.journal.forEach(e => { const d = parsePolishDate(e.date); if (d) { const k = d.getFullYear() + '-' + d.getMonth(); mc[k] = (mc[k]||0)+1; } }); return Object.values(mc).some(v => v >= 3); } },
+];
+
+function getUnlockedAchievements() {
+  return ACHIEVEMENTS.filter(a => a.check());
+}
+
+function renderAchievements() {
+  const unlocked = getUnlockedAchievements();
+  return `
+  <div class="card card-pad">
+    <div class="section-title">🏅 Osiągnięcia (${unlocked.length}/${ACHIEVEMENTS.length})</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      ${ACHIEVEMENTS.map(a => {
+        const done = unlocked.includes(a);
+        return `<div class="achievement-badge ${done ? 'unlocked' : 'locked'}">
+          <div style="font-size:28px;${done ? '' : 'filter:grayscale(1);opacity:0.3'}">${a.icon}</div>
+          <div style="font-size:10px;font-weight:600;margin-top:4px;${done ? 'color:var(--accent)' : 'color:var(--text2)'}">${a.name}</div>
+          <div style="font-size:8px;color:var(--text2);margin-top:2px">${a.desc}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// FEATURE 15: TIMELINE / OŚ CZASU W DZIENNIKU
+// ============================================================
+function renderJournalTimeline() {
+  if (state.journal.length === 0) return '';
+
+  let lastDate = null;
+  return `
+  <div class="card">
+    <div class="card-pad" style="border-bottom:1px solid var(--border)">
+      <div class="section-title">📅 Oś czasu</div>
+    </div>
+    <div class="journal-timeline">
+      ${state.journal.map((entry, i) => {
+        const d = parsePolishDate(entry.date);
+        let gapHtml = '';
+        if (lastDate && d) {
+          const gap = Math.floor((lastDate - d) / (1000 * 60 * 60 * 24));
+          if (gap > 1) {
+            gapHtml = `<div class="jtl-gap">${gap} dni przerwy</div>`;
+          }
+        }
+        lastDate = d;
+        return `${gapHtml}
+        <div class="jtl-item anim-fade-in" style="animation-delay:${i * 0.05}s">
+          <div class="jtl-left">
+            <div class="jtl-dot" style="background:var(--green)"></div>
+            ${i < state.journal.length - 1 ? '<div class="jtl-line"></div>' : ''}
+          </div>
+          <div class="jtl-content">
+            <div class="jtl-photo" onclick="${entry.photo ? `openLightbox(${entry.peakId})` : ''}" style="cursor:${entry.photo ? 'pointer' : 'default'}">
+              ${entry.photo ? `<img src="${entry.photo}" alt="${entry.name}">` : '<span style="font-size:24px">📷</span>'}
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:14px">${entry.name} <span style="color:var(--accent);font-family:var(--font-display);font-size:16px">${entry.height}m</span></div>
+              <div style="font-size:11px;color:var(--text2)">📅 ${entry.date} o ${entry.time}</div>
+              ${entry.note ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;font-style:italic">"${esc(entry.note)}"</div>` : ''}
+              ${entry.dedication ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🎁 ${esc(entry.dedication)}</div>` : ''}
+              <div style="display:flex;gap:6px;margin-top:4px">
+                ${entry.photo ? `<button onclick="generateConquestCard(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">🎴 Karta</button>` : ''}
+                ${entry.photo ? `<button onclick="downloadPhoto(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">⬇️ Zdjęcie</button>` : ''}
+                <button onclick="removePeak(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px;color:var(--red)">× Usuń</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// FEATURE 18: GALERIA / LIGHTBOX
+// ============================================================
+function openLightbox(peakId) {
+  const photos = state.journal.filter(e => e.photo);
+  const idx = photos.findIndex(e => e.peakId === peakId);
+  if (idx === -1) return;
+
+  state._lightboxPhotos = photos;
+  state._lightboxIdx = idx;
+  renderLightbox();
+}
+
+function renderLightbox() {
+  const photos = state._lightboxPhotos;
+  const idx = state._lightboxIdx;
+  const entry = photos[idx];
+
+  document.querySelector('.lightbox-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.innerHTML = `
+    <div class="lightbox-close" onclick="closeLightbox()">×</div>
+    <div class="lightbox-counter">${idx + 1} / ${photos.length}</div>
+    ${photos.length > 1 ? `
+      <div class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)">‹</div>
+      <div class="lightbox-nav lightbox-next" onclick="lightboxNav(1)">›</div>
+    ` : ''}
+    <div class="lightbox-img-wrap">
+      <img src="${entry.photo}" class="lightbox-img" alt="${entry.name}">
+    </div>
+    <div class="lightbox-caption">
+      <div style="font-weight:600">${entry.name} ${entry.height}m</div>
+      <div style="font-size:12px;color:var(--text2)">${entry.date} o ${entry.time}</div>
+    </div>`;
+
+  // Swipe support
+  let startX = 0;
+  overlay.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+  overlay.addEventListener('touchend', e => {
+    const diff = e.changedTouches[0].clientX - startX;
+    if (Math.abs(diff) > 60) {
+      lightboxNav(diff > 0 ? -1 : 1);
+    }
+  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeLightbox(); });
+
+  document.body.appendChild(overlay);
+}
+
+function lightboxNav(dir) {
+  const photos = state._lightboxPhotos;
+  let idx = state._lightboxIdx + dir;
+  if (idx < 0) idx = photos.length - 1;
+  if (idx >= photos.length) idx = 0;
+  state._lightboxIdx = idx;
+  renderLightbox();
+}
+
+function closeLightbox() {
+  document.querySelector('.lightbox-overlay')?.remove();
+}
+
+// ============================================================
+// FEATURE 19: DASHBOARD Z WYKRESAMI
+// ============================================================
+function renderDashboard() {
+  if (state.journal.length === 0) return '';
+
+  // Szczyty na miesiąc
+  const monthData = {};
+  state.journal.forEach(e => {
+    const d = parsePolishDate(e.date);
+    if (d) {
+      const key = d.toLocaleDateString('pl-PL', { month: 'short', year: '2-digit' });
+      monthData[key] = (monthData[key] || 0) + 1;
+    }
+  });
+  const months = Object.entries(monthData).reverse();
+  const maxMonth = Math.max(...months.map(m => m[1]), 1);
+
+  // Łączne statystyki
+  let totalDist = 0, totalAscent = 0, totalDescent = 0;
+  state.journal.forEach(e => {
+    const p = PEAKS.find(pk => pk.id === e.peakId);
+    if (p) {
+      const r = getRoute(p);
+      totalDist += r.trail.dist;
+      totalAscent += r.trail.ascent;
+      totalDescent += r.trail.ascent; // descent ~ ascent
+    }
+  });
+
+  // Trudność
+  const avgDiff = state.conquered.length > 0
+    ? (state.conquered.reduce((s, id) => { const p = PEAKS.find(pk => pk.id === id); return s + (p ? p.difficulty : 0); }, 0) / state.conquered.length).toFixed(1)
+    : 0;
+
+  // Dzień tygodnia
+  const dayNames = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So'];
+  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+  state.journal.forEach(e => {
+    const d = parsePolishDate(e.date);
+    if (d) dayCounts[d.getDay()]++;
+  });
+  const maxDay = Math.max(...dayCounts, 1);
+
+  return `
+  <div class="card card-pad">
+    <div class="section-title">📊 Dashboard</div>
+
+    <div class="stats-grid" style="margin-bottom:16px">
+      <div class="stat-card">
+        <div class="stat-val">${totalDist.toFixed(0)}</div>
+        <div class="stat-label">km na szlakach</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${(totalAscent/1000).toFixed(1)}</div>
+        <div class="stat-label">km w górę (przewyższenia)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${avgDiff}</div>
+        <div class="stat-label">Śr. trudność</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${Math.round(totalDist * 1000 * 0.04 + totalAscent * 0.5 + totalDescent * 0.15)}</div>
+        <div class="stat-label">Łączne kcal</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600">Szczyty na miesiąc</div>
+    <div class="chart-bars" style="margin-bottom:16px">
+      ${months.map(([label, count]) => `
+        <div class="chart-bar-col">
+          <div class="chart-bar-val">${count}</div>
+          <div class="chart-bar" style="height:${Math.round(count / maxMonth * 60)}px"></div>
+          <div class="chart-bar-label">${label}</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600">Ulubiony dzień tygodnia</div>
+    <div class="chart-bars">
+      ${dayCounts.map((count, i) => `
+        <div class="chart-bar-col">
+          <div class="chart-bar-val">${count || ''}</div>
+          <div class="chart-bar" style="height:${Math.round(count / maxDay * 40)}px;${count === Math.max(...dayCounts) ? 'background:var(--green)' : ''}"></div>
+          <div class="chart-bar-label">${dayNames[i]}</div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}

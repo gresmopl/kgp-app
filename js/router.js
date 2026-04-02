@@ -36,6 +36,7 @@ async function goto(page, skipHistory) {
     const peak = state.selectedPeak || getTodo()[0] || PEAKS[0];
     loadWeather(peak);
     loadSunTimes(peak);
+    loadWarnings(peak.id);
   }
   if (page === 'sos') {
     // Załaduj zachód słońca dla SOS
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   history.replaceState({page:'map'}, '', '#map');
   startGPS();
+  restoreTracking();
   goto('map', true);
   if (shouldShowOnboarding()) {
     document.body.insertAdjacentHTML('beforeend', renderOnboarding());

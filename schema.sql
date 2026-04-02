@@ -68,3 +68,38 @@ CREATE POLICY "Allow all on photos" ON photos FOR ALL USING (true) WITH CHECK (t
 
 CREATE POLICY "Allow public upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'photos');
 CREATE POLICY "Allow public read" ON storage.objects FOR SELECT USING (bucket_id = 'photos');
+
+-- ============================================================
+-- 8. Tabela group_members (wyzwanie grupowe)
+-- ============================================================
+CREATE TABLE group_members (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_code text NOT NULL,
+  profile_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  name text NOT NULL DEFAULT 'Anonim',
+  count int NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(group_code, profile_id)
+);
+
+CREATE INDEX idx_group_members_code ON group_members(group_code);
+ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all on group_members" ON group_members FOR ALL USING (true) WITH CHECK (true);
+CREATE TRIGGER group_members_updated_at BEFORE UPDATE ON group_members FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================================
+-- 9. Tabela warnings (ostrzezenia szlakowe)
+-- ============================================================
+CREATE TABLE warnings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  peak_id int NOT NULL,
+  message text NOT NULL,
+  author text DEFAULT 'Anonim',
+  profile_id uuid REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_warnings_peak_id ON warnings(peak_id);
+ALTER TABLE warnings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all on warnings" ON warnings FOR ALL USING (true) WITH CHECK (true);

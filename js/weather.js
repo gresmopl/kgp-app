@@ -73,6 +73,25 @@ async function loadWeather(peak) {
   </div>
   <div style="margin-top:8px;font-size:10px;color:var(--text2)">Scoring dla terenu: <b style="color:var(--text)">${peak.terrain}</b>${isOffline ? '' : ' · Open-Meteo API'}</div>`;
   el.innerHTML = html;
+
+  // Best weather day (Feature 24)
+  const bestEl = document.getElementById('best-weather-section');
+  if (bestEl) {
+    const best = findBestWeatherDay(data, peak);
+    if (best) {
+      bestEl.innerHTML = `
+      <div class="card card-pad" style="border-color:var(--green)44">
+        <div class="section-title">🎯 Najlepszy termin</div>
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--green)">${best.date} (${best.dayName})</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">
+          Wiatr: ${best.wind} km/h · Opad: ${best.precip}mm
+          ${best.isWeekend ? ' · <span style="color:var(--accent)">Weekend!</span>' : ''}
+        </div>
+      </div>`;
+    } else {
+      bestEl.innerHTML = '';
+    }
+  }
 }
 
 async function loadSunTimes(peak) {

@@ -17,6 +17,20 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Passa zdobywcy** - streak, prognoza ukonczenia KGP, porownanie z innymi
 - **Dedykacja szczytu** - mozliwosc dedykowania zdobycia bliskiej osobie
 - **Onboarding** - ekran powitalny dla nowych uzytkownikow
+- **Karta zdobycia** - generowana grafika PNG ze zdjeciem, nazwa szczytu, postepem - do udostepnienia
+- **System osiagniec** - 12 odznak (Zimowy wojownik, Maraton, Dach Polski i inne)
+- **Timeline** - wizualna os czasu w dzienniku z miniaturkami zdjec i przerwami miedzy wejsciami
+- **Lightbox** - pelnoekranowy podglad zdjec z nawigacja swipe
+- **Dashboard** - wykresy: szczyty/miesiac, ulubiony dzien tygodnia, laczne km i kcal
+- **Generator wydruku** - wydruk zdjec A4 w formacie 9x13cm z liniami ciecia
+- **Pakuj sie!** - dynamiczna lista rzeczy do spakowania na podstawie terenu, trudnosci i pogody
+- **Ciekawostki KGP** - losowe fakty o Koronie Gor Polski
+- **Nawigacja powrotna** - zapisz lokalizacje parkingu i wroc do auta po zejsciu
+- **Okno pogodowe** - automatyczna rekomendacja najlepszego dnia na wyjscie
+- **Restauracje** - wyszukiwanie miejsc do jedzenia w okolicy parkingu (Google Maps)
+- **Wyzwanie grupowe** - rywalizacja ze znajomymi w zdobywaniu KGP
+- **Live tracker** - sledzenie GPS z postepem trasy, dystansem i szacowanym czasem
+- **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku
 
 ## Stos technologiczny
 
@@ -45,7 +59,8 @@ kgp-app/
 │   ├── ui.js           # Strony: lista, plan, szczyt, modal
 │   ├── journal.js      # Dziennik, eksport/import
 │   ├── settings.js     # Ustawienia
-│   ├── features.js     # SOS, streak, prognoza, onboarding, kalorie
+│   ├── features.js     # SOS, streak, prognoza, onboarding, kalorie, karta, osiagniecia, timeline, lightbox, dashboard
+│   ├── features2.js    # Wydruk, pakowanie, ciekawostki, parking, pogoda, restauracje, grupy, tracker, ostrzezenia
 │   └── router.js       # Nawigacja SPA, init
 ├── manifest.json       # Konfiguracja PWA
 ├── sw.js               # Service Worker
@@ -84,6 +99,8 @@ Aplikacja dziala w trybie offline-first:
 | `profiles` | Profile uzytkownikow z kodami sync |
 | `user_data` | Dane uzytkownika jako JSONB (szczyty, dziennik, ustawienia) |
 | `photos` | Metadane zdjec (pliki w Supabase Storage) |
+| `group_members` | Czlonkowie grup wyzwan z wynikami |
+| `warnings` | Ostrzezenia szlakowe od uzytkownikow |
 
 ## Branche
 

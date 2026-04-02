@@ -26,6 +26,9 @@ function renderList() {
     <span class="chip ${state.filter==='tatry'?'active':''}" onclick="setFilter('tatry')">Karpaty</span>
     <span class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety</span>
   </div>
+  <div style="text-align:center;padding:0 14px 8px">
+    <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejscia</button>
+  </div>
   <div class="card" style="margin:0 14px 80px">
     ${peaks.sort((a,b)=>b.height-a.height).map(p => `
     <div class="peak-item" onclick="openPeakDetail(${p.id})">
@@ -100,7 +103,7 @@ async function renderPlan() {
         <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px">
           <div style="font-weight:600;font-size:13px">🅿️ ${pk.name}</div>
           <div style="font-size:12px;color:var(--accent);margin-top:3px">⚠️ ${pk.note}</div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="navigateToParking('${pk.name.replace(/'/g,'`')}')">🚗 Wyznacz dojazd</button>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="navigateToParking('${pk.name.replace(/'/g,'`')}',${pk.lat||'null'},${pk.lon||'null'})">🚗 Wyznacz dojazd</button>
         </div>
       `).join(''); })()}
       <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="margin-top:8px;background:var(--blue,#4a90d9)">
@@ -124,6 +127,12 @@ async function renderPlan() {
       <div style="font-size:11px;color:var(--text2);margin-top:4px">Szacunek dla ~70kg osoby (podejście + zejście). Tempo: ${state.paceMultiplier}×</div>
     </div>
 
+    <div id="best-weather-section"></div>
+
+    ${renderPackingList(peak)}
+
+    ${renderWarningsSection(peak.id)}
+
     <div class="card card-pad">
       <div class="section-title">📷 Kamery górskie</div>
       <a href="${getCameraSearchUrl(peak)}" target="_blank" class="btn btn-secondary btn-full" style="text-decoration:none">
@@ -131,17 +140,20 @@ async function renderPlan() {
       </a>
     </div>
 
-    ${getNearbyFood(peak.id) ? `
     <div class="card card-pad">
       <div class="section-title">🍽️ Gdzie zjeść po zejściu</div>
-      <div style="display:flex;align-items:center;gap:10px">
+      ${getNearbyFood(peak.id) ? `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <span style="font-size:24px">${getNearbyFood(peak.id).type}</span>
         <div>
           <div style="font-weight:600;font-size:13px">${getNearbyFood(peak.id).name}</div>
           <div style="font-size:11px;color:var(--text2)">${getNearbyFood(peak.id).dist}</div>
         </div>
-      </div>
-    </div>` : ''}
+      </div>` : ''}
+      <a href="${getRestaurantSearchUrl(peak)}" target="_blank" class="btn btn-secondary btn-full" style="text-decoration:none">
+        🍴 Szukaj restauracji w okolicy
+      </a>
+    </div>
 
     <div class="card card-pad">
       <div class="section-title">🧠 Optimizer Weekendu</div>
@@ -357,6 +369,17 @@ function renderSummit() {
     </button>
     <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:-6px">Zrób najpierw zdjęcie aby aktywować</div>
 
+    <div id="tracker-panel"></div>
+
+    <div class="card card-pad">
+      <div class="section-title">🏃 Śledzenie trasy</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="startTrailTracking(${peak.id})">▶️ Start tracker</button>
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="stopTrailTracking()">⏹️ Stop</button>
+      </div>
+      ${renderParkingButtons()}
+    </div>
+
     <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="background:var(--blue,#4a90d9)">
       🗺️ Wyznacz trasę (Mapy.com)
     </button>
@@ -567,6 +590,7 @@ function renderNextSuggestPage() {
       <div style="font-size:64px">🏔️</div>
       <div style="font-family:var(--font-display);font-size:32px;color:var(--green);margin-top:8px">${last?.name} ZDOBYTA!</div>
       <div style="font-size:14px;color:var(--text2);margin-top:4px">${state.conquered.length} z 28 szczytów Korony</div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="generateConquestCard(${lastId})">🎴 Pobierz kartę zdobycia</button>
     </div>
     <div class="card card-pad">
       <div class="section-title">Co dalej?</div>

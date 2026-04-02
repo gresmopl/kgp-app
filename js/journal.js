@@ -113,34 +113,22 @@ function renderJournal() {
       </div>`;
     })()}
 
-    ${state.journal.length > 0 ? `
-    <div class="card">
-      <div class="card-pad" style="border-bottom:1px solid var(--border)">
-        <div class="section-title">Historia</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:-8px;margin-bottom:4px">
-          📱 Zdjęcia przechowywane lokalnie w przeglądarce (localStorage). Nie znikną po zamknięciu - ale wyczyść się przy czyszczeniu danych przeglądarki. Zrób backup zdjęć zapisując je do galerii telefonu.
-        </div>
-      </div>
-      ${state.journal.map(entry => `
-        <div class="journal-item">
-          <div class="journal-photo" style="cursor:${entry.photo?'pointer':'default'}" onclick="${entry.photo?`downloadPhoto(${entry.peakId})`:''}">
-            ${entry.photo ? `<img src="${entry.photo}" alt="szczyt" style="width:100%;height:100%;border-radius:10px;object-fit:cover">` : '📷'}
-          </div>
-          <div class="journal-info">
-            <div class="journal-name">${entry.name} <span style="color:var(--accent);font-family:var(--font-display);font-size:16px">${entry.height}m</span></div>
-            <div class="journal-date">📅 ${entry.date} o ${entry.time}</div>
-            ${entry.note ? `<div class="journal-note">"${esc(entry.note)}"</div>` : ''}
-            ${entry.dedication ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🎁 ${esc(entry.dedication)}</div>` : ''}
-            ${entry.photo ? `<button onclick="downloadPhoto(${entry.peakId})" style="background:none;border:none;font-size:11px;color:var(--blue);cursor:pointer;padding:2px 0;margin-top:2px;display:block">⬇️ Zapisz zdjęcie</button>` : ''}
-          </div>
-          <button onclick="removePeak(${entry.peakId})" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);padding:4px" title="Usuń">×</button>
-        </div>`).join('')}
-    </div>` : `
+    ${renderAchievements()}
+
+    ${renderDashboard()}
+
+    ${state.journal.length > 0 ? renderJournalTimeline() : `
     <div style="text-align:center;padding:40px;color:var(--text2)">
       <div style="font-size:48px;margin-bottom:12px">⛰️</div>
       <div style="font-size:14px">Brak wpisów w dzienniku</div>
       <div style="font-size:12px;margin-top:6px">Zdobądź pierwszy szczyt!</div>
     </div>`}
+
+    <div style="text-align:center;margin-bottom:6px">
+      <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejscie</button>
+    </div>
+
+    ${renderGroupChallenge()}
 
     ${done > 0 ? `
     <div class="card card-pad">
@@ -148,7 +136,10 @@ function renderJournal() {
       ${renderNextSuggestions()}
     </div>` : ''}
 
-    <div style="text-align:center;padding:12px">
+    ${renderFunFact()}
+
+    <div style="text-align:center;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      ${state.journal.filter(e => e.photo).length > 0 ? `<button class="btn btn-secondary btn-sm" onclick="printPhotos()">🖨️ Drukuj zdjęcia (A4, 9x13)</button>` : ''}
       <button class="btn btn-secondary btn-sm" onclick="goto('settings')">⚙️ Ustawienia, sync i backup</button>
     </div>
 
