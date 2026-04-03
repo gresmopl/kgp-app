@@ -58,6 +58,7 @@
 ## Do zrobienia
 
 ### Priorytet wysoki
+- [ ] **Planer wyprawy (multi-segment)** - refactor strony Planuj. Wyprawa = kontener segmentów: 🚗 Dojazd, 🥾 Podejście (z via), 🔽 Zejście, 🏨 Nocleg, 🍽️ Restauracja, ☀️ Przerwa, 🚂 Komunikacja, ⛽ Tankowanie. Jeden szczyt = 3 segmenty, weekend = wiele segmentów + nocleg. Kalkulator dnia sumuje wszystko w timeline. Zapis do Supabase.
 - [ ] **Profil wysokosciowy trasy** - wykres przewyzszen (OpenElevation API + Canvas). Gdzie stromo, gdzie plask, gdzie odpoczac.
 - [ ] **Tryb offline z mapami** - cache kafelkow w IndexedDB dla okolic kazdego szczytu. W gorach czesto brak zasiegu.
 - [ ] **Wiele zdjec na szczyt** - galeria zamiast jednego zdjecia. Porownanie lato vs zima.
@@ -81,6 +82,11 @@
 - [ ] **Szlakowy geocaching** - wirtualne punkty na szlaku
 - [ ] **"Wiadomosc w butelce"** - anonimowa wiadomosc na szczycie dla nastepnego zdobywcy
 - [ ] **Live na szczycie** - inni widza kto jest na ktorym szczycie w real-time
+
+### UX/UI trendy 2026
+- [ ] **Adaptive UI** - kontekstowy interfejs zależny od sytuacji: w domu → tryb planowania (duże karty, pogoda), na szlaku → tryb nawigacji (duża mapa, duże przyciski), na szczycie → tryb zdobywcy (aparat, formularz). Wykrywanie przez GPS + czas + aktywność.
+- [ ] **Accessibility** - wysoki kontrast, skalowalne fonty, aria labels, semantic HTML, obsługa czytnika ekranu. Nie feature, a wymóg.
+- [ ] **Onboarding jako quest** - zamiast intro screena, pierwszy szczyt jako "misja treningowa": wybierz szczyt → sprawdź pogodę → zaplanuj → zdobądź → zrób zdjęcie. Grywalizacja od pierwszej minuty.
 
 ### Bugfixy
 - [ ] **Grupowanie parkingow** - jeden parking → wiele szczytow (np. Gorce)

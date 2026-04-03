@@ -77,11 +77,11 @@ const PEAKS = [
     stamps:[{name:"Schronisko na Szczelińcu",type:"🏠",note:"Na płaskowyżu, bilet wstępu"}],
     photo:"Na skałkach z widokiem na Dolinę Kłodzką - efektowna ekspozycja" },
   { id:13, name:"Wysoka Kopa", height:1126, range:"Góry Izerskie", difficulty:2, lat:50.8503, lon:15.4200, season:[4,5,6,7,8,9,10,11], terrain:"forest",
-    parking:[{name:"Rozdroże Izerskie",lat:50.8597,lon:15.3981,note:"Darmowy, pojemny - kilka placów po obu stronach drogi"}],
+    parking:[{name:"Orle",lat:50.8655,lon:15.4464,note:"Najbliższy parking do szlaku na Wysoką Kopę"},{name:"Rozdroże Izerskie",lat:50.8597,lon:15.3981,note:"Darmowy, pojemny - dalej od szlaku"}],
     station:{name:"Szklarska Poręba Górna PKP", info:"Polregio / Koleje Dolnośląskie, szlak czerwonym GSS ~3h"},
     trail:{dist:12, up:130, down:120, ascent:480},
     stamps:[
-      {name:"Skrzynka KGP na szlaku czerwonym (GSS)",type:"📬",note:"⚠️ Szczyt zamknięty od 2021 (ochrona cietrzewia)! Skrzynka ~300-400m od schroniska w kierunku Świeradowa"}
+      {name:"Skrzynka KGP na szlaku czerwonym (GSS)",type:"📬",lat:50.8547,lon:15.4209,note:"⚠️ Szczyt zamknięty od 2021 (ochrona cietrzewia)! Skrzynka ~300-400m od schroniska w kierunku Świeradowa"}
     ],
     photo:"⚠️ NIE na szczycie! Zdjęcie rób przy rogaczu z tablicą KGP na czerwonym szlaku GSS - ~400m za wiatą. Szczyt jest wyłączony z ruchu (ochrona cietrzewia)" },
   { id:14, name:"Skopiec", height:724, range:"Góry Kaczawskie", difficulty:1, lat:50.9440, lon:15.8847, season:[3,4,5,6,7,8,9,10,11,12], terrain:"forest",

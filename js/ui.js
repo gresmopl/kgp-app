@@ -30,9 +30,6 @@ function renderList() {
     <span class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety (${PEAKS.filter(_sudety).length})</span>
     <span class="chip ${state.filter==='inne'?'active':''}" onclick="setFilter('inne')">Inne (${PEAKS.filter(_inne).length})</span>
   </div>
-  <div style="text-align:center;padding:0 14px 8px">
-    <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejścia</button>
-  </div>
   <div class="card" style="margin:0 14px 80px">
     ${peaks.sort((a,b)=>b.height-a.height).map(p => `
     <div class="peak-item" onclick="openPeakDetail(${p.id})">
@@ -82,7 +79,7 @@ async function renderPlan() {
       <input class="input" type="text" id="startAddr" value="${state.homeAddr}" placeholder="Np. Kraków, Warszawa..." onfocus="this.select()" onchange="state.homeAddr=this.value;save()">
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-secondary btn-sm" onclick="setTransport('car')" id="btn-car" style="flex:1;${state.transport!=='pks'?'border-color:var(--accent);color:var(--accent)':''}">🚗 Samochód</button>
-        <button class="btn btn-secondary btn-sm" onclick="setTransport('pks')" id="btn-pks" style="flex:1;${state.transport==='pks'?'border-color:var(--accent);color:var(--accent)':''}">🚂 PKP/PKS</button>
+        <button class="btn btn-secondary btn-sm" onclick="setTransport('pks')" id="btn-pks" style="flex:1;${state.transport==='pks'?'border-color:var(--accent);color:var(--accent)':''}">🚂 Komunikacja</button>
       </div>
     </div>
 
@@ -110,8 +107,13 @@ async function renderPlan() {
           <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="navigateToParking('${pk.name.replace(/'/g,'`')}',${pk.lat||'null'},${pk.lon||'null'})">🚗 Wyznacz dojazd</button>
         </div>
       `).join(''); })()}
+      <div style="margin-top:10px">
+        <div class="label">Punkt pośredni (opcjonalnie)</div>
+        <input class="input" type="text" id="via-point" placeholder="Np. schronisko, przełęcz...">
+        <div style="font-size:10px;color:var(--text2);margin-top:3px">Trasa przejdzie przez to miejsce (np. schronisko na odpoczynek)</div>
+      </div>
       <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="margin-top:8px;background:var(--blue,#4a90d9)">
-        🗺️ Wyznacz trasę (Mapy.com)
+        🗺️ Wyznacz trasę
       </button>
     </div>
 
@@ -336,7 +338,7 @@ function renderSummit() {
               <div class="stamp-name">${s.name}</div>
               <div class="stamp-note">${s.note}</div>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="navigateToStamp('${s.name.replace(/'/g,'`')}')">🧭 Nawiguj</button>
+            <button class="btn btn-secondary btn-sm" onclick="navigateToStamp('${s.name.replace(/'/g,'`')}',${s.lat||'null'},${s.lon||'null'})">🧭 Nawiguj</button>
           </div>`;
         }).join('')}
       </div>
@@ -385,7 +387,7 @@ function renderSummit() {
     </div>
 
     <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="background:var(--blue,#4a90d9)">
-      🗺️ Wyznacz trasę (Mapy.com)
+      🗺️ Wyznacz trasę
     </button>
 
     <button class="btn btn-secondary btn-full" onclick="returnToParking(${peak.id})">
@@ -466,12 +468,16 @@ function openNavigation(lat, lon, label) {
   window.open(url, '_blank');
 }
 
-async function navigateToStamp(stampName) {
-  const coords = await geocodeParking(stampName);
-  if (coords) {
-    openNavigation(coords.lat, coords.lon, stampName);
+async function navigateToStamp(stampName, lat, lon) {
+  if (lat && lon) {
+    openNavigation(lat, lon, stampName);
   } else {
-    window.open(`https://mapy.com/search?q=${encodeURIComponent(stampName + ', Polska')}`, '_blank');
+    const coords = await geocodeParking(stampName);
+    if (coords) {
+      openNavigation(coords.lat, coords.lon, stampName);
+    } else {
+      window.open(`https://mapy.com/search?q=${encodeURIComponent(stampName + ', Polska')}`, '_blank');
+    }
   }
 }
 

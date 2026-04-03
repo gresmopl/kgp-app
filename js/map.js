@@ -104,7 +104,27 @@ async function navigateToPeak(peakId) {
     return;
   }
 
-  const hikeRoute = await getRoute_Mapy(hikeLon, hikeLat, peak.lon, peak.lat, 'foot_hiking');
+  const stamp = peak.stamps && peak.stamps.find(s => s.lat && s.lon);
+  const endLat = stamp ? stamp.lat : peak.lat;
+  const endLon = stamp ? stamp.lon : peak.lon;
+
+  let waypoints = [];
+  const viaInput = document.getElementById('via-point');
+  const viaName = viaInput ? viaInput.value.trim() : '';
+  if (viaName) {
+    showToast('🔍 Szukam: ' + viaName + '...');
+    const viaCoords = await geocodeNear(viaName, peak.lat, peak.lon);
+    if (viaCoords) {
+      waypoints = [{ lat: viaCoords.lat, lon: viaCoords.lon }];
+      state._viaName = viaName;
+    } else {
+      showToast('Nie znaleziono w okolicy: ' + viaName);
+    }
+  } else {
+    state._viaName = null;
+  }
+
+  const hikeRoute = await getRoute_Mapy(hikeLon, hikeLat, endLon, endLat, 'foot_hiking', waypoints);
   if (hikeRoute) {
     results.hike = {
       distance: formatDistance(hikeRoute.length),
@@ -114,6 +134,28 @@ async function navigateToPeak(peakId) {
   }
 
   showNavigationResult(peak, results);
+}
+
+async function geocodeNear(name, nearLat, nearLon) {
+  try {
+    const res = await fetch(`https://api.mapy.com/v1/geocode?query=${encodeURIComponent(name)}&lang=pl&limit=5&apiKey=${MAPY_API_KEY}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    console.log('geocodeNear results:', name, data.items);
+    if (!data.items || data.items.length === 0) return null;
+    let best = null;
+    let bestDist = Infinity;
+    for (const item of data.items) {
+      const d = Math.pow(item.position.lat - nearLat, 2) + Math.pow(item.position.lon - nearLon, 2);
+      if (d < bestDist) { bestDist = d; best = item.position; }
+    }
+    console.log('geocodeNear best:', best, 'dist:', bestDist);
+    if (bestDist > 1) return null;
+    return { lat: best.lat, lon: best.lon };
+  } catch(e) {
+    console.error('geocodeNear error:', e);
+    return null;
+  }
 }
 
 async function geocodeParking(name) {
@@ -139,7 +181,7 @@ function showNavigationResult(peak, results) {
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML = `
-    <div class="modal-content" style="max-width:500px">
+    <div class="modal-content">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="font-family:var(--font-display);font-size:22px;color:var(--accent)">🗺️ Trasa na ${peak.name}</div>
         <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2)">×</button>
@@ -156,19 +198,71 @@ function showNavigationResult(peak, results) {
       </div>` : ''}
 
       <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px">
-        <div style="font-weight:600;color:var(--green);margin-bottom:6px">🥾 Szlak pieszy na szczyt</div>
+        <div style="font-weight:600;color:var(--green);margin-bottom:6px">🥾 Szlak pieszy na szczyt${state._viaName ? ' (przez ' + state._viaName + ')' : ''}</div>
         ${results.hike ? `
         <div style="display:flex;gap:16px;font-size:14px">
           <span>📏 ${results.hike.distance}</span>
           <span>⏱️ ${results.hike.duration}</span>
         </div>
-        <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="showRouteOnMap('hike')">🗺️ Pokaż szlak na mapie</button>
+        <div style="font-size:10px;color:var(--text2);margin-top:6px">Trasa orientacyjna (Mapy.com) - sprawdź przebieg na mapie</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-secondary btn-sm" style="flex:1" onclick="showRouteOnMap('hike')">🗺️ Pokaż na mapie</button>
+          <button class="btn btn-green btn-sm" style="flex:1" onclick="saveRoute(${peak.id})">💾 Zapisz trasę</button>
+        </div>
         ` : '<div style="font-size:13px;color:var(--text2)">Nie udało się wyznaczyć trasy pieszej</div>'}
       </div>
+
+      ${state.savedRoutes[peak.id] ? `
+      <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-weight:600;color:var(--accent);margin-bottom:6px">💾 Zapisana trasa${state.savedRoutes[peak.id].via ? ' (przez ' + state.savedRoutes[peak.id].via + ')' : ''}</div>
+        <div style="font-size:12px;color:var(--text2)">${state.savedRoutes[peak.id].distance} · ${state.savedRoutes[peak.id].duration}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-secondary btn-sm" style="flex:1" onclick="loadSavedRoute(${peak.id})">🗺️ Pokaż na mapie</button>
+          <button class="btn btn-sm" style="flex:1;background:none;color:var(--red);border:1px solid var(--red)" onclick="deleteSavedRoute(${peak.id})">🗑️ Usuń</button>
+        </div>
+      </div>` : ''}
 
       <button class="btn btn-secondary btn-full" onclick="this.closest('.modal-overlay').remove()">Zamknij</button>
     </div>`;
   document.body.appendChild(overlay);
+}
+
+function simplifyGeometry(geojson, every) {
+  if (!geojson || !geojson.geometry) return geojson;
+  const coords = geojson.geometry.coordinates;
+  if (!coords || coords.length === 0) return geojson;
+  const simplified = coords.filter((_, i) => i === 0 || i === coords.length - 1 || i % every === 0);
+  return { type: geojson.type, geometry: { type: geojson.geometry.type, coordinates: simplified } };
+}
+
+function saveRoute(peakId) {
+  const r = _navResults.hike;
+  if (!r) return;
+  state.savedRoutes[peakId] = {
+    geometry: simplifyGeometry(r.geometry, 10),
+    distance: r.distance,
+    duration: r.duration,
+    via: state._viaName || null,
+    date: new Date().toLocaleDateString('pl-PL')
+  };
+  save();
+  showToast('💾 Trasa zapisana!');
+  document.querySelector('.modal-overlay')?.remove();
+}
+
+function loadSavedRoute(peakId) {
+  const saved = state.savedRoutes[peakId];
+  if (!saved) return;
+  drawRouteOnMap(saved.geometry, '#4caf7d');
+  document.querySelector('.modal-overlay')?.remove();
+  goto('map');
+}
+
+function deleteSavedRoute(peakId) {
+  delete state.savedRoutes[peakId];
+  save();
+  showToast('Trasa usunięta');
+  document.querySelector('.modal-overlay')?.remove();
 }
 
 function showRouteOnMap(type) {
@@ -215,7 +309,7 @@ function renderMap() {
   const done = state.conquered.length;
   return `
   <div class="header">
-    <span class="header-icon">🏔️</span>
+    <span class="header-icon">👑</span>
     <div><div class="header-title">Korona Gór Polski</div><div class="header-sub">Twój asystent zdobywcy</div></div>
     <span class="header-badge">${done}/28</span>
   </div>

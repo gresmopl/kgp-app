@@ -16,6 +16,7 @@ const state = {
   selectedRoutes: JSON.parse(localStorage.getItem('kgp_routes') || '{}'),
   userName: localStorage.getItem('kgp_username') || '',
   iceContact: localStorage.getItem('kgp_ice') || '',
+  savedRoutes: JSON.parse(localStorage.getItem('kgp_saved_routes') || '{}'),
 };
 
 function getRoute(peak) {
@@ -39,6 +40,7 @@ function save() {
     localStorage.setItem('kgp_routes', JSON.stringify(state.selectedRoutes));
     localStorage.setItem('kgp_username', state.userName);
     localStorage.setItem('kgp_ice', state.iceContact);
+    localStorage.setItem('kgp_saved_routes', JSON.stringify(state.savedRoutes));
   } catch(e) {
     if (e.name === 'QuotaExceededError' || e.code === 22) {
       showToast('⚠️ Brak miejsca! Zapisz zdjęcia i wyczyść stare wpisy.');

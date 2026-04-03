@@ -24,6 +24,7 @@ async function goto(page, skipHistory) {
     case 'settings': html = renderSettings(); break;
     case 'sos': html = renderSOS(); break;
     case 'next_suggest': html = renderNextSuggestPage(); break;
+    case 'history': html = renderHistoryEntry(); break;
   }
 
   screen.innerHTML = html;

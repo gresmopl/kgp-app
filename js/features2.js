@@ -412,27 +412,40 @@ function renderWarningsSection(peakId) {
 // FEATURE 29: WPISZ HISTORYCZNE WEJSCIE
 // ============================================================
 function openHistoryEntry() {
-  const todo = PEAKS.filter(p => !isDone(p.id));
-  const done = PEAKS.filter(p => isDone(p.id));
-  const all = [...todo, ...done];
+  goto('history');
+}
 
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-  overlay.innerHTML = `
-    <div class="modal-content" style="max-width:500px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-family:var(--font-display);font-size:20px;color:var(--accent)">📝 Wpisz historyczne wejście</div>
-        <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2)">\u00d7</button>
-      </div>
+function renderHistoryEntry() {
+  const todo = PEAKS.filter(p => !isDone(p.id));
+
+  if (todo.length === 0) {
+    return `
+    <div class="header">
+      <span class="header-icon">📝</span>
+      <div><div class="header-title">Dodaj wejście</div><div class="header-sub">Wszystkie szczyty zdobyte!</div></div>
+    </div>
+    <div class="page page-gap" style="padding-bottom:80px;text-align:center;padding-top:40px">
+      <div style="font-size:48px;margin-bottom:12px">🏆</div>
+      <div style="font-size:16px;color:var(--accent);font-weight:700">Gratulacje!</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:8px">Masz już wszystkie 28 szczytów w dzienniku.</div>
+      <button class="btn btn-secondary" style="margin-top:20px" onclick="goto('journal')">← Wróć do dziennika</button>
+    </div>`;
+  }
+
+  return `
+  <div class="header">
+    <span class="header-icon">📝</span>
+    <div><div class="header-title">Dodaj wejście</div><div class="header-sub">Wpisz wcześniej zdobyte szczyty</div></div>
+  </div>
+  <div class="page page-gap" style="padding-bottom:80px">
+
+    <div class="card card-pad">
       <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Zdobyłeś już szczyty wcześniej? Wpisz je tutaj - zdjęcie i GPS nie są wymagane.</div>
 
       <div style="margin-bottom:10px">
         <div class="label">Szczyt</div>
-        <select class="input" id="hist-peak">
-          ${all.map(p => `<option value="${p.id}" ${isDone(p.id)?'disabled':''}>
-            ${p.name} (${p.height}m) ${isDone(p.id)?'- już zdobyty':''}
-          </option>`).join('')}
+        <select class="input" id="hist-peak" style="font-size:14px">
+          ${todo.map(p => `<option value="${p.id}">${p.name} (${p.height}m) - ${p.range}</option>`).join('')}
         </select>
       </div>
 
@@ -442,39 +455,26 @@ function openHistoryEntry() {
       </div>
 
       <div style="margin-bottom:10px">
-        <div class="label">Notatka (opcjonalnie)</div>
-        <input class="input" type="text" id="hist-note" placeholder="Pogoda, towarzysze, wspomnienia...">
-      </div>
-
-      <div style="margin-bottom:10px">
         <div class="label">Zdjęcie (opcjonalnie)</div>
         <input type="file" id="hist-photo" accept="image/*" class="input" style="padding:8px">
       </div>
 
       <div style="margin-bottom:10px">
+        <div class="label">Notatka (opcjonalnie)</div>
+        <input class="input" type="text" id="hist-note" placeholder="Pogoda, towarzysze, wspomnienia...">
+      </div>
+
+      <div style="margin-bottom:12px">
         <div class="label">Dedykacja (opcjonalnie)</div>
-        <input class="input" type="text" id="hist-dedication" placeholder="Ten szczyt dedykuje...">
+        <input class="input" type="text" id="hist-dedication" placeholder="Ten szczyt dedykuję...">
       </div>
 
-      <button class="btn btn-green btn-full" onclick="saveHistoryEntry()">✅ Zapisz wejście</button>
+      <button class="btn btn-green btn-full" onclick="saveHistoryEntry()">✅ Dodaj do dziennika</button>
+    </div>
 
-      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Szybkie dodawanie - zaznacz wiele szczytów naraz:</div>
-        <div id="hist-batch" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:200px;overflow-y:auto">
-          ${todo.map(p => `
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 8px;background:var(--card2);border-radius:8px;cursor:pointer">
-              <input type="checkbox" value="${p.id}" style="accent-color:var(--green)">
-              <span>${p.name}</span>
-            </label>`).join('')}
-        </div>
-        <div style="margin-top:8px">
-          <div class="label">Data dla zaznaczonych</div>
-          <input class="input" type="date" id="hist-batch-date" value="${new Date().toISOString().split('T')[0]}">
-        </div>
-        <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="saveBatchHistory()">📋 Dodaj zaznaczone</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
+    <button class="btn btn-secondary btn-full" onclick="goto('journal')">← Wróć do dziennika</button>
+
+  </div>`;
 }
 
 function parseInputDate(dateInput) {
@@ -511,8 +511,7 @@ function saveHistoryEntry() {
     save();
     if (photo) uploadPhoto(peakId, photo, 'summit');
     showToast('\u{1F389} ' + peak.name + ' dodana do dziennika!');
-    document.querySelector('.modal-overlay')?.remove();
-    goto('journal');
+    goto('history');
   }
 
   if (fileInput.files.length > 0) {
@@ -527,37 +526,3 @@ function saveHistoryEntry() {
   }
 }
 
-function saveBatchHistory() {
-  const checkboxes = document.querySelectorAll('#hist-batch input[type="checkbox"]:checked');
-  if (checkboxes.length === 0) { showToast('Zaznacz przynajmniej jeden szczyt!'); return; }
-
-  const dateInput = document.getElementById('hist-batch-date').value;
-  const d = parseInputDate(dateInput);
-  const dateStr = d.toLocaleDateString('pl-PL');
-  let added = 0;
-
-  checkboxes.forEach(cb => {
-    const peakId = parseInt(cb.value);
-    if (state.conquered.includes(peakId)) return;
-    const peak = PEAKS.find(p => p.id === peakId);
-    state.conquered.push(peakId);
-    state.journal.push({
-      peakId, name: peak.name, height: peak.height, range: peak.range,
-      date: dateStr, time: '', note: '', dedication: '',
-      photo: null, gpsLat: null, gpsLon: null, historical: true
-    });
-    added++;
-  });
-
-  if (added > 0) {
-    state.journal.sort((a, b) => {
-      const pa = a.date.split('.').map(Number);
-      const pb = b.date.split('.').map(Number);
-      return (pb[2]*10000+pb[1]*100+pb[0]) - (pa[2]*10000+pa[1]*100+pa[0]);
-    });
-    save();
-    showToast('\u{1F389} Dodano ' + added + ' szczytów!');
-  }
-  document.querySelector('.modal-overlay')?.remove();
-  goto('journal');
-}
