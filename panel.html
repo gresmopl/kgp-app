@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KGP - Panel administracyjny</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --bg: #0f0f1a; --bg2: #1a1a2e; --card: #1e1e35; --card2: #252545;
+  --accent: #e8a020; --green: #4caf7d; --red: #e05555; --blue: #4a90d9;
+  --text: #e8e8f0; --text2: #9090b0; --border: #2a2a45;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.container { max-width: 1000px; margin: 0 auto; padding: 16px; }
+
+/* Auth */
+#auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+#auth-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 360px; text-align: center; }
+#auth-box h1 { font-size: 20px; color: var(--accent); margin-bottom: 8px; }
+#auth-box p { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
+#auth-box input { width: 100%; padding: 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 12px; }
+#auth-box button { width: 100%; padding: 12px; background: var(--accent); color: #000; border: none; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; }
+#auth-box button:hover { background: #f0c060; }
+#auth-error { color: var(--red); font-size: 12px; margin-top: 12px; display: none; }
+.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.15s; }
+.pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+.pin-dot.error { border-color: var(--red); background: var(--red); }
+#pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 0 auto; }
+#pin-pad button { padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 22px; font-weight: 600; cursor: pointer; transition: all 0.1s; font-family: inherit; }
+#pin-pad button:active { background: var(--accent); color: #000; transform: scale(0.95); }
+
+/* Layout */
+#panel { display: none; }
+.header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; border-radius: 12px; }
+.header h1 { font-size: 18px; color: var(--accent); flex: 1; }
+.header .logout { background: none; border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.header .logout:hover { color: var(--red); border-color: var(--red); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { padding: 10px 18px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text2); transition: all 0.2s; }
+.tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); border-color: var(--text2); }
+
+/* Cards & Tables */
+.section { display: none; }
+.section.active { display: block; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.card h2 { font-size: 15px; color: var(--accent); margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 10px; background: var(--bg2); color: var(--text2); font-weight: 600; border-bottom: 1px solid var(--border); }
+td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: var(--card2); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.badge-green { background: #4caf7d22; color: var(--green); }
+.badge-blue { background: #4a90d922; color: var(--blue); }
+.badge-gray { background: #9090b022; color: var(--text2); }
+
+/* Forms */
+.form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.form-row input, .form-row select, .form-row textarea { flex: 1; padding: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: inherit; }
+.form-row textarea { min-height: 60px; resize: vertical; }
+.btn { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.btn-accent { background: var(--accent); color: #000; }
+.btn-accent:hover { background: #f0c060; }
+.btn-green { background: var(--green); color: #fff; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-num { font-size: 28px; font-weight: 800; color: var(--accent); }
+.stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); opacity: 0; transition: opacity 0.3s; z-index: 100; pointer-events: none; }
+.toast.show { opacity: 1; }
+.mono { font-family: 'Courier New', monospace; font-size: 12px; }
+
+/* Gallery */
+.gallery-item { position: relative; border-radius: 10px; overflow: hidden; background: var(--card2); border: 1px solid var(--border); cursor: pointer; aspect-ratio: 1; }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+.gallery-item:hover img { transform: scale(1.05); }
+.gallery-meta { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 8px; }
+.gallery-meta .gm-peak { font-size: 11px; font-weight: 700; color: #fff; }
+.gallery-meta .gm-info { font-size: 10px; color: #ccc; }
+.gallery-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.gallery-lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+
+/* System status */
+.sys-check { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg2); border-radius: 8px; }
+.sys-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sys-dot.ok { background: var(--green); }
+.sys-dot.err { background: var(--red); }
+.sys-dot.warn { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Auth -->
+<div id="auth-screen">
+  <div id="auth-box">
+    <div style="font-size:32px;margin-bottom:12px">🏔️</div>
+    <h1>Panel administracyjny</h1>
+    <p>Korona Gór Polski</p>
+    <div id="pin-dots" style="display:flex;gap:12px;justify-content:center;margin-bottom:20px">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div id="pin-pad">
+      <button onclick="pinKey('1')">1</button><button onclick="pinKey('2')">2</button><button onclick="pinKey('3')">3</button>
+      <button onclick="pinKey('4')">4</button><button onclick="pinKey('5')">5</button><button onclick="pinKey('6')">6</button>
+      <button onclick="pinKey('7')">7</button><button onclick="pinKey('8')">8</button><button onclick="pinKey('9')">9</button>
+      <button onclick="pinClear()" style="font-size:14px">✕</button><button onclick="pinKey('0')">0</button><button onclick="pinBackspace()" style="font-size:18px">←</button>
+    </div>
+    <div id="auth-error">Nieprawidłowy PIN</div>
+  </div>
+</div>
+
+<!-- Panel -->
+<div id="panel">
+  <div class="container">
+    <div class="header">
+      <span style="font-size:24px">🏔️</span>
+      <h1>Panel KGP</h1>
+      <span id="last-refresh" style="font-size:11px;color:var(--text2)"></span>
+      <button class="btn btn-secondary" onclick="refreshAll()" style="font-size:12px">🔄 Odśwież</button>
+      <button class="logout" onclick="adminLogout()">Wyloguj</button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+      <div class="tab" onclick="switchTab('users')">👥 Użytkownicy</div>
+      <div class="tab" onclick="switchTab('facts')">🧠 Ciekawostki</div>
+      <div class="tab" onclick="switchTab('warnings')">⚠️ Ostrzeżenia</div>
+      <div class="tab" onclick="switchTab('gallery')">🖼️ Galeria</div>
+      <div class="tab" onclick="switchTab('system')">🔧 System</div>
+      <div class="tab" onclick="switchTab('data')">🗄️ Dane</div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="section active" id="sec-dashboard">
+      <div class="stats" id="stats-grid"></div>
+      <div class="card">
+        <h2>🕐 Ostatnia aktywność</h2>
+        <table><thead><tr><th>Kod</th><th>Szczytów</th><th>Ostatnia zmiana</th><th>Utworzony</th></tr></thead>
+        <tbody id="activity-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="section" id="sec-users">
+      <div class="card">
+        <h2>👥 Zarejestrowani użytkownicy</h2>
+        <table><thead><tr><th>Kod dostępu</th><th>Imię</th><th>Zdobyte</th><th>Adres</th><th>Utworzony</th><th>Ostatnia zmiana</th></tr></thead>
+        <tbody id="users-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Facts -->
+    <div class="section" id="sec-facts">
+      <div class="card">
+        <h2>🧠 Ciekawostki KGP</h2>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Ciekawostki są przechowywane w kodzie (features2.js). Poniżej możesz je przeglądać i przygotować nowe.</p>
+        <div id="facts-list"></div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+          <h2 style="margin-bottom:8px">Dodaj nową ciekawostkę</h2>
+          <div class="form-row">
+            <textarea id="new-fact" placeholder="Treść ciekawostki..."></textarea>
+          </div>
+          <button class="btn btn-accent" onclick="addFact()">➕ Dodaj do listy</button>
+          <div style="font-size:11px;color:var(--text2);margin-top:6px">Nowe ciekawostki zostaną zapisane do pamięci podręcznej (localStorage). Aby trwale dodać do aplikacji, skopiuj je do kodu.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📋 Eksport ciekawostek</h2>
+        <button class="btn btn-secondary" onclick="exportFacts()">📤 Kopiuj wszystkie jako JSON</button>
+      </div>
+    </div>
+
+    <!-- Warnings -->
+    <div class="section" id="sec-warnings">
+      <div class="card">
+        <h2>⚠️ Ostrzeżenia szlakowe</h2>
+        <table><thead><tr><th>Szczyt</th><th>Treść</th><th>Autor</th><th>Data</th><th></th></tr></thead>
+        <tbody id="warnings-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="section" id="sec-gallery">
+      <div class="card">
+        <h2>🖼️ Galeria zdjęć</h2>
+        <div class="form-row" style="margin-bottom:12px">
+          <select id="gallery-peak-filter" onchange="renderGallery()">
+            <option value="">Wszystkie szczyty</option>
+          </select>
+          <select id="gallery-type-filter" onchange="renderGallery()">
+            <option value="">Wszystkie typy</option>
+            <option value="summit">Szczyt</option>
+            <option value="stamp">Pieczątka</option>
+            <option value="panorama">Panorama</option>
+            <option value="parking">Parking</option>
+            <option value="other">Inne</option>
+          </select>
+        </div>
+        <div id="gallery-count" style="font-size:11px;color:var(--text2);margin-bottom:12px"></div>
+        <div id="gallery-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+      </div>
+    </div>
+
+    <!-- System -->
+    <div class="section" id="sec-system">
+      <div class="stats" id="system-stats"></div>
+      <div class="card">
+        <h2>🔧 Stan systemu</h2>
+        <div id="system-checks" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div class="card">
+        <h2>📊 Tabele w bazie</h2>
+        <table>
+          <thead><tr><th>Tabela</th><th>Rekordów</th><th>Status</th></tr></thead>
+          <tbody id="system-tables"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h2>🗂️ Storage (bucket: photos)</h2>
+        <div id="storage-info" style="font-size:13px;color:var(--text2)">Ładowanie...</div>
+      </div>
+    </div>
+
+    <!-- Raw data -->
+    <div class="section" id="sec-data">
+      <div class="card">
+        <h2>🗄️ Przeglądarka tabel</h2>
+        <div class="form-row" style="margin-bottom:12px">
+          <select id="table-select" onchange="loadTable()">
+            <option value="profiles">profiles</option>
+            <option value="user_data">user_data</option>
+            <option value="photos">photos</option>
+            <option value="group_members">group_members</option>
+            <option value="warnings">warnings</option>
+          </select>
+          <button class="btn btn-accent" onclick="loadTable()">Załaduj</button>
+        </div>
+        <div id="raw-table" style="overflow-x:auto"></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px" id="raw-count"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ──
+const SUPABASE_URL = 'https://bocwhfubyuwpsdcvqiqb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__szHGpjSyOWzCDXQMSD6eA_TKu8ClW0';
+const ADMIN_HASH = 'ea3a03b4971eeb62730e1de238225cc4e6145f0eb50ad28b1379f2a2ee71e16e'; // sha256 PIN - zmień na swój
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Obecne ciekawostki z kodu
+const CODE_FACTS = [
+  'Rekord zdobycia wszystkich 28 szczytów KGP wynosi 3 dni 5 godzin i 25 minut (2019).',
+  'Rysy (2499m) to jedyny szczyt KGP powyżej 2000m n.p.m.',
+  'Łysica (614m) to najniższy szczyt w Koronie Gór Polski.',
+  'Korona Gór Polski powstała w 1997 roku z inicjatywy Jerzego Galewskiego.',
+  'Aby oficjalnie zdobyć KGP, trzeba wejść na 28 szczytów i zebrać pieczątki w książeczce.',
+  'Najtrudniejsze szczyty KGP to Rysy i Babia Góra - wymagają dobrej pogody i kondycji.',
+  'Najłatwiejsze szczyty KGP (Waligóra, Skopiec) można zdobyć w 30-40 minut.',
+  'Lackowa w Beskidzie Niskim jest najmniej uczęszczanym szczytem KGP.',
+  'Szczeliniec Wielki w Górach Stołowych to najwyższy szczyt gór płaskich w Polsce.',
+  'Wysoka Kopa w Górach Izerskich jest zamknięta - szczyt wyłączony z ruchu dla ochrony cietrzewia.',
+  'Łączne przewyższenie wszystkich 28 tras KGP to ponad 14 000 metrów - prawie 2x Everest!',
+  'Średni czas zdobycia pełnej Korony to ok. 2-3 lata.',
+  'Biskupia Kopa leży na granicy polsko-czeskiej - z wieży widać trzy kraje.',
+  'Ślęża (718m) była świętą górą starożytnych Słowian.',
+  'Turbacz w Gorcach oferuje jeden z najlepszych widoków na Tatry w Polsce.',
+];
+
+// ── Auth (PIN) ──
+let _pin = '';
+
+function updateDots() {
+  document.querySelectorAll('.pin-dot').forEach((d, i) => {
+    d.classList.toggle('filled', i < _pin.length);
+    d.classList.remove('error');
+  });
+}
+
+function pinKey(n) {
+  if (_pin.length >= 4) return;
+  _pin += n;
+  updateDots();
+  if (_pin.length === 4) {
+    setTimeout(() => checkPin(), 150);
+  }
+}
+
+function pinBackspace() {
+  _pin = _pin.slice(0, -1);
+  updateDots();
+}
+
+function pinClear() {
+  _pin = '';
+  updateDots();
+}
+
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPin() {
+  const hash = await sha256(_pin);
+  if (hash === ADMIN_HASH) {
+    sessionStorage.setItem('kgp_admin', '1');
+    showPanel();
+  } else {
+    document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('error'));
+    const err = document.getElementById('auth-error');
+    err.style.display = 'block';
+    setTimeout(() => {
+      err.style.display = 'none';
+      _pin = '';
+      updateDots();
+    }, 1200);
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('kgp_admin');
+  location.reload();
+}
+
+function showPanel() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
+  refreshAll();
+}
+
+// ── Tabs ──
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`#sec-${name}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Data loading ──
+let _profiles = [], _userData = [], _warnings = [], _photos = [];
+
+async function refreshAll() {
+  showToast('🔄 Ładowanie danych...');
+
+  const [p, u, w, ph] = await Promise.all([
+    sb.from('profiles').select('*').order('updated_at', { ascending: false }),
+    sb.from('user_data').select('*').order('updated_at', { ascending: false }),
+    sb.from('warnings').select('*').order('created_at', { ascending: false }),
+    sb.from('photos').select('*').order('created_at', { ascending: false }),
+  ]);
+
+  _profiles = p.data || [];
+  _userData = u.data || [];
+  _warnings = w.data || [];
+  _photos = ph.data || [];
+
+  renderDashboard();
+  renderUsers();
+  renderFacts();
+  renderWarnings();
+  renderGallery();
+  renderSystem();
+
+  document.getElementById('last-refresh').textContent = 'Odświeżono: ' + new Date().toLocaleTimeString('pl-PL');
+  showToast('✅ Dane załadowane');
+}
+
+// ── Dashboard ──
+function renderDashboard() {
+  const totalUsers = _profiles.length;
+  const activeUsers = _userData.filter(u => {
+    const d = new Date(u.updated_at);
+    return (Date.now() - d) < 7 * 24 * 60 * 60 * 1000;
+  }).length;
+  const totalConquered = _userData.reduce((sum, u) => sum + (u.data?.conquered?.length || 0), 0);
+  const totalWarnings = _warnings.length;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${totalUsers}</div><div class="stat-label">Użytkowników</div></div>
+    <div class="stat-card"><div class="stat-num">${activeUsers}</div><div class="stat-label">Aktywnych (7 dni)</div></div>
+    <div class="stat-card"><div class="stat-num">${totalConquered}</div><div class="stat-label">Zdobytych szczytów łącznie</div></div>
+    <div class="stat-card"><div class="stat-num">${totalWarnings}</div><div class="stat-label">Ostrzeżeń szlakowych</div></div>`;
+
+  // Activity table - join profiles with user_data
+  const rows = _profiles.map(p => {
+    const ud = _userData.find(u => u.user_id === p.id);
+    const conquered = ud?.data?.conquered?.length || 0;
+    return { code: p.sync_code, conquered, updated: ud?.updated_at || p.updated_at, created: p.created_at };
+  }).sort((a, b) => new Date(b.updated) - new Date(a.updated)).slice(0, 15);
+
+  document.getElementById('activity-table').innerHTML = rows.map(r => `
+    <tr>
+      <td class="mono">${r.code}</td>
+      <td><span class="badge ${r.conquered > 0 ? 'badge-green' : 'badge-gray'}">${r.conquered}/28</span></td>
+      <td>${fmtDate(r.updated)}</td>
+      <td>${fmtDate(r.created)}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text2)">Brak danych</td></tr>';
+}
+
+// ── Users ──
+function renderUsers() {
+  const rows = _profiles.map(p => {
+    const ud = _userData.find(u => u.user_id === p.id);
+    const data = ud?.data || {};
+    return {
+      code: p.sync_code,
+      name: data.userName || '-',
+      conquered: data.conquered?.length || 0,
+      home: data.homeAddr || '-',
+      created: p.created_at,
+      updated: ud?.updated_at || p.updated_at
+    };
+  }).sort((a, b) => new Date(b.updated) - new Date(a.updated));
+
+  document.getElementById('users-table').innerHTML = rows.map(r => `
+    <tr>
+      <td class="mono">${r.code}</td>
+      <td>${esc(r.name)}</td>
+      <td><span class="badge ${r.conquered > 0 ? 'badge-green' : 'badge-gray'}">${r.conquered}/28</span></td>
+      <td>${esc(r.home)}</td>
+      <td>${fmtDate(r.created)}</td>
+      <td>${fmtDate(r.updated)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text2)">Brak użytkowników</td></tr>';
+}
+
+// ── Facts ──
+function getCustomFacts() {
+  return JSON.parse(localStorage.getItem('kgp_admin_facts') || '[]');
+}
+function saveCustomFacts(facts) {
+  localStorage.setItem('kgp_admin_facts', JSON.stringify(facts));
+}
+
+function renderFacts() {
+  const custom = getCustomFacts();
+  const all = [...CODE_FACTS, ...custom];
+
+  document.getElementById('facts-list').innerHTML = all.map((f, i) => `
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text2);min-width:24px">#${i + 1}</span>
+      <div style="flex:1;font-size:13px">${esc(f)}</div>
+      ${i >= CODE_FACTS.length ? `<button class="btn btn-red" style="padding:4px 8px;font-size:11px" onclick="removeFact(${i - CODE_FACTS.length})">✕</button>` : '<span class="badge badge-blue" style="white-space:nowrap">w kodzie</span>'}
+    </div>`).join('');
+}
+
+function addFact() {
+  const input = document.getElementById('new-fact');
+  const text = input.value.trim();
+  if (!text) return;
+  const custom = getCustomFacts();
+  custom.push(text);
+  saveCustomFacts(custom);
+  input.value = '';
+  renderFacts();
+  showToast('✅ Ciekawostka dodana');
+}
+
+function removeFact(idx) {
+  const custom = getCustomFacts();
+  custom.splice(idx, 1);
+  saveCustomFacts(custom);
+  renderFacts();
+  showToast('Usunięto');
+}
+
+function exportFacts() {
+  const all = [...CODE_FACTS, ...getCustomFacts()];
+  navigator.clipboard.writeText(JSON.stringify(all, null, 2));
+  showToast('📋 Skopiowano do schowka');
+}
+
+// ── Warnings ──
+function renderWarnings() {
+  const PEAK_NAMES = {
+    1:'Rysy',2:'Babia Góra',3:'Śnieżka',4:'Śnieżnik',5:'Tarnica',6:'Turbacz',
+    7:'Radziejowa',8:'Skrzyczne',9:'Mogielica',10:'Lackowa',11:'Wysoka',
+    12:'Szczeliniec Wielki',13:'Wysoka Kopa',14:'Skopiec',15:'Skalnik',
+    16:'Chełmiec',17:'Waligóra',18:'Wielka Sowa',19:'Kłodzka Góra',
+    20:'Jagodna',21:'Orlica',22:'Rudawiec',23:'Kowadło',24:'Ślęża',
+    25:'Biskupia Kopa',26:'Łysica',27:'Czupel',28:'Lubomir'
+  };
+
+  document.getElementById('warnings-table').innerHTML = _warnings.map(w => `
+    <tr>
+      <td>${PEAK_NAMES[w.peak_id] || w.peak_id}</td>
+      <td>${esc(w.message)}</td>
+      <td>${esc(w.author)}</td>
+      <td>${fmtDate(w.created_at)}</td>
+      <td><button class="btn btn-red" style="padding:4px 8px;font-size:11px" onclick="deleteWarning('${w.id}')">🗑️</button></td>
+    </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text2)">Brak ostrzeżeń</td></tr>';
+}
+
+async function deleteWarning(id) {
+  if (!confirm('Usunąć ostrzeżenie?')) return;
+  await sb.from('warnings').delete().eq('id', id);
+  _warnings = _warnings.filter(w => w.id !== id);
+  renderWarnings();
+  showToast('Ostrzeżenie usunięte');
+}
+
+// ── Gallery ──
+const PEAK_NAMES_FULL = {
+  1:'Rysy',2:'Babia Góra',3:'Śnieżka',4:'Śnieżnik',5:'Tarnica',6:'Turbacz',
+  7:'Radziejowa',8:'Skrzyczne',9:'Mogielica',10:'Lackowa',11:'Wysoka',
+  12:'Szczeliniec Wielki',13:'Wysoka Kopa',14:'Skopiec',15:'Skalnik',
+  16:'Chełmiec',17:'Waligóra',18:'Wielka Sowa',19:'Kłodzka Góra',
+  20:'Jagodna',21:'Orlica',22:'Rudawiec',23:'Kowadło',24:'Ślęża',
+  25:'Biskupia Kopa',26:'Łysica',27:'Czupel',28:'Lubomir'
+};
+
+const PHOTO_TYPE_LABELS = { summit:'Szczyt', stamp:'Pieczątka', panorama:'Panorama', parking:'Parking', other:'Inne' };
+
+function getPhotoUrl(storagePath) {
+  return `${SUPABASE_URL}/storage/v1/object/public/photos/${storagePath}`;
+}
+
+function renderGallery() {
+  // Wypełnij filtr szczytów
+  const peakFilter = document.getElementById('gallery-peak-filter');
+  if (peakFilter.options.length <= 1) {
+    Object.entries(PEAK_NAMES_FULL).sort((a,b) => a[1].localeCompare(b[1])).forEach(([id, name]) => {
+      peakFilter.add(new Option(name, id));
+    });
+  }
+
+  const filterPeak = document.getElementById('gallery-peak-filter').value;
+  const filterType = document.getElementById('gallery-type-filter').value;
+
+  let photos = _photos;
+  if (filterPeak) photos = photos.filter(p => String(p.peak_id) === filterPeak);
+  if (filterType) photos = photos.filter(p => p.photo_type === filterType);
+
+  document.getElementById('gallery-count').textContent = `${photos.length} zdjęć` + (_photos.length !== photos.length ? ` (z ${_photos.length} wszystkich)` : '');
+
+  if (photos.length === 0) {
+    document.getElementById('gallery-grid').innerHTML = '<div style="color:var(--text2);grid-column:1/-1;text-align:center;padding:32px">Brak zdjęć</div>';
+    return;
+  }
+
+  document.getElementById('gallery-grid').innerHTML = photos.map(p => {
+    const url = getPhotoUrl(p.storage_path);
+    const peak = PEAK_NAMES_FULL[p.peak_id] || `#${p.peak_id}`;
+    const type = PHOTO_TYPE_LABELS[p.photo_type] || p.photo_type;
+    const user = _profiles.find(pr => pr.id === p.user_id);
+    const code = user?.sync_code || '?';
+    return `
+      <div class="gallery-item" onclick="openLightbox('${url}')">
+        <img src="${url}" alt="${esc(peak)}" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2);font-size:12px\\'>Brak pliku</div>'">
+        <div class="gallery-meta">
+          <div class="gm-peak">${esc(peak)}</div>
+          <div class="gm-info">${type} - ${code} - ${fmtDate(p.created_at)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openLightbox(url) {
+  const lb = document.createElement('div');
+  lb.className = 'gallery-lightbox';
+  lb.innerHTML = `<img src="${url}">`;
+  lb.onclick = () => lb.remove();
+  document.body.appendChild(lb);
+}
+
+// ── System ──
+async function renderSystem() {
+  // Statystyki
+  const totalPhotos = _photos.length;
+  const totalUsers = _profiles.length;
+  const dbSize = _userData.reduce((s, u) => s + JSON.stringify(u.data || {}).length, 0);
+
+  document.getElementById('system-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${totalUsers}</div><div class="stat-label">Profile</div></div>
+    <div class="stat-card"><div class="stat-num">${_userData.length}</div><div class="stat-label">Rekordy user_data</div></div>
+    <div class="stat-card"><div class="stat-num">${totalPhotos}</div><div class="stat-label">Zdjęcia</div></div>
+    <div class="stat-card"><div class="stat-num">${(dbSize / 1024).toFixed(1)} KB</div><div class="stat-label">Dane JSONB łącznie</div></div>`;
+
+  // Sprawdzenia systemu
+  const checks = [];
+
+  // Test połączenia Supabase
+  try {
+    const { count, error } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+    checks.push({ ok: !error, label: 'Połączenie z Supabase', detail: error ? error.message : 'OK' });
+  } catch (e) {
+    checks.push({ ok: false, label: 'Połączenie z Supabase', detail: e.message });
+  }
+
+  // Test Storage
+  try {
+    const { data, error } = await sb.storage.from('photos').list('', { limit: 1 });
+    checks.push({ ok: !error, label: 'Storage (bucket: photos)', detail: error ? error.message : 'Dostępny' });
+  } catch (e) {
+    checks.push({ ok: false, label: 'Storage (bucket: photos)', detail: e.message });
+  }
+
+  // Spójność danych
+  const orphanData = _userData.filter(u => !_profiles.find(p => p.id === u.user_id));
+  checks.push({
+    ok: orphanData.length === 0,
+    label: 'Spójność user_data ↔ profiles',
+    detail: orphanData.length === 0 ? 'OK' : `${orphanData.length} osieroconych rekordów`
+  });
+
+  const orphanPhotos = _photos.filter(p => !_profiles.find(pr => pr.id === p.user_id));
+  checks.push({
+    ok: orphanPhotos.length === 0,
+    label: 'Spójność photos ↔ profiles',
+    detail: orphanPhotos.length === 0 ? 'OK' : `${orphanPhotos.length} osieroconych zdjęć`
+  });
+
+  document.getElementById('system-checks').innerHTML = checks.map(c => `
+    <div class="sys-check">
+      <div class="sys-dot ${c.ok ? 'ok' : 'err'}"></div>
+      <div style="flex:1;font-size:13px;font-weight:600">${c.label}</div>
+      <div style="font-size:12px;color:${c.ok ? 'var(--green)' : 'var(--red)'}">${c.detail}</div>
+    </div>`).join('');
+
+  // Tabele - zlicz rekordy
+  const tables = ['profiles', 'user_data', 'photos', 'group_members', 'warnings'];
+  const counts = await Promise.all(tables.map(t =>
+    sb.from(t).select('*', { count: 'exact', head: true }).then(r => ({ table: t, count: r.count ?? '?', error: r.error }))
+  ));
+
+  document.getElementById('system-tables').innerHTML = counts.map(c => `
+    <tr>
+      <td class="mono">${c.table}</td>
+      <td>${c.error ? '-' : c.count}</td>
+      <td><span class="badge ${c.error ? 'badge-gray' : 'badge-green'}">${c.error ? 'Błąd' : 'OK'}</span></td>
+    </tr>`).join('');
+
+  // Storage info
+  try {
+    const { data } = await sb.storage.from('photos').list('', { limit: 100 });
+    let fileCount = 0;
+    if (data) {
+      // Policz pliki rekurencyjnie (1 poziom folderów)
+      for (const item of data) {
+        if (item.id) {
+          fileCount++;
+        } else {
+          // To folder - policz pliki w środku
+          const { data: inner } = await sb.storage.from('photos').list(item.name, { limit: 500 });
+          fileCount += inner?.length || 0;
+        }
+      }
+    }
+    document.getElementById('storage-info').innerHTML = `Plików w storage: <strong>${fileCount}</strong>` +
+      `<br><span style="font-size:11px">Rekordy w tabeli photos: ${_photos.length}</span>`;
+  } catch (e) {
+    document.getElementById('storage-info').innerHTML = `<span style="color:var(--red)">Błąd: ${e.message}</span>`;
+  }
+}
+
+// ── Raw data browser ──
+async function loadTable() {
+  const table = document.getElementById('table-select').value;
+  const { data, error } = await sb.from(table).select('*').order('created_at', { ascending: false }).limit(50);
+
+  if (error) {
+    document.getElementById('raw-table').innerHTML = `<div style="color:var(--red)">${error.message}</div>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    document.getElementById('raw-table').innerHTML = '<div style="color:var(--text2)">Pusta tabela</div>';
+    document.getElementById('raw-count').textContent = '0 rekordów';
+    return;
+  }
+
+  const cols = Object.keys(data[0]);
+  document.getElementById('raw-table').innerHTML = `
+    <table>
+      <thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${data.map(row => `<tr>${cols.map(c => {
+        let v = row[c];
+        if (v && typeof v === 'object') v = JSON.stringify(v).substring(0, 80) + '...';
+        if (typeof v === 'string' && v.length > 60) v = v.substring(0, 60) + '...';
+        return `<td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v ?? '-'}</td>`;
+      }).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+  document.getElementById('raw-count').textContent = `${data.length} rekordów (max 50)`;
+}
+
+// ── Helpers ──
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return 'Przed chwilą';
+  if (diff < 3600000) return Math.floor(diff / 60000) + ' min temu';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h temu';
+  if (diff < 604800000) return Math.floor(diff / 86400000) + ' dni temu';
+  return d.toLocaleDateString('pl-PL') + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Init ──
+if (sessionStorage.getItem('kgp_admin')) showPanel();
+</script>
+</body>
+</html>

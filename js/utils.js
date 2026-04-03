@@ -86,3 +86,114 @@ function checkGeofence() {
   }
   state.nearbyPeak = null;
 }
+
+// ============================================================
+// CONTEXT DETECTION (home / trail / summit)
+// ============================================================
+const CTX = { HOME: 'home', DRIVING: 'driving', TRAIL: 'trail', SUMMIT: 'summit' };
+const CTX_META = {
+  home:    { icon: '🏠', label: 'Planowanie',  color: 'var(--accent)' },
+  driving: { icon: '🚗', label: 'W trasie',    color: 'var(--blue)' },
+  trail:   { icon: '🥾', label: 'Na szlaku',   color: 'var(--green)' },
+  summit:  { icon: '🏔️', label: 'Na szczycie', color: '#e05555' },
+};
+
+let _ctxHistory = [];       // ostatnie odczyty [{ctx, ts}]
+let _ctxGpsHistory = [];    // pozycje do pomiaru prędkości [{lat,lon,ts}]
+const CTX_SPEED_DRIVING = 4.17; // 15 km/h w m/s
+
+function detectContext() {
+  if (!state.gpsActive || !state.userLat) return CTX.HOME;
+
+  // Oblicz dystans do najbliższego szczytu
+  let minDist = Infinity, nearestPeak = null;
+  for (const p of PEAKS) {
+    const d = dist(state.userLat, state.userLon, p.lat, p.lon);
+    if (d < minDist) { minDist = d; nearestPeak = p; }
+  }
+
+  // Oblicz prędkość (m/s) z ostatnich odczytów GPS
+  const now = Date.now();
+  _ctxGpsHistory.push({ lat: state.userLat, lon: state.userLon, ts: now });
+  // Zachowaj tylko ostatnie 2 minuty
+  _ctxGpsHistory = _ctxGpsHistory.filter(h => now - h.ts < 120000);
+
+  let speed = 0; // m/s
+  if (_ctxGpsHistory.length >= 2) {
+    const oldest = _ctxGpsHistory[0];
+    const dt = (now - oldest.ts) / 1000;
+    if (dt > 5) {
+      const dd = dist(oldest.lat, oldest.lon, state.userLat, state.userLon);
+      speed = dd / dt;
+    }
+  }
+
+  // Reguły detekcji (priorytet od najwyższego)
+  // 1. Na szczycie: <200m + wolno
+  // 2. W trasie: prędkość >15 km/h (samochód, niezależnie od dystansu)
+  // 3. Na szlaku: <5km od szczytu + prędkość 1-15 km/h
+  // 4. Planowanie: reszta
+  let raw;
+  if (minDist < 200 && speed < 0.5) {
+    raw = CTX.SUMMIT;
+  } else if (speed > CTX_SPEED_DRIVING) {
+    raw = CTX.DRIVING;
+  } else if (minDist < 5000 && speed > 0.3) {
+    raw = CTX.TRAIL;
+  } else {
+    raw = CTX.HOME;
+  }
+
+  // Debounce - wymagaj 3 kolejnych odczytów tego samego kontekstu (ok. 45s)
+  _ctxHistory.push({ ctx: raw, ts: now });
+  _ctxHistory = _ctxHistory.filter(h => now - h.ts < 90000);
+
+  const recent = _ctxHistory.slice(-3);
+  if (recent.length >= 3 && recent.every(h => h.ctx === raw)) {
+    return raw;
+  }
+
+  return state.context || CTX.HOME;
+}
+
+function updateContext() {
+  const prev = state.context;
+  const next = detectContext();
+  if (next === prev) return;
+
+  state.context = next;
+  state._contextPeak = null;
+
+  // Ustal szczyt kontekstowy
+  if (next !== CTX.HOME && state.userLat) {
+    let minD = Infinity, best = null;
+    for (const p of PEAKS) {
+      const d = dist(state.userLat, state.userLon, p.lat, p.lon);
+      if (d < minD) { minD = d; best = p; }
+    }
+    state._contextPeak = best;
+  }
+
+  updateContextBadge();
+
+  // Toast przy zmianie kontekstu
+  const meta = CTX_META[next];
+  if (prev && prev !== next) {
+    const peakInfo = state._contextPeak ? ` - ${state._contextPeak.name}` : '';
+    showToast(`${meta.icon} Tryb: ${meta.label}${peakInfo}`);
+  }
+}
+
+function updateContextBadge() {
+  let badge = document.getElementById('ctx-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'ctx-badge';
+    document.getElementById('nav')?.prepend(badge);
+  }
+
+  const meta = CTX_META[state.context || CTX.HOME];
+  badge.innerHTML = `<span class="ctx-icon">${meta.icon}</span><span class="ctx-label">${meta.label}</span>`;
+  badge.style.setProperty('--ctx-color', meta.color);
+  badge.className = 'ctx-badge ctx-' + (state.context || CTX.HOME);
+}

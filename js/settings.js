@@ -10,6 +10,22 @@ function renderSettings() {
   </div>
   <div class="page page-gap">
 
+    <a href="about.html" target="_blank" class="card card-pad" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)">
+      <span style="font-size:28px">🏔️</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">Korona Gór Polski</div>
+        <div style="font-size:11px;color:var(--text2)">Dowiedz się więcej o aplikacji</div>
+      </div>
+      <span style="font-size:16px;color:var(--text2)">→</span>
+    </a>
+
+    ${!(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? `
+    <div class="card card-pad">
+      <div class="section-title">📲 Zainstaluj na telefonie</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Dodaj aplikację do ekranu głównego - działa jak zwykła aplikacja, bez paska przeglądarki.</div>
+      <button class="btn btn-primary btn-full" onclick="installApp()">📲 Dodaj do ekranu głównego</button>
+    </div>` : ''}
+
     <div class="card card-pad">
       <div class="section-title">👤 Profil</div>
       <label class="label">Imię / nick</label>
@@ -22,13 +38,6 @@ function renderSettings() {
       <label class="label">Skąd wyruszasz na szlak?</label>
       <input class="input" type="text" value="${esc(state.homeAddr)}" placeholder="Np. Kraków, Warszawa, Wrocław..." onchange="state.homeAddr=this.value;save()">
       <div style="font-size:10px;color:var(--text2);margin-top:4px">Używany do obliczania czasu dojazdu</div>
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">🆘 Kontakt ICE</div>
-      <label class="label">Numer telefonu osoby bliskiej (na wypadek SOS)</label>
-      <input class="input" type="tel" value="${esc(state.iceContact)}" placeholder="np. 600123456" onchange="state.iceContact=this.value;save()">
-      <div style="font-size:10px;color:var(--text2);margin-top:4px">Wyświetlany na ekranie SOS jako szybki kontakt</div>
     </div>
 
     <div class="card card-pad">
@@ -58,17 +67,17 @@ function renderSettings() {
 
     <div class="card card-pad">
       <div class="section-title">☁️ Synchronizacja</div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Synchronizuj dane między urządzeniami za pomocą kodu sync.</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Synchronizuj dane między urządzeniami za pomocą kodu dostępu.</div>
       ${syncCode ? `
         <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Twój kod sync</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Twój kod dostępu</div>
           <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);letter-spacing:1px">${syncCode}</div>
           <div style="font-size:10px;color:var(--text2);margin-top:4px">Podaj ten kod na innym urządzeniu</div>
         </div>
         <button class="btn btn-secondary btn-sm btn-full" onclick="syncToCloud().then(()=>showToast('☁️ Zsynchronizowano!'))">🔄 Wymuś synchronizację</button>
       ` : `
         <div style="display:flex;gap:8px;margin-bottom:8px">
-          <button class="btn btn-green btn-sm" style="flex:1" onclick="initSync().then(()=>goto('settings'))">🆕 Nowy kod sync</button>
+          <button class="btn btn-green btn-sm" style="flex:1" onclick="initSync().then(()=>goto('settings'))">🆕 Nowy kod dostępu</button>
         </div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Masz już kod? Wpisz go poniżej:</div>
         <div style="display:flex;gap:8px">
@@ -79,7 +88,7 @@ function renderSettings() {
     </div>
 
     <div class="card card-pad">
-      <div class="section-title">💾 Backup danych</div>
+      <div class="section-title">💾 Kopia zapasowa</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Eksportuj dane aby nie stracić postępu.</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary btn-sm" style="flex:1" onclick="exportData()">📤 Eksportuj</button>
@@ -90,10 +99,13 @@ function renderSettings() {
 
     <div class="card card-pad">
       <div class="section-title">🗑️ Dane lokalne</div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Wyczyść wszystkie lokalne dane aplikacji. Dane w chmurze (jeśli masz kod sync) pozostaną nienaruszone.</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Wyczyść wszystkie lokalne dane aplikacji. Dane w chmurze (jeśli masz kod dostępu) pozostaną nienaruszone.</div>
       <button class="btn btn-sm" style="background:var(--red);color:#fff;width:100%" onclick="if(confirm('Na pewno? Wszystkie lokalne dane zostaną usunięte!')){localStorage.clear();location.reload()}">🗑️ Wyczyść dane lokalne</button>
     </div>
 
-    <div style="text-align:center;padding:12px;font-size:10px;color:var(--text2)">KGP App v1.2.0</div>
+    <div style="text-align:center;padding:12px;font-size:10px;color:var(--text2)" onclick="adminTap()">
+      Korona Gór Polski v1.2.0<br>
+      <span style="margin-top:2px;display:inline-block">Projekt: Grzegorz Smoliński</span>
+    </div>
   </div>`;
 }

@@ -84,9 +84,24 @@
 - [ ] **Live na szczycie** - inni widza kto jest na ktorym szczycie w real-time
 
 ### UX/UI trendy 2026
-- [ ] **Adaptive UI** - kontekstowy interfejs zależny od sytuacji: w domu → tryb planowania (duże karty, pogoda), na szlaku → tryb nawigacji (duża mapa, duże przyciski), na szczycie → tryb zdobywcy (aparat, formularz). Wykrywanie przez GPS + czas + aktywność.
+- [x] **Adaptive UI (etap 1)** - detekcja kontekstu (home/driving/trail/summit) z badge w nawigacji. Debounce 3 odczytow. Etap 2-3: zmiana layoutu per kontekst.
 - [ ] **Accessibility** - wysoki kontrast, skalowalne fonty, aria labels, semantic HTML, obsługa czytnika ekranu. Nie feature, a wymóg.
 - [ ] **Onboarding jako quest** - zamiast intro screena, pierwszy szczyt jako "misja treningowa": wybierz szczyt → sprawdź pogodę → zaplanuj → zdobądź → zrób zdjęcie. Grywalizacja od pierwszej minuty.
+
+### Landing page
+- [x] **Responsywna strona "O aplikacji"** - osobna strona prezentująca KGP App: czym jest, jakie ma funkcje, screenshoty, CTA do instalacji PWA. Styl inspirowany skillsandup.pl: czysty, nowoczesny layout, hero section z hasłem, karty funkcji w siatce, dużo białej przestrzeni, sans-serif fonty, przyciski CTA. Sekcje: hero → funkcje (karty z emoji/ikonami) → screenshoty → jak zacząć → footer.
+
+### Tymczasowo wyłączone (do przywrócenia)
+- [ ] **Śledzenie trasy (Live tracker)** - GPS tracker z postępem na szlaku, dystansem i ETA. Usunięty z zakładki Szczyt - kod w features2.js, do przywrócenia po redesignie.
+- [ ] **Dedykacja zdobycia szczytu** - pole "Ten szczyt dedykuję..." w formularzu szczytu. Usunięte z UI, dane w journal obsługują pole dedication.
+
+### Infrastruktura
+- [x] **Panel administracyjny** - panel.html z PIN, dashboard, uzytkownicy, galeria, system, dane surowe
+- [x] **System migracji danych** - wersjonowany schemat state z automatycznymi migracjami
+- [x] **Dokumentacja projektowa** - DOCS.md z architektura, przepływami, decyzjami
+- [x] **Changelog** - CHANGELOG.md z historia wersji
+- [ ] **Polityka prywatnosci** - prosta strona z informacja o zbieranych danych
+- [ ] **Informacja o sync** - komunikat przy pierwszym uzyciu synchronizacji
 
 ### Bugfixy
 - [ ] **Grupowanie parkingow** - jeden parking → wiele szczytow (np. Gorce)

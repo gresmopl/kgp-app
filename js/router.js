@@ -8,6 +8,9 @@ async function goto(page, skipHistory) {
     history.pushState({page}, '', '#' + page);
   }
   state.currentPage = page;
+  // Zapamiętaj ostatnią główną zakładkę
+  if (navMap[page]) localStorage.setItem('kgp_last_page', page);
+
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const navId = navMap[page] || navMap[page.replace('_suggest','')];
   if (navId) document.getElementById(navId)?.classList.add('active');
@@ -27,8 +30,14 @@ async function goto(page, skipHistory) {
     case 'history': html = renderHistoryEntry(); break;
   }
 
+  // Animacja przejścia
+  screen.style.opacity = '0';
   screen.innerHTML = html;
   screen.scrollTop = 0;
+  requestAnimationFrame(() => { screen.style.opacity = '1'; });
+
+  // Przycisk "do góry" na długich stronach
+  updateScrollTopBtn(screen, page);
 
   if (page === 'map') {
     setTimeout(() => { initMap(); setTimeout(applyRouteToMap, 100); }, 50);
@@ -63,14 +72,96 @@ window.addEventListener('popstate', e => {
   goto(page, true);
 });
 
+// Admin easter egg - 5x tap na wersję w ustawieniach
+let _adminTaps = 0;
+let _adminTimer = null;
+function adminTap() {
+  _adminTaps++;
+  if (_adminTaps >= 5) {
+    _adminTaps = 0;
+    clearTimeout(_adminTimer);
+    window.open('panel.html', '_blank');
+  } else {
+    clearTimeout(_adminTimer);
+    _adminTimer = setTimeout(() => { _adminTaps = 0; }, 2000);
+    if (_adminTaps >= 3) showToast('Jeszcze ' + (5 - _adminTaps) + '...');
+  }
+}
+
+// PWA install prompt
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+});
+
+function installApp() {
+  if (_deferredInstallPrompt) {
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') showToast('✅ Aplikacja zainstalowana!');
+      _deferredInstallPrompt = null;
+      goto('settings');
+    });
+  } else if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+    showToast('Aplikacja jest już zainstalowana');
+  } else {
+    showToast('Użyj menu przeglądarki → "Dodaj do ekranu głównego"');
+  }
+}
+
+// Scroll-to-top button
+function updateScrollTopBtn(screen, page) {
+  let btn = document.getElementById('scroll-top-btn');
+  const longPages = ['plan','journal','settings','list','sos'];
+  if (!longPages.includes(page)) {
+    if (btn) btn.style.display = 'none';
+    return;
+  }
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'scroll-top-btn';
+    btn.className = 'scroll-top-btn';
+    btn.textContent = '↑';
+    btn.onclick = () => screen.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('app').appendChild(btn);
+  }
+  btn.style.display = 'none';
+  screen.onscroll = () => {
+    btn.style.display = screen.scrollTop > 400 ? 'flex' : 'none';
+  };
+}
+
+// Offline indicator
+function initOfflineIndicator() {
+  const bar = document.createElement('div');
+  bar.id = 'offline-bar';
+  bar.className = 'offline-bar';
+  bar.textContent = '📡 Brak połączenia z internetem';
+  document.body.appendChild(bar);
+
+  function update() {
+    bar.classList.toggle('visible', !navigator.onLine);
+  }
+  window.addEventListener('online', () => { update(); showToast('✅ Połączenie przywrócone'); });
+  window.addEventListener('offline', update);
+  update();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
-  history.replaceState({page:'map'}, '', '#map');
+
+  initOfflineIndicator();
+  updateContextBadge();
+  setInterval(updateContext, 15000);
+
+  const lastPage = state.currentPage || 'map';
+  history.replaceState({page: lastPage}, '', '#' + lastPage);
   startGPS();
   restoreTracking();
-  goto('map', true);
+  goto(lastPage, true);
   if (shouldShowOnboarding()) {
     document.body.insertAdjacentHTML('beforeend', renderOnboarding());
   }

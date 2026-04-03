@@ -25,6 +25,7 @@ function renderList() {
   </div>
   <div class="chips">
     <span class="chip ${state.filter==='all'?'active':''}" onclick="setFilter('all')">Wszystkie (28)</span>
+    <span class="chip ${state.filter==='done'?'active':''}" onclick="setFilter('done')">Zdobyte (${done})</span>
     <span class="chip ${state.filter==='todo'?'active':''}" onclick="setFilter('todo')">Do zdobycia (${28-done})</span>
     <span class="chip ${state.filter==='tatry'?'active':''}" onclick="setFilter('tatry')">Karpaty (${PEAKS.filter(_karpaty).length})</span>
     <span class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety (${PEAKS.filter(_sudety).length})</span>
@@ -43,7 +44,7 @@ function renderList() {
   </div>`;
 }
 
-function setFilter(f) { state.filter = f; goto('list'); }
+function setFilter(f) { state.filter = f; localStorage.setItem('kgp_filter', f); goto('list'); }
 
 // ============================================================
 // PLAN PAGE
@@ -364,27 +365,10 @@ function renderSummit() {
       <textarea class="input" id="summit-note" rows="3" placeholder="Pogoda, widoki, towarzysze..." style="resize:none;line-height:1.5"></textarea>
     </div>
 
-    <div class="card card-pad">
-      <div class="label" style="margin-bottom:8px">Dedykacja (opcjonalnie)</div>
-      <input class="input" type="text" id="summit-dedication" placeholder="Ten szczyt dedykuję...">
-      <div style="font-size:10px;color:var(--text2);margin-top:4px">Pojawi się na karcie zdobycia</div>
-    </div>
-
     <button class="btn btn-green btn-full" id="conquer-btn" onclick="conquerPeak(${peak.id})" disabled>
       ✅ Oznacz jako zdobyty
     </button>
     <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:-6px">Zrób najpierw zdjęcie aby aktywować</div>
-
-    <div id="tracker-panel"></div>
-
-    <div class="card card-pad">
-      <div class="section-title">🏃 Śledzenie trasy</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-green btn-sm" style="flex:1" onclick="startTrailTracking(${peak.id})">▶️ Start tracker</button>
-        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="stopTrailTracking()">⏹️ Stop</button>
-      </div>
-      ${renderParkingButtons()}
-    </div>
 
     <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="background:var(--blue,#4a90d9)">
       🗺️ Wyznacz trasę

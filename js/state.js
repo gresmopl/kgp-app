@@ -1,15 +1,19 @@
 // ============================================================
 // STATE & PERSISTENCE
 // ============================================================
+
+// Wersja schematu danych - inkrementuj przy kazdej zmianie struktury state
+const STATE_VERSION = 2;
+
 const state = {
   conquered: JSON.parse(localStorage.getItem('kgp_conquered') || '[]'),
   journal: JSON.parse(localStorage.getItem('kgp_journal') || '[]'),
   userLat: null, userLon: null,
   gpsActive: false,
   selectedPeak: null,
-  filter: 'all',
-  transport: 'car',
-  currentPage: 'map',
+  filter: localStorage.getItem('kgp_filter') || 'all',
+  transport: localStorage.getItem('kgp_transport') || 'car',
+  currentPage: localStorage.getItem('kgp_last_page') || 'map',
   paceMultiplier: parseFloat(localStorage.getItem('kgp_pace') || '1.0'),
   homeAddr: localStorage.getItem('kgp_home') || '',
   nearbyPeak: null,
@@ -17,7 +21,46 @@ const state = {
   userName: localStorage.getItem('kgp_username') || '',
   iceContact: localStorage.getItem('kgp_ice') || '',
   savedRoutes: JSON.parse(localStorage.getItem('kgp_saved_routes') || '{}'),
+  trips: JSON.parse(localStorage.getItem('kgp_trips') || '[]'),
+  discoveredPlaces: JSON.parse(localStorage.getItem('kgp_discovered') || '[]'),
+  context: 'home',
+  _contextPeak: null,
 };
+
+// ============================================================
+// MIGRACJA DANYCH
+// ============================================================
+// Kazda migracja to funkcja ktora aktualizuje dane z wersji N do N+1.
+// Dodaj nowa migracje na koniec tablicy gdy zmieniasz strukture state.
+const MIGRATIONS = [
+  // v0 → v1: poczatkowa wersja, brak zmian
+  function() {},
+  // v1 → v2: dodanie trips, discoveredPlaces, persystowanie transport
+  function() {
+    if (!localStorage.getItem('kgp_trips')) localStorage.setItem('kgp_trips', '[]');
+    if (!localStorage.getItem('kgp_discovered')) localStorage.setItem('kgp_discovered', '[]');
+    if (!localStorage.getItem('kgp_transport')) localStorage.setItem('kgp_transport', 'car');
+  },
+];
+
+function migrateState() {
+  const currentVersion = parseInt(localStorage.getItem('kgp_state_version') || '0');
+  if (currentVersion >= STATE_VERSION) return;
+
+  for (let v = currentVersion; v < STATE_VERSION; v++) {
+    if (MIGRATIONS[v]) {
+      try {
+        MIGRATIONS[v]();
+        console.log(`Migracja v${v} → v${v + 1} OK`);
+      } catch(e) {
+        console.error(`Migracja v${v} → v${v + 1} blad:`, e);
+      }
+    }
+  }
+  localStorage.setItem('kgp_state_version', String(STATE_VERSION));
+}
+
+migrateState();
 
 function getRoute(peak) {
   const idx = state.selectedRoutes[peak.id] || 0;
@@ -41,6 +84,9 @@ function save() {
     localStorage.setItem('kgp_username', state.userName);
     localStorage.setItem('kgp_ice', state.iceContact);
     localStorage.setItem('kgp_saved_routes', JSON.stringify(state.savedRoutes));
+    localStorage.setItem('kgp_trips', JSON.stringify(state.trips));
+    localStorage.setItem('kgp_discovered', JSON.stringify(state.discoveredPlaces));
+    localStorage.setItem('kgp_transport', state.transport);
   } catch(e) {
     if (e.name === 'QuotaExceededError' || e.code === 22) {
       showToast('⚠️ Brak miejsca! Zapisz zdjęcia i wyczyść stare wpisy.');

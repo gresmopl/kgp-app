@@ -28,7 +28,7 @@ async function initSync() {
       localStorage.setItem('kgp_sync_code', code);
       localStorage.setItem('kgp_profile_id', data.id);
       await sb.from('user_data').insert({ user_id: data.id, data: getStateForSync() });
-      showToast(`🔗 Twój kod sync: ${code}`);
+      showToast(`🔗 Twój kod dostępu: ${code}`);
       return;
     }
     if (error && error.code === '23505') { attempts++; continue; }
@@ -45,7 +45,11 @@ function getStateForSync() {
     homeAddr: state.homeAddr,
     selectedRoutes: state.selectedRoutes,
     userName: state.userName,
-    iceContact: state.iceContact
+    iceContact: state.iceContact,
+    trips: state.trips,
+    discoveredPlaces: state.discoveredPlaces,
+    transport: state.transport,
+    _stateVersion: STATE_VERSION
   };
 }
 
@@ -85,6 +89,9 @@ async function pullFromCloud() {
     state.selectedRoutes = d.selectedRoutes || {};
     state.userName = d.userName || '';
     state.iceContact = d.iceContact || '';
+    state.trips = d.trips || [];
+    state.discoveredPlaces = d.discoveredPlaces || [];
+    state.transport = d.transport || 'car';
     _skipSync = true;
     save();
     _skipSync = false;
@@ -100,7 +107,7 @@ async function loginWithCode(code) {
   const { data, error } = await sb.from('profiles')
     .select('id, sync_code').eq('sync_code', code).single();
   if (error || !data) {
-    showToast('❌ Nieprawidłowy kod sync');
+    showToast('❌ Nieprawidłowy kod dostępu');
     return false;
   }
   localStorage.setItem('kgp_sync_code', data.sync_code);

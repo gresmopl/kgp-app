@@ -77,14 +77,16 @@ function renderSOS() {
       📞 Numer alarmowy - 112
     </a>
 
-    ${iceContact ? `
-    <a href="tel:${iceContact}" class="btn" style="background:var(--card2);color:var(--text);text-decoration:none;border:1px solid var(--border)">
-      👤 Kontakt ICE - ${iceContact}
-    </a>` : ''}
-
     <a href="sms:${gopr.phone}?body=${smsBody}" class="btn btn-secondary" style="text-decoration:none">
       💬 Wyślij SMS z lokalizacją
     </a>
+
+    <div class="card card-pad">
+      <div class="section-title">👤 Kontakt bliskiej osoby</div>
+      <label class="label">Numer telefonu (na wypadek SOS)</label>
+      <input class="input" type="tel" value="${esc(state.iceContact)}" placeholder="np. 600123456" onchange="state.iceContact=this.value;save()">
+      ${iceContact ? `<a href="tel:${iceContact}" class="btn btn-secondary btn-full" style="margin-top:8px;text-decoration:none">📞 Zadzwoń - ${iceContact}</a>` : '<div style="font-size:10px;color:var(--text2);margin-top:4px">Wpisz numer, aby móc szybko zadzwonić</div>'}
+    </div>
 
     ${nearestShelter ? `
     <div class="card card-pad">

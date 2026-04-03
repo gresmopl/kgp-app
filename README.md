@@ -15,7 +15,6 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Wschod/zachod slonca** - ostrzezenie jesli zejscie po zmroku
 - **Kalkulator kalorii** - szacunkowe spalanie na trasie
 - **Passa zdobywcy** - streak, prognoza ukonczenia KGP, porownanie z innymi
-- **Dedykacja szczytu** - mozliwosc dedykowania zdobycia bliskiej osobie
 - **Onboarding** - ekran powitalny dla nowych uzytkownikow
 - **Karta zdobycia** - generowana grafika PNG ze zdjeciem, nazwa szczytu, postepem - do udostepnienia
 - **System osiagniec** - 12 odznak (Zimowy wojownik, Maraton, Dach Polski i inne)
@@ -29,8 +28,9 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Okno pogodowe** - automatyczna rekomendacja najlepszego dnia na wyjscie
 - **Restauracje** - wyszukiwanie miejsc do jedzenia w okolicy parkingu (Google Maps)
 - **Wyzwanie grupowe** - rywalizacja ze znajomymi w zdobywaniu KGP
-- **Live tracker** - sledzenie GPS z postepem trasy, dystansem i szacowanym czasem
 - **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku
+- **Strona informacyjna** - responsywna strona "O aplikacji" z opisem funkcji (about.html)
+- **Panel administracyjny** - dashboard, zarzadzanie uzytkownikami, galeria zdjec, ostrzezenia, stan systemu (panel.html)
 
 ## Stos technologiczny
 
@@ -47,6 +47,8 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 ```
 kgp-app/
 ├── index.html          # HTML + nawigacja (SPA)
+├── about.html          # Strona informacyjna "O aplikacji"
+├── panel.html          # Panel administracyjny (PIN)
 ├── css/
 │   └── style.css       # Wszystkie style CSS
 ├── js/
@@ -66,6 +68,9 @@ kgp-app/
 ├── sw.js               # Service Worker
 ├── schema.sql          # Schemat bazy danych Supabase
 ├── IDEAS.md            # Pomysly i plan rozwoju
+├── DOCS.md             # Dokumentacja projektowa analityczna
+├── CHANGELOG.md        # Historia wersji
+├── CLAUDE.md           # Instrukcje dla Claude Code
 ├── .gitignore          # Wykluczenia git
 └── README.md           # Dokumentacja
 ```

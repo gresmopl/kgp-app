@@ -318,7 +318,7 @@ function renderMap() {
     <div class="map-legend">
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div>Zdobyty</div>
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--accent)"></div>Do zdobycia</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:4px">Dotknij marker → szczegóły</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">Dotknij znacznik → szczegóły</div>
     </div>
   </div>`;
 }
@@ -340,13 +340,13 @@ function initMap() {
   if (leafletMap) { leafletMap.remove(); leafletMap = null; }
 
   leafletMap = L.map('leaflet-map', {
-    center: [50.1, 19.0],
-    zoom: 7,
+    center: [50.0, 19.5],
+    zoom: 8,
     zoomControl: false,
     attributionControl: true
   });
 
-  L.tileLayer(`https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?apiKey=${MAPY_API_KEY}`, {
+  L.tileLayer(`https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?lang=pl&apiKey=${MAPY_API_KEY}`, {
     maxZoom: 18,
     minZoom: 6,
     attribution: '&copy; <a href="https://www.mapy.com">Mapy.com</a> &copy; <a href="https://www.openstreetmap.org">OSM</a>'
@@ -400,8 +400,7 @@ function initMap() {
     }).addTo(leafletMap).bindTooltip('Ty', { permanent: true, direction: 'top' });
   }
 
-  if (!pendingRoute) {
-    const bounds = L.latLngBounds(PEAKS.map(p => [p.lat, p.lon]));
-    leafletMap.fitBounds(bounds, { padding: [20, 20] });
+  if (pendingRoute) {
+    applyRouteToMap();
   }
 }

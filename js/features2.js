@@ -277,7 +277,7 @@ async function syncGroupData() {
   const code = localStorage.getItem('kgp_group_code');
   if (!code) return;
   const profileId = getProfileId();
-  if (!profileId) { showToast('Potrzebujesz kodu sync aby korzystać z grup'); return; }
+  if (!profileId) { showToast('Potrzebujesz kodu dostępu aby korzystać z grup'); return; }
 
   try {
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
