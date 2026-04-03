@@ -108,6 +108,9 @@ async function renderPlan() {
           <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="navigateToParking('${pk.name.replace(/'/g,'`')}',${pk.lat||'null'},${pk.lon||'null'})">🚗 Wyznacz dojazd</button>
         </div>
       `).join(''); })()}
+      <button class="btn btn-secondary btn-full" onclick="openParkingFinder(${peak.id})" style="margin-top:8px">
+        🗺️ Pokaż parkingi na mapie
+      </button>
       <div style="margin-top:10px">
         <div class="label">Punkt pośredni (opcjonalnie)</div>
         <input class="input" type="text" id="via-point" placeholder="Np. schronisko, przełęcz...">
@@ -484,6 +487,194 @@ async function returnToParking(peakId) {
   } else {
     window.open(`https://mapy.com/search?q=${encodeURIComponent(pk.name + ', Polska')}`, '_blank');
   }
+}
+
+// ============================================================
+// PARKING FINDER - mapa z wyszukiwaniem parkingów
+// ============================================================
+function openParkingFinder(peakId) {
+  const peak = PEAKS.find(p => p.id === peakId);
+  if (!peak) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'parking-finder-overlay';
+  overlay.innerHTML = `
+  <div style="position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);gap:12px">
+      <button class="btn btn-secondary btn-sm" onclick="closeParkingFinder()">✕</button>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">🅿️ Parkingi - ${esc(peak.name)}</div>
+        <div style="font-size:11px;color:var(--text2)">Kliknij parking aby zapisać</div>
+      </div>
+    </div>
+    <div id="parking-finder-map" style="flex:1"></div>
+    <div id="parking-finder-info" style="padding:12px 16px;background:var(--bg2);border-top:1px solid var(--border);display:none">
+      <div id="parking-finder-name" style="font-weight:600;font-size:14px"></div>
+      <div id="parking-finder-details" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px" id="parking-finder-save" onclick="saveParkingFromFinder(${peakId})">💾 Zapisz ten parking</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+
+  setTimeout(() => {
+    const map = L.map('parking-finder-map', {
+      center: [peak.lat, peak.lon],
+      zoom: 14
+    });
+
+    L.tileLayer(`https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?lang=pl&apikey=${MAPY_API_KEY}`, {
+      maxZoom: 18,
+      attribution: '© Mapy.com'
+    }).addTo(map);
+
+    window._parkingFinderMap = map;
+    window._parkingFinderData = null;
+    window._parkingFinderMarkers = [];
+
+    // Marker szczytu
+    L.marker([peak.lat, peak.lon], {
+      icon: L.divIcon({ className: '', html: '<div style="font-size:24px">🏔️</div>', iconSize: [28, 28], iconAnchor: [14, 14] })
+    }).addTo(map).bindTooltip(peak.name, { permanent: true, direction: 'top', offset: [0, -10] });
+
+    // Istniejące parkingi z danych
+    const existingParkings = getParkingList(peak);
+    existingParkings.filter(pk => pk.lat && pk.lon).forEach(pk => {
+      const m = L.marker([pk.lat, pk.lon], {
+        icon: L.divIcon({ className: '', html: '<div style="font-size:20px">🅿️</div>', iconSize: [24, 24], iconAnchor: [12, 12] })
+      }).addTo(map).bindTooltip(pk.name, { direction: 'top', offset: [0, -8] });
+      m.on('click', () => selectParkingOnMap(pk.lat, pk.lon, pk.name, pk.note || ''));
+    });
+
+    // Szukaj parkingów z OSM Overpass
+    fetchOsmParkings(peak.lat, peak.lon, 6000, map);
+
+    // Klik na mapę - reverse geocode i zapisz
+    map.on('click', async e => {
+      const { lat, lng: lon } = e.latlng;
+      selectParkingOnMap(lat, lon, null, null);
+      // Reverse geocode
+      try {
+        const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&apikey=${MAPY_API_KEY}`);
+        const data = await res.json();
+        const name = data.items?.[0]?.name || `Parking (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+        window._parkingFinderData.name = name;
+        document.getElementById('parking-finder-name').textContent = '🅿️ ' + name;
+      } catch {}
+    });
+  }, 100);
+}
+
+function selectParkingOnMap(lat, lon, name, details) {
+  const map = window._parkingFinderMap;
+  if (!map) return;
+
+  // Usuń stary marker wyboru
+  if (window._parkingFinderSelected) window._parkingFinderSelected.remove();
+  window._parkingFinderSelected = L.marker([lat, lon]).addTo(map);
+
+  window._parkingFinderData = { lat, lon, name: name || `Parking (${lat.toFixed(5)}, ${lon.toFixed(5)})` };
+
+  const info = document.getElementById('parking-finder-info');
+  info.style.display = 'block';
+  document.getElementById('parking-finder-name').textContent = '🅿️ ' + (name || 'Wybrany punkt');
+  document.getElementById('parking-finder-details').textContent = details || `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+}
+
+async function fetchOsmParkings(lat, lon, radiusM, map) {
+  try {
+    const query = `[out:json][timeout:10];(node["amenity"="parking"](around:${radiusM},${lat},${lon});way["amenity"="parking"](around:${radiusM},${lat},${lon}););out center;`;
+    const res = await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query));
+    const data = await res.json();
+    const elements = data.elements || [];
+
+    elements.forEach(el => {
+      const elLat = el.lat || el.center?.lat;
+      const elLon = el.lon || el.center?.lon;
+      if (!elLat || !elLon) return;
+
+      const name = el.tags?.name || '';
+      const fee = el.tags?.fee === 'yes' ? '💰 Płatny' : el.tags?.fee === 'no' ? '🆓 Darmowy' : '';
+      const capacity = el.tags?.capacity ? `${el.tags.capacity} miejsc` : '';
+      const label = [name, fee, capacity].filter(Boolean).join(' · ') || 'Parking (OSM)';
+
+      const m = L.marker([elLat, elLon], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="background:#2196F3;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 4px rgba(0,0,0,0.3)">P</div>',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      }).addTo(map).bindTooltip(label, { direction: 'top', offset: [0, -8] });
+
+      m.on('click', () => selectParkingOnMap(elLat, elLon, name || 'Parking (OSM)', label));
+      window._parkingFinderMarkers.push(m);
+    });
+  } catch (e) {
+    // Overpass może nie odpowiedzieć - nie krytyczne
+    console.log('OSM parking search failed:', e);
+  }
+}
+
+function saveParkingFromFinder(peakId) {
+  const d = window._parkingFinderData;
+  if (!d || !d.lat) return;
+
+  const peak = PEAKS.find(p => p.id === peakId);
+  if (!peak) return;
+
+  const name = prompt('Nazwa parkingu:', d.name || '');
+  if (name === null) return;
+  const note = prompt('Notatka (cena, miejsc, uwagi):', '') || '';
+
+  const newParking = { name: name || d.name, lat: d.lat, lon: d.lon, note };
+
+  // Zapisz jako override w localStorage
+  const ov = JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}');
+  if (!ov[peakId]) ov[peakId] = {};
+
+  // Zbierz istniejące parkingi (z routes lub parking[])
+  if (!ov[peakId].parking) {
+    if (peak.routes) {
+      ov[peakId].parking = peak.routes.map(r => r.parking).filter(Boolean).map(p => JSON.parse(JSON.stringify(p)));
+    } else {
+      ov[peakId].parking = JSON.parse(JSON.stringify(peak.parking || []));
+    }
+  }
+
+  // Sprawdź czy nie duplikat (blisko istniejącego)
+  const isDup = ov[peakId].parking.some(p => {
+    return Math.abs(p.lat - d.lat) < 0.0005 && Math.abs(p.lon - d.lon) < 0.0005;
+  });
+  if (!isDup) {
+    ov[peakId].parking.push(newParking);
+  } else {
+    const idx = ov[peakId].parking.findIndex(p => Math.abs(p.lat - d.lat) < 0.0005 && Math.abs(p.lon - d.lon) < 0.0005);
+    if (idx >= 0) ov[peakId].parking[idx] = newParking;
+  }
+
+  localStorage.setItem('kgp_peaks_overrides', JSON.stringify(ov));
+
+  // Odśwież PEAKS w pamięci
+  if (!peak.routes) {
+    peak.parking = ov[peakId].parking;
+  }
+
+  closeParkingFinder();
+  goto(state.currentPage);
+  showToast(`🅿️ ${name || d.name} zapisany!`);
+}
+
+function closeParkingFinder() {
+  if (window._parkingFinderMap) {
+    window._parkingFinderMap.remove();
+    window._parkingFinderMap = null;
+  }
+  if (window._parkingFinderSelected) window._parkingFinderSelected = null;
+  window._parkingFinderMarkers = [];
+  window._parkingFinderData = null;
+  const overlay = document.getElementById('parking-finder-overlay');
+  if (overlay) overlay.remove();
 }
 
 // ============================================================

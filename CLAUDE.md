@@ -24,7 +24,8 @@ js/utils.js         - esc(), dist(), GPS, toast, confetti, context detection
 js/sync.js          - Supabase sync, login, upload zdjęć
 js/weather.js       - prognoza pogody
 js/map.js           - Leaflet mapa, routing Mapy.com
-js/ui.js            - renderList, renderPlan, renderSummit, modal
+js/ui.js            - renderList, renderSummit, modal (renderPlan zachowany jako referencja)
+js/planner.js       - planer wypraw: lista, edytor, map picker, GPS checkpoint
 js/journal.js       - renderJournal, export/import backup
 js/settings.js      - renderSettings
 js/features.js      - SOS, streak, osiągnięcia, timeline, lightbox, dashboard, kalorie
@@ -37,7 +38,7 @@ DOCS.md             - dokumentacja projektowa analityczna (architektura, przeply
 
 ## Konwencje kodu
 - Vanilla JS, bez TypeScript, bez modułów ES6 (skrypty ładowane przez `<script src>`)
-- Kolejność ładowania JS ma znaczenie (zależności): data → state → utils → sync → weather → map → ui → journal → settings → features → features2 → router
+- Kolejność ładowania JS ma znaczenie (zależności): data → state → utils → sync → weather → map → ui → journal → settings → features → features2 → planner → router
 - Funkcje renderujące strony zwracają string HTML (np. `renderMap()`, `renderList()`)
 - Nawigacja SPA przez `goto('page')` — router w `router.js`
 - Stan w obiekcie `state`, zapis do localStorage przez `save()`

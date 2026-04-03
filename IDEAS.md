@@ -58,7 +58,7 @@
 ## Do zrobienia
 
 ### Priorytet wysoki
-- [ ] **Planer wyprawy (multi-segment)** - refactor strony Planuj. Wyprawa = kontener segmentów: 🚗 Dojazd, 🥾 Podejście (z via), 🔽 Zejście, 🏨 Nocleg, 🍽️ Restauracja, ☀️ Przerwa, 🚂 Komunikacja, ⛽ Tankowanie. Jeden szczyt = 3 segmenty, weekend = wiele segmentów + nocleg. Kalkulator dnia sumuje wszystko w timeline. Zapis do Supabase.
+- [x] **Planer wyprawy (multi-segment)** - planner.js: lista wypraw, edytor z dniami i przystankami, 11 typów stopów, auto-kalkulacja timeline, GPS checkpoint, map picker (reverse geocode), udostępnianie przez Supabase shared_trips, szybki plan z jednego szczytu, przesuwanie dat, duplikowanie.
 - [ ] **Profil wysokosciowy trasy** - wykres przewyzszen (OpenElevation API + Canvas). Gdzie stromo, gdzie plask, gdzie odpoczac.
 - [ ] **Tryb offline z mapami** - cache kafelkow w IndexedDB dla okolic kazdego szczytu. W gorach czesto brak zasiegu.
 - [ ] **Wiele zdjec na szczyt** - galeria zamiast jednego zdjecia. Porownanie lato vs zima.

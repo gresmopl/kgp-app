@@ -30,6 +30,7 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Wyzwanie grupowe** - rywalizacja ze znajomymi w zdobywaniu KGP
 - **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku
 - **Strona informacyjna** - responsywna strona "O aplikacji" z opisem funkcji (about.html)
+- **Planer wypraw** - wielodniowe wyprawy, przystanki (parking/szlak/szczyt/nocleg/restauracja), timeline z auto-kalkulacja, GPS checkpoint, udostepnianie, wybor punktow z mapy
 - **Panel administracyjny** - dashboard, zarzadzanie uzytkownikami, galeria zdjec, ostrzezenia, stan systemu (panel.html)
 
 ## Stos technologiczny
@@ -63,6 +64,7 @@ kgp-app/
 │   ├── settings.js     # Ustawienia
 │   ├── features.js     # SOS, streak, prognoza, onboarding, kalorie, karta, osiagniecia, timeline, lightbox, dashboard
 │   ├── features2.js    # Wydruk, pakowanie, ciekawostki, parking, pogoda, restauracje, grupy, tracker, ostrzezenia
+│   ├── planner.js      # Planer wypraw: lista, edytor, map picker, GPS checkpoint, udostepnianie
 │   └── router.js       # Nawigacja SPA, init
 ├── manifest.json       # Konfiguracja PWA
 ├── sw.js               # Service Worker

@@ -62,6 +62,23 @@ function migrateState() {
 
 migrateState();
 
+// Nakładanie nadpisań danych szczytów z panelu admina
+(function applyPeakOverrides() {
+  const ov = JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}');
+  Object.entries(ov).forEach(([id, changes]) => {
+    const peak = PEAKS.find(p => p.id === parseInt(id));
+    if (!peak) return;
+    if (changes.trail) Object.assign(peak.trail || (peak.trail = {}), changes.trail);
+    if (changes.parking) peak.parking = changes.parking;
+    if (changes.routes) peak.routes = changes.routes;
+    if (changes.station) peak.station = changes.station;
+    if (changes.stamps) peak.stamps = changes.stamps;
+    if (changes.photo !== undefined) peak.photo = changes.photo;
+    if (changes.season) peak.season = changes.season;
+    if (changes.difficulty !== undefined) peak.difficulty = changes.difficulty;
+  });
+})();
+
 function getRoute(peak) {
   const idx = state.selectedRoutes[peak.id] || 0;
   if (peak.routes) return peak.routes[idx] || peak.routes[0];

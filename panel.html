@@ -6,6 +6,7 @@
 <title>KGP - Panel administracyjny</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/data.js"></script>
 <style>
 :root {
   --bg: #0f0f1a; --bg2: #1a1a2e; --card: #1e1e35; --card2: #252545;
@@ -138,6 +139,7 @@ tr:hover td { background: var(--card2); }
       <div class="tab" onclick="switchTab('warnings')">⚠️ Ostrzeżenia</div>
       <div class="tab" onclick="switchTab('gallery')">🖼️ Galeria</div>
       <div class="tab" onclick="switchTab('system')">🔧 System</div>
+      <div class="tab" onclick="switchTab('peaks')">🏔️ Szczyty</div>
       <div class="tab" onclick="switchTab('data')">🗄️ Dane</div>
     </div>
 
@@ -233,6 +235,24 @@ tr:hover td { background: var(--card2); }
     </div>
 
     <!-- Raw data -->
+    <div class="section" id="sec-peaks">
+      <div class="card">
+        <h2>🏔️ Edycja danych szczytów</h2>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Zmień dane trasy, parkingów, stacji i inne. Zmiany zapisują się automatycznie przy każdej edycji i są stosowane w aplikacji.</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-accent" onclick="exportPeakOverrides()">📋 Kopiuj zmiany jako JSON</button>
+          <button class="btn btn-secondary" onclick="importPeakOverrides()">📥 Importuj JSON</button>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <select id="peak-select" onchange="renderPeakEditor()">
+            <option value="">-- Wybierz szczyt --</option>
+          </select>
+        </div>
+        <div id="peak-editor"></div>
+      </div>
+      <div id="peak-overrides-info" style="margin-top:4px"></div>
+    </div>
+
     <div class="section" id="sec-data">
       <div class="card">
         <h2>🗄️ Przeglądarka tabel</h2>
@@ -258,8 +278,7 @@ tr:hover td { background: var(--card2); }
 
 <script>
 // ── Config ──
-const SUPABASE_URL = 'https://bocwhfubyuwpsdcvqiqb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable__szHGpjSyOWzCDXQMSD6eA_TKu8ClW0';
+// SUPABASE_URL i SUPABASE_KEY załadowane z data.js
 const ADMIN_HASH = 'ea3a03b4971eeb62730e1de238225cc4e6145f0eb50ad28b1379f2a2ee71e16e'; // sha256 PIN - zmień na swój
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -720,8 +739,379 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ── Peak editor ──
+const PEAKS_OVERRIDES_KEY = 'kgp_peaks_overrides';
+
+function getPeakOverrides() {
+  return JSON.parse(localStorage.getItem(PEAKS_OVERRIDES_KEY) || '{}');
+}
+function savePeakOverrides(ov) {
+  localStorage.setItem(PEAKS_OVERRIDES_KEY, JSON.stringify(ov));
+}
+
+function initPeakSelect() {
+  const sel = document.getElementById('peak-select');
+  if (sel.options.length > 1) return;
+  PEAKS.sort((a, b) => a.name.localeCompare(b.name, 'pl')).forEach(p => {
+    sel.add(new Option(`${p.name} (${p.height}m, ${p.range})`, p.id));
+  });
+  renderPeakOverridesInfo();
+}
+
+function getPeakWithOverrides(id) {
+  const base = PEAKS.find(p => p.id === id);
+  if (!base) return null;
+  const ov = getPeakOverrides()[id];
+  if (!ov) return JSON.parse(JSON.stringify(base));
+  const merged = JSON.parse(JSON.stringify(base));
+  // Nadpisz trail
+  if (ov.trail) Object.assign(merged.trail || (merged.trail = {}), ov.trail);
+  // Nadpisz parking (zamień cały)
+  if (ov.parking) merged.parking = ov.parking;
+  // Nadpisz routes (z parking/trail wewnątrz)
+  if (ov.routes) merged.routes = ov.routes;
+  // Nadpisz pola proste
+  if (ov.station) merged.station = ov.station;
+  if (ov.stamps) merged.stamps = ov.stamps;
+  if (ov.photo !== undefined) merged.photo = ov.photo;
+  if (ov.season) merged.season = ov.season;
+  if (ov.difficulty !== undefined) merged.difficulty = ov.difficulty;
+  return merged;
+}
+
+function renderPeakEditor() {
+  const sel = document.getElementById('peak-select');
+  const id = parseInt(sel.value);
+  const editor = document.getElementById('peak-editor');
+  if (!id) { editor.innerHTML = ''; return; }
+
+  const peak = getPeakWithOverrides(id);
+  if (!peak) return;
+
+  const ov = getPeakOverrides()[id] || {};
+  const hasOverrides = Object.keys(ov).length > 0;
+
+  let html = `<div style="margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:10px">
+    <div style="font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px">${esc(peak.name)} - ${peak.height}m</div>
+    <div style="font-size:12px;color:var(--text2)">${peak.range} - trudność ${peak.difficulty}/5</div>
+    ${hasOverrides ? '<div style="margin-top:6px"><span class="badge badge-blue">Ma nadpisania</span> <button class="btn btn-red" style="padding:2px 10px;font-size:11px;margin-left:8px" onclick="resetPeakOverrides(' + id + ')">Resetuj do domyślnych</button></div>' : ''}
+  </div>`;
+
+  // Trasa (multi-route lub single)
+  if (peak.routes) {
+    peak.routes.forEach((route, ri) => {
+      html += renderRouteEditor(id, ri, route, true);
+    });
+  } else {
+    html += renderRouteEditor(id, -1, peak, false);
+  }
+
+  // Sezon
+  const monthNames = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+  html += `<div style="margin-top:16px;padding:12px;background:var(--bg2);border-radius:10px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:8px">📅 Sezon</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">
+      ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m =>
+        `<button class="btn" style="padding:6px 10px;font-size:11px;${peak.season.includes(m) ? 'background:var(--green);color:#fff' : 'background:var(--card);color:var(--text2)'}" onclick="toggleSeason(${id},${m})">${monthNames[m-1]}</button>`
+      ).join('')}
+    </div>
+  </div>`;
+
+  // Trudność
+  html += `<div style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:10px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:8px">💪 Trudność</div>
+    <div style="display:flex;gap:4px">
+      ${[1,2,3,4,5].map(d =>
+        `<button class="btn" style="padding:6px 14px;font-size:13px;${peak.difficulty === d ? 'background:var(--accent);color:#000' : 'background:var(--card);color:var(--text2)'}" onclick="setPeakDifficulty(${id},${d})">${d}</button>`
+      ).join('')}
+    </div>
+  </div>`;
+
+  // Pieczątki
+  html += `<div style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:10px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:8px">📌 Pieczątki</div>
+    ${(peak.stamps || []).map((s, si) =>
+      `<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+        <input value="${esc(s.name)}" placeholder="Nazwa" style="flex:2;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateStamp(${id},${si},'name',this.value)">
+        <input value="${esc(s.note || '')}" placeholder="Notatka" style="flex:2;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateStamp(${id},${si},'note',this.value)">
+        <select style="padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateStamp(${id},${si},'type',this.value)">
+          <option value="🏠" ${s.type === '🏠' ? 'selected' : ''}>🏠 Schronisko</option>
+          <option value="🏚️" ${s.type === '🏚️' ? 'selected' : ''}>🏚️ Chatka</option>
+          <option value="🎫" ${s.type === '🎫' ? 'selected' : ''}>🎫 Kasa</option>
+          <option value="📮" ${s.type === '📮' ? 'selected' : ''}>📮 Poczta</option>
+        </select>
+        <button class="btn btn-red" style="padding:4px 8px;font-size:11px" onclick="removeStamp(${id},${si})">✕</button>
+      </div>`
+    ).join('')}
+    <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px;margin-top:4px" onclick="addStamp(${id})">+ Dodaj pieczątkę</button>
+  </div>`;
+
+  // Foto tip
+  html += `<div style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:10px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:8px">📸 Wskazówka do zdjęcia</div>
+    <input value="${esc(peak.photo || '')}" placeholder="np. Przy tablicy na szczycie" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updatePeakField(${id},'photo',this.value)">
+  </div>`;
+
+  editor.innerHTML = html;
+}
+
+function renderRouteEditor(peakId, routeIdx, data, isMultiRoute) {
+  const prefix = routeIdx >= 0 ? `route_${routeIdx}` : 'main';
+  const trail = isMultiRoute ? data.trail : data.trail;
+  const parking = isMultiRoute ? data.parking : (data.parking ? data.parking[0] : null);
+  const station = data.station;
+  const routeName = isMultiRoute ? data.name : '';
+
+  let html = `<div style="padding:12px;background:var(--bg2);border-radius:10px;margin-bottom:12px">`;
+
+  if (isMultiRoute) {
+    html += `<div style="font-weight:600;font-size:13px;color:var(--accent);margin-bottom:10px">🛤️ Trasa: ${esc(routeName)}</div>`;
+  }
+
+  // Trail
+  html += `<div style="font-weight:600;font-size:12px;margin-bottom:6px">🥾 Szlak</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+    <div>
+      <label style="font-size:10px;color:var(--text2)">Dystans (km)</label>
+      <input type="number" step="0.1" value="${trail?.dist || ''}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateTrail(${peakId},${routeIdx},'dist',parseFloat(this.value))">
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--text2)">Podejście (min)</label>
+      <input type="number" value="${trail?.up || ''}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateTrail(${peakId},${routeIdx},'up',parseInt(this.value))">
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--text2)">Zejście (min)</label>
+      <input type="number" value="${trail?.down || ''}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateTrail(${peakId},${routeIdx},'down',parseInt(this.value))">
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--text2)">Przewyższenie (m)</label>
+      <input type="number" value="${trail?.ascent || ''}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateTrail(${peakId},${routeIdx},'ascent',parseInt(this.value))">
+    </div>
+  </div>`;
+
+  // Parking
+  if (isMultiRoute) {
+    html += `<div style="font-weight:600;font-size:12px;margin-bottom:6px">🅿️ Parking</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:12px">
+      <div>
+        <label style="font-size:10px;color:var(--text2)">Nazwa</label>
+        <input value="${esc(parking?.name || '')}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateRouteParking(${peakId},${routeIdx},'name',this.value)">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--text2)">Lat</label>
+        <input type="number" step="0.0001" value="${parking?.lat || ''}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateRouteParking(${peakId},${routeIdx},'lat',parseFloat(this.value))">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--text2)">Lon</label>
+        <input type="number" step="0.0001" value="${parking?.lon || ''}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateRouteParking(${peakId},${routeIdx},'lon',parseFloat(this.value))">
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:10px;color:var(--text2)">Notatka</label>
+      <input value="${esc(parking?.note || '')}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateRouteParking(${peakId},${routeIdx},'note',this.value)">
+    </div>`;
+  } else {
+    const parkings = data.parking || [];
+    html += `<div style="font-weight:600;font-size:12px;margin-bottom:6px">🅿️ Parkingi</div>`;
+    parkings.forEach((pk, pi) => {
+      html += `<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:4px">
+        <div>
+          <label style="font-size:10px;color:var(--text2)">Nazwa</label>
+          <input value="${esc(pk.name)}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateParking(${peakId},${pi},'name',this.value)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--text2)">Lat</label>
+          <input type="number" step="0.0001" value="${pk.lat}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateParking(${peakId},${pi},'lat',parseFloat(this.value))">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--text2)">Lon</label>
+          <input type="number" step="0.0001" value="${pk.lon}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateParking(${peakId},${pi},'lon',parseFloat(this.value))">
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:10px;color:var(--text2)">Notatka</label>
+        <input value="${esc(pk.note || '')}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateParking(${peakId},${pi},'note',this.value)">
+      </div>`;
+    });
+  }
+
+  // Stacja
+  html += `<div style="font-weight:600;font-size:12px;margin-bottom:6px">🚂 Stacja</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+    <div>
+      <label style="font-size:10px;color:var(--text2)">Nazwa</label>
+      <input value="${esc(station?.name || '')}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateStation(${peakId},${routeIdx},'name',this.value)">
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--text2)">Info</label>
+      <input value="${esc(station?.info || '')}" style="width:100%;padding:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="updateStation(${peakId},${routeIdx},'info',this.value)">
+    </div>
+  </div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+// ── Peak edit actions ──
+function getFullPeakData(peakId) {
+  return getPeakWithOverrides(peakId);
+}
+
+function savePeakChange(peakId, mutator) {
+  const ov = getPeakOverrides();
+  if (!ov[peakId]) ov[peakId] = {};
+  const peak = getFullPeakData(peakId);
+  mutator(peak, ov[peakId]);
+  savePeakOverrides(ov);
+  renderPeakEditor();
+  renderPeakOverridesInfo();
+  showToast('✅ Zapisano');
+}
+
+function updateTrail(peakId, routeIdx, field, value) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (routeIdx >= 0) {
+      if (!ov.routes) ov.routes = JSON.parse(JSON.stringify(PEAKS.find(p => p.id === peakId).routes));
+      ov.routes[routeIdx].trail[field] = value;
+    } else {
+      if (!ov.trail) ov.trail = {};
+      ov.trail[field] = value;
+    }
+  });
+}
+
+function updateParking(peakId, parkingIdx, field, value) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (!ov.parking) ov.parking = JSON.parse(JSON.stringify(peak.parking));
+    ov.parking[parkingIdx][field] = value;
+  });
+}
+
+function updateRouteParking(peakId, routeIdx, field, value) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (!ov.routes) ov.routes = JSON.parse(JSON.stringify(PEAKS.find(p => p.id === peakId).routes));
+    ov.routes[routeIdx].parking[field] = value;
+  });
+}
+
+function updateStation(peakId, routeIdx, field, value) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (routeIdx >= 0) {
+      if (!ov.routes) ov.routes = JSON.parse(JSON.stringify(PEAKS.find(p => p.id === peakId).routes));
+      ov.routes[routeIdx].station[field] = value;
+    } else {
+      if (!ov.station) ov.station = Object.assign({}, peak.station);
+      ov.station[field] = value;
+    }
+  });
+}
+
+function updateStamp(peakId, stampIdx, field, value) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (!ov.stamps) ov.stamps = JSON.parse(JSON.stringify(peak.stamps || []));
+    ov.stamps[stampIdx][field] = value;
+  });
+}
+
+function addStamp(peakId) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (!ov.stamps) ov.stamps = JSON.parse(JSON.stringify(peak.stamps || []));
+    ov.stamps.push({ name: '', type: '🏠', note: '' });
+  });
+}
+
+function removeStamp(peakId, stampIdx) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (!ov.stamps) ov.stamps = JSON.parse(JSON.stringify(peak.stamps || []));
+    ov.stamps.splice(stampIdx, 1);
+  });
+}
+
+function updatePeakField(peakId, field, value) {
+  savePeakChange(peakId, (peak, ov) => {
+    ov[field] = value;
+  });
+}
+
+function toggleSeason(peakId, month) {
+  savePeakChange(peakId, (peak, ov) => {
+    if (!ov.season) ov.season = [...peak.season];
+    const idx = ov.season.indexOf(month);
+    if (idx >= 0) ov.season.splice(idx, 1);
+    else ov.season.push(month);
+    ov.season.sort((a, b) => a - b);
+  });
+}
+
+function setPeakDifficulty(peakId, diff) {
+  savePeakChange(peakId, (peak, ov) => {
+    ov.difficulty = diff;
+  });
+}
+
+function resetPeakOverrides(peakId) {
+  const ov = getPeakOverrides();
+  delete ov[peakId];
+  savePeakOverrides(ov);
+  renderPeakEditor();
+  renderPeakOverridesInfo();
+  showToast('Przywrócono domyślne dane');
+}
+
+function exportPeakOverrides() {
+  const ov = getPeakOverrides();
+  if (Object.keys(ov).length === 0) {
+    showToast('Brak zmian do eksportu');
+    return;
+  }
+  // Wzbogać o nazwy szczytów dla czytelności
+  const out = {};
+  Object.entries(ov).forEach(([id, changes]) => {
+    const p = PEAKS.find(pk => pk.id === parseInt(id));
+    out[id] = { _name: p ? p.name : '?', ...changes };
+  });
+  navigator.clipboard.writeText(JSON.stringify(out, null, 2));
+  showToast('📋 Skopiowano do schowka');
+}
+
+function importPeakOverrides() {
+  const json = prompt('Wklej JSON z nadpisaniami:');
+  if (!json) return;
+  try {
+    const data = JSON.parse(json);
+    // Usuń pola pomocnicze _name
+    Object.values(data).forEach(v => delete v._name);
+    savePeakOverrides(data);
+    renderPeakEditor();
+    renderPeakOverridesInfo();
+    showToast('✅ Zaimportowano');
+  } catch (e) {
+    showToast('❌ Błędny format JSON');
+  }
+}
+
+function renderPeakOverridesInfo() {
+  const ov = getPeakOverrides();
+  const keys = Object.keys(ov);
+  const el = document.getElementById('peak-overrides-info');
+  if (!el) return;
+  if (keys.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  const names = keys.map(id => {
+    const p = PEAKS.find(pk => pk.id === parseInt(id));
+    return p ? p.name : `#${id}`;
+  });
+  el.innerHTML = `<div class="card" style="padding:12px">
+    <div style="font-size:12px;color:var(--text2)">📝 Szczyty z nadpisaniami (${keys.length}): <strong style="color:var(--text)">${names.join(', ')}</strong></div>
+    <button class="btn btn-red" style="padding:4px 12px;font-size:11px;margin-top:8px" onclick="if(confirm('Usunąć wszystkie nadpisania?')){localStorage.removeItem('${PEAKS_OVERRIDES_KEY}');renderPeakEditor();renderPeakOverridesInfo();showToast('Usunięto')}">Resetuj wszystkie</button>
+  </div>`;
+}
+
 // ── Init ──
 if (sessionStorage.getItem('kgp_admin')) showPanel();
+setTimeout(initPeakSelect, 100);
 </script>
 </body>
 </html>

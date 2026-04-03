@@ -21,7 +21,7 @@ async function goto(page, skipHistory) {
   switch(page) {
     case 'map':    html = renderMap(); break;
     case 'list':   html = renderList(); break;
-    case 'plan':   html = await renderPlan(); break;
+    case 'plan':   html = renderPlanner(); break;
     case 'summit': html = renderSummit(); break;
     case 'journal':html = renderJournal(); break;
     case 'settings': html = renderSettings(); break;
@@ -43,10 +43,20 @@ async function goto(page, skipHistory) {
     setTimeout(() => { initMap(); setTimeout(applyRouteToMap, 100); }, 50);
   }
   if (page === 'plan') {
-    const peak = state.selectedPeak || getTodo()[0] || PEAKS[0];
-    loadWeather(peak);
-    loadSunTimes(peak);
-    loadWarnings(peak.id);
+    // Ładuj pogodę/słońce/ostrzeżenia jeśli edytujemy wyprawę z peakiem
+    const trip = state._activeTripId ? state.trips.find(t => t.id === state._activeTripId) : null;
+    let planPeak = null;
+    if (trip) {
+      const dayIdx = Math.min(state._activeDayIdx, (trip.days || []).length - 1);
+      const day = trip.days?.[dayIdx];
+      const peakStop = day?.stops?.find(s => s.type === 'summit' && s.peakId);
+      if (peakStop) planPeak = PEAKS.find(p => p.id === peakStop.peakId);
+    }
+    if (planPeak) {
+      loadWeather(planPeak);
+      loadSunTimes(planPeak);
+      loadWarnings(planPeak.id);
+    }
   }
   if (page === 'sos') {
     // Załaduj zachód słońca dla SOS
@@ -156,6 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initOfflineIndicator();
   updateContextBadge();
   setInterval(updateContext, 15000);
+
+  // Sprawdź czy to link do shared trip
+  const hash = location.hash;
+  if (hash.startsWith('#trip/')) {
+    const shareCode = hash.slice(6);
+    loadSharedTrip(shareCode);
+  }
 
   const lastPage = state.currentPage || 'map';
   history.replaceState({page: lastPage}, '', '#' + lastPage);
