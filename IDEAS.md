@@ -64,7 +64,7 @@
 
 ### Priorytet wysoki
 - [x] **Planer wyprawy (multi-segment)** - planner.js: lista wypraw, edytor z dniami i przystankami, 11 typów stopów, auto-kalkulacja timeline, GPS checkpoint, map picker (reverse geocode), udostępnianie przez Supabase shared_trips, szybki plan z jednego szczytu, przesuwanie dat, duplikowanie.
-- [ ] **Profil wysokosciowy trasy** - wykres przewyzszen (OpenElevation API + Canvas). Gdzie stromo, gdzie plask, gdzie odpoczac.
+- [ ] **Profil wysokosciowy trasy** - wykres przewyzszen (GUGiK NMT API + Canvas). Gdzie stromo, gdzie plask, gdzie odpoczac. NMT daje dokladnosc 1m - lepsza niz OpenElevation.
 - [ ] **Tryb offline z mapami** - cache kafelkow w IndexedDB dla okolic kazdego szczytu. W gorach czesto brak zasiegu.
 - [ ] **Wiele zdjec na szczyt** - galeria zamiast jednego zdjecia. Porownanie lato vs zima.
 
@@ -139,4 +139,25 @@
 - **Waymarked Trails** - darmowy overlay szlakow (tile.waymarkedtrails.org/hiking/)
 - Wniosek: Mapy.cz optymalny wybor - jeden provider, wszystko w jednym, tani, dobre dane turystyczne
 
-*Ostatnia aktualizacja: 2026-04-05 (sesja 3)*
+### GUGiK / Geoportal API (research)
+- **Darmowe, bez klucza API, do uzytkow komercyjnych i niekomercyjnych** (wymog: podanie zrodla GUGiK)
+- Brak udokumentowanych rate limitow (przy normalnym uzyciu nie powinno byc problemow)
+- **NMT API** (`services.gugik.gov.pl/nmt/`) - Numeryczny Model Terenu:
+  - `GetHByXY` - wysokosc pojedynczego punktu (dokladnosc 1m x 1m grid)
+  - `GetHByPointList` - wysokosci listy punktow (idealny do profilu trasy)
+  - `GetMinMaxByPolygon` - min/max wysokosc w obszarze
+  - Uwaga: wspolrzedne w ukladzie PUWG92, wymaga konwersji z WGS84 (lat/lon)
+- **CAPAP Search API** (`capap.gugik.gov.pl/api/fts/`) - geokodowanie i wyszukiwanie:
+  - `/gc/prngof` - wyszukiwanie obiektow fizjograficznych (gory, szczyty, rzeki, jeziora)
+  - `/gc/pkt` - geokodowanie adresow (alternatywa dla Mapy.com)
+  - `/rgc/adr` - reverse geokodowanie (co jest w danym punkcie GPS)
+  - `/rgc/prngof` - reverse geocoding obiektow fizjograficznych
+  - Odpowiedzi w JSON z GeoJSON geometry
+- **Potencjalne zastosowania w KGP**:
+  - Profil wysokosciowy trasy (NMT GetHByPointList + routing z Mapy.com)
+  - Dokładna wysokosc szczytu z NMT
+  - "Jestes w poblizu: Rysy (2499 m)" - reverse geocoding PRNG w terenie
+  - Fallback geokodowania parkingów
+- Dokumentacja: https://www.geoportal.gov.pl/wp-media/2023/10/Dokumentacja-uslugi-API-wersja-1.06.pdf
+
+*Ostatnia aktualizacja: 2026-04-05 (sesja 4)*
