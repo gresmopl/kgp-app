@@ -12,6 +12,11 @@
 - [x] Integracja Supabase (sync code, zdjecia, profil)
 - [x] Integracja Mapy.com (routing pieszy/auto, kafelki outdoor, geocoding)
 - [x] Ekran Ustawienia (profil, adres, tempo, transport, sync, backup)
+- [x] Modul AI (ai.js) - Gemini Flash, klucz z Supabase app_config, tracking zuzycia per user, autoryzacja przez login
+- [x] Bezpieczny sync - ochrona przed nadpisaniem bogatszych danych pustymi (dataWeight), brak auto-tworzenia profilu na nowym urzadzeniu
+- [x] Sync zdjec miedzy urzadzeniami - photoUrl z Supabase Storage, fallback przy braku base64
+- [x] Manualne przyciski sync (Wyslij/Pobierz z chmury) + naprawa brakujacych URL zdjec
+- [x] Zarzadzanie parkingami - dodawanie nowych przez map picker, lista overrides w ustawieniach, sync do Supabase
 
 ### Bezpieczenstwo
 - [x] ~~Tryb SOS~~ → przeniesione do ustawień jako sekcja "Numery alarmowe" (GPS, GOPR/TOPR per region, 112, rekomendacja apki Ratunek)
@@ -65,7 +70,10 @@
 
 ### Priorytet sredni
 - [ ] **AI Planner (Gemini)** - "weekend 18-19 kwietnia, jade z Krakowa" → AI generuje plan: ktore gory, kolejnosc, noclegi, pogoda
-- [ ] **AI Chatbot / Przewodnik** - "Co zabrac na Babia Gore w listopadzie?" - odpowiada w kontekscie pogody i poziomu
+- [x] **AI Chatbot / Przewodnik** - przycisk 🤖 na mapie, bottom-sheet overlay, historia rozmowy (max 6 msg), kontekst uzytkownika (zdobyte, lokalizacja, transport, pora roku). Gemini Flash przez ai.js
+- [x] **AI opisy szczytow** - przycisk 🤖 w popupie mapy i widoku szczyt. Modal z opisem AI (historia, ciekawostki, porady). Gemini generuje na podstawie danych szczytu
+- [ ] **Ciekawostki z Wikipedii + AI** - Wikipedia API (pl.wikipedia.org) pobiera intro artykulu o szczycie, Gemini skraca do 2-3 zdan ciekawostki. Darmowe, bez limitu, pelne artykuly po polsku
+- [ ] **AI-generowane obrazy gor (Pollinations.ai)** - darmowe API generujace artystyczne obrazy gor z promptu. URL: `image.pollinations.ai/prompt/{opis}?width=512&height=384&nologo=true`. Gemini generuje prompt na podstawie opisu z Wikipedii. Model nanobanana (enter.pollinations.ai) radzi sobie z polskim tekstem na obrazie. Mozliwosc nakladania tekstu (nazwa, data) przez Canvas. Rate limiting - trzeba cachowac. Do kart zdobycia, ciekawostek, tla profilowego
 - [ ] **Porownaj trase z kolega** - import/export planow jako linki
 - [ ] **Planowanie weekendu z noclegiem** - linki do booking.com / nocowanie.pl
 - [ ] **Eksport do GPX / KML** - szlaki do nawigacji GPS
@@ -102,6 +110,9 @@
 - [x] **System migracji danych** - wersjonowany schemat state z automatycznymi migracjami
 - [x] **Dokumentacja projektowa** - DOCS.md z architektura, przepływami, decyzjami
 - [x] **Changelog** - CHANGELOG.md z historia wersji
+- [x] **Supabase app_config** - bezpieczne przechowywanie kluczy API (Gemini) w bazie, SELECT-only RLS
+- [x] **Supabase ai_usage** - tracking zuzycia tokenow AI per user per miesiac (input/output/requests/model)
+- [ ] **Zliczanie kredytow Mapy.cz API** - wewnetrzny licznik requestow per endpoint (tiles=1, geocoding=4, routing=4, suggest=4). Pokazywanie zuzycia w panelu admina. Limit 250k darmowych/mc. Alerty przy zbliżaniu do limitu.
 - [ ] **Polityka prywatnosci** - prosta strona z informacja o zbieranych danych
 - [ ] **Informacja o sync** - komunikat przy pierwszym uzyciu synchronizacji
 
@@ -114,7 +125,18 @@
 
 ### Bugfixy
 - [ ] **Grupowanie parkingow** - jeden parking → wiele szczytow (np. Gorce)
+- [x] **Drukowanie zdjec blokowane jako popup** - window.open zamienione na iframe z przyciskami Drukuj/Zamknij
+- [x] **Bottom nav niewidoczny na tablecie Samsung** - flex-shrink:0 na nav, min-height:0 na screen, overflow:hidden na app
+- [x] **Sync nadpisywal dane pustymi** - dataWeight() porownuje bogactwo danych, puste nie nadpisza bogatszych
 
 ---
 
-*Ostatnia aktualizacja: 2026-04-04 (sesja 2)*
+### Porownanie API map (research)
+- **Mapy.cz** - 250k darmowych kredytow/mc, 1.6 CZK/1000 kredytow. Najlepsze mapy turystyczne PL (szlaki PTTK, schroniska). Koszty: tiles=1, geocoding/routing/suggest=4 kredyty
+- **Mapbox** - 50k loads/mc free, $0.75-5.00/1000 req. 10-75x drozszy niz Mapy.cz. Lepsze globalne pokrycie ale niepotrzebne dla KGP
+- **mapa-turystyczna.pl** - brak API
+- **UMP** - darmowy tile server (tiles.ump.waw.pl), bez routingu/geocodingu
+- **Waymarked Trails** - darmowy overlay szlakow (tile.waymarkedtrails.org/hiking/)
+- Wniosek: Mapy.cz optymalny wybor - jeden provider, wszystko w jednym, tani, dobre dane turystyczne
+
+*Ostatnia aktualizacja: 2026-04-05 (sesja 3)*
