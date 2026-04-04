@@ -174,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (shouldShowOnboarding()) {
     document.body.insertAdjacentHTML('beforeend', renderOnboarding());
   }
+  initSync();
   if (navigator.onLine && getProfileId()) {
     if (localStorage.getItem('kgp_sync_pending')) syncToCloud();
     processPhotoQueue();

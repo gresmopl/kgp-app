@@ -103,6 +103,11 @@ function renderSettings() {
             <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);letter-spacing:1px">${syncCode}</div>
             <div style="font-size:10px;color:var(--text2);margin-top:4px">Podaj ten kod na innym urządzeniu</div>
           </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button class="btn btn-primary btn-sm" style="flex:1" onclick="syncToCloud().then(()=>showToast('☁️ Wysłano do chmury'))">⬆️ Wyślij do chmury</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1" onclick="pullFromCloud().then(ok=>{if(ok){showToast('⬇️ Pobrano z chmury');goto('settings')}else{showToast('❌ Błąd pobierania')}})">⬇️ Pobierz z chmury</button>
+          </div>
+          <div style="font-size:10px;color:var(--text2)">Zdobyte: ${state.conquered.length}, wpisy: ${state.journal.length}, wycieczki: ${state.trips.length}</div>
         ` : `
           <div style="display:flex;gap:8px;margin-bottom:8px">
             <button class="btn btn-green btn-sm" style="flex:1" onclick="createNewProfile().then(()=>goto('settings'))">🆕 Nowy kod dostępu</button>
