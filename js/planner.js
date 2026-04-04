@@ -132,7 +132,7 @@ function renderTripEditor(trip) {
   <div class="header">
     <span class="header-icon" style="cursor:pointer" onclick="closeTripEditor()">←</span>
     <div style="flex:1">
-      <div class="header-title" contenteditable="true" onblur="renameTripFromEl(this,'${trip.id}')" style="outline:none;min-width:50px">${esc(trip.name)}</div>
+      <div class="header-title" contenteditable="true" onblur="renameTripFromEl(this,'${trip.id}')" style="outline:none;min-width:50px;border-bottom:1px dashed var(--text2);padding-bottom:2px;cursor:text" title="Kliknij aby zmienić nazwę">${esc(trip.name)}</div>
       <div class="header-sub">${fmtTripDates(trip)} - ${trip.days.length} ${trip.days.length === 1 ? 'dzień' : 'dni'}</div>
     </div>
     <button class="btn btn-secondary btn-sm" onclick="showTripMenu('${trip.id}')" style="font-size:16px;padding:6px 10px">⋮</button>

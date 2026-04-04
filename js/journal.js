@@ -136,8 +136,6 @@ function renderJournal() {
       ${renderNextSuggestions()}
     </div>` : ''}
 
-    ${renderFunFact()}
-
     <div style="text-align:center;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
       ${state.journal.filter(e => e.photo).length > 0 ? `<button class="btn btn-secondary btn-sm" onclick="printPhotos()">🖨️ Drukuj zdjęcia (A4, 9x13)</button>` : ''}
       <button class="btn btn-secondary btn-sm" onclick="goto('settings')">⚙️ Ustawienia i synchronizacja</button>

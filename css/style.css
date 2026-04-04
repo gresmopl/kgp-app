@@ -378,42 +378,65 @@ body {
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 
-/* LIGHT MODE */
+/* LIGHT MODE - zmienne i style */
+.light-theme {
+  --bg: #f5f5f8;
+  --bg2: #ffffff;
+  --bg3: #e8eaf0;
+  --card: #ffffff;
+  --card2: #f0f0f5;
+  --accent: #c07800;
+  --accent2: #a06000;
+  --green: #2e8b57;
+  --red: #d03030;
+  --blue: #2a6cb8;
+  --text: #1a1a2e;
+  --text2: #606080;
+  --border: #d0d0e0;
+}
+.light-theme, .light-theme body { background: var(--bg); color: var(--text); }
+.light-theme #map-container .leaflet-tile-pane { filter: none; }
+.light-theme .kgp-label { color: var(--accent); text-shadow: -1px -1px 2px #fff, 1px -1px 2px #fff, -1px 1px 2px #fff, 1px 1px 2px #fff; }
+.light-theme .kgp-popup .leaflet-popup-content-wrapper { background: #fff; color: #1a1a2e; border-color: #d0d0e0; }
+.light-theme .kgp-popup .leaflet-popup-tip { background: #fff; }
+.light-theme .nav-btn.active { color: var(--accent); }
+.light-theme .header { border-bottom-color: var(--border); }
+.light-theme #nav { border-top-color: var(--border); }
+.light-theme .ctx-badge { background: var(--card); border-color: var(--border); }
+.light-theme .ctx-badge.ctx-driving { background: linear-gradient(180deg, #2a6cb818, var(--card)); }
+.light-theme .ctx-badge.ctx-trail { background: linear-gradient(180deg, #2e8b5718, var(--card)); }
+.light-theme .ctx-badge.ctx-summit { background: linear-gradient(180deg, #d0303018, var(--card)); }
+.light-theme body { background: linear-gradient(180deg, #f5f5f8 0%, #e8eaf0 100%); background-attachment: fixed; }
+.light-theme .header { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.light-theme #nav { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.light-theme .achievement-badge.unlocked { background: linear-gradient(135deg, #fff, #fff8e1); }
+.light-theme .summit-header { background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border-color: var(--green); }
+.light-theme .diff-dot.filled { background: var(--accent) !important; }
+.light-theme .weather-day.good { border-color: var(--green)88; background: #e8f5e9; }
+.light-theme .weather-day.risky { border-color: var(--accent)88; background: #fff8e1; }
+.light-theme .weather-day.bad { border-color: var(--red)88; background: #fce4ec; }
+
+/* Systemowy fallback - gdy theme=system lub brak ustawienia */
 @media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f5f5f8;
-    --bg2: #ffffff;
-    --bg3: #e8eaf0;
-    --card: #ffffff;
-    --card2: #f0f0f5;
-    --accent: #c07800;
-    --accent2: #a06000;
-    --green: #2e8b57;
-    --red: #d03030;
-    --blue: #2a6cb8;
-    --text: #1a1a2e;
-    --text2: #606080;
-    --border: #d0d0e0;
+  html:not(.dark-theme) {
+    --bg: #f5f5f8; --bg2: #ffffff; --bg3: #e8eaf0; --card: #ffffff; --card2: #f0f0f5;
+    --accent: #c07800; --accent2: #a06000; --green: #2e8b57; --red: #d03030; --blue: #2a6cb8;
+    --text: #1a1a2e; --text2: #606080; --border: #d0d0e0;
   }
-  html, body { background: var(--bg); color: var(--text); }
-  #map-container .leaflet-tile-pane { filter: none; }
-  .kgp-label { color: var(--accent); text-shadow: -1px -1px 2px #fff, 1px -1px 2px #fff, -1px 1px 2px #fff, 1px 1px 2px #fff; }
-  .kgp-popup .leaflet-popup-content-wrapper { background: #fff; color: #1a1a2e; border-color: #d0d0e0; }
-  .kgp-popup .leaflet-popup-tip { background: #fff; }
-  .nav-btn.active { color: var(--accent); }
-  .header { border-bottom-color: var(--border); }
-  #nav { border-top-color: var(--border); }
-  .ctx-badge { background: var(--card); border-color: var(--border); }
-  .ctx-badge.ctx-driving { background: linear-gradient(180deg, #2a6cb818, var(--card)); }
-  .ctx-badge.ctx-trail { background: linear-gradient(180deg, #2e8b5718, var(--card)); }
-  .ctx-badge.ctx-summit { background: linear-gradient(180deg, #d0303018, var(--card)); }
-  body { background: linear-gradient(180deg, #f5f5f8 0%, #e8eaf0 100%); background-attachment: fixed; }
-  .header { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-  #nav { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-  .achievement-badge.unlocked { background: linear-gradient(135deg, #fff, #fff8e1); }
-  .summit-header { background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border-color: var(--green); }
-  .diff-dot.filled { background: var(--accent) !important; }
-  .weather-day.good { border-color: var(--green)88; background: #e8f5e9; }
-  .weather-day.risky { border-color: var(--accent)88; background: #fff8e1; }
-  .weather-day.bad { border-color: var(--red)88; background: #fce4ec; }
+  html:not(.dark-theme), html:not(.dark-theme) body { background: var(--bg); color: var(--text); }
+  html:not(.dark-theme) #map-container .leaflet-tile-pane { filter: none; }
+  html:not(.dark-theme) .kgp-label { color: var(--accent); text-shadow: -1px -1px 2px #fff, 1px -1px 2px #fff, -1px 1px 2px #fff, 1px 1px 2px #fff; }
+  html:not(.dark-theme) .kgp-popup .leaflet-popup-content-wrapper { background: #fff; color: #1a1a2e; border-color: #d0d0e0; }
+  html:not(.dark-theme) .kgp-popup .leaflet-popup-tip { background: #fff; }
+  html:not(.dark-theme) .nav-btn.active { color: var(--accent); }
+  html:not(.dark-theme) .header { border-bottom-color: var(--border); background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  html:not(.dark-theme) #nav { border-top-color: var(--border); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  html:not(.dark-theme) .ctx-badge { background: var(--card); border-color: var(--border); }
+  html:not(.dark-theme) body { background: linear-gradient(180deg, #f5f5f8 0%, #e8eaf0 100%); background-attachment: fixed; }
+  html:not(.dark-theme) .achievement-badge.unlocked { background: linear-gradient(135deg, #fff, #fff8e1); }
+  html:not(.dark-theme) .summit-header { background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border-color: var(--green); }
+  html:not(.dark-theme) .diff-dot.filled { background: var(--accent) !important; }
+  html:not(.dark-theme) .weather-day.good { border-color: var(--green)88; background: #e8f5e9; }
+  html:not(.dark-theme) .weather-day.risky { border-color: var(--accent)88; background: #fff8e1; }
+  html:not(.dark-theme) .weather-day.bad { border-color: var(--red)88; background: #fce4ec; }
 }

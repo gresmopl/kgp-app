@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
+  applyTheme();
   initOfflineIndicator();
   updateContextBadge();
   setInterval(updateContext, 15000);

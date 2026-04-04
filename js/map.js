@@ -319,6 +319,7 @@ function renderMap() {
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div>Zdobyty</div>
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--accent)"></div>Do zdobycia</div>
       <div style="font-size:10px;color:var(--text2);margin-top:4px">Dotknij znacznik → szczegóły</div>
+      <div style="font-size:9px;color:var(--accent);margin-top:6px;border-top:1px solid var(--border);padding-top:6px;max-width:180px;line-height:1.4" onclick="this.innerHTML='💡 '+getRandomFunFact();event.stopPropagation()">💡 ${getRandomFunFact()}</div>
     </div>
   </div>`;
 }

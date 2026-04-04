@@ -184,15 +184,15 @@ function parsePolishDate(dateStr) {
 // FEATURE 4: PROGNOZA UKOŃCZENIA KGP
 // ============================================================
 function getCompletionForecast() {
-  if (state.journal.length < 2) return null;
+  if (state.journal.length < 1) return null;
 
   const dates = state.journal.map(e => parsePolishDate(e.date)).filter(Boolean).sort((a, b) => a - b);
-  if (dates.length < 2) return null;
+  if (dates.length < 1) return null;
 
   const firstDate = dates[0];
-  const lastDate = dates[dates.length - 1];
-  const daySpan = Math.max(1, (lastDate - firstDate) / (1000 * 60 * 60 * 24));
-  const peaksPerDay = state.conquered.length / daySpan;
+  const now = new Date();
+  const daySpan = Math.max(30, (now - firstDate) / (1000 * 60 * 60 * 24));
+  const peaksPerDay = dates.length / daySpan;
   const remaining = 28 - state.conquered.length;
 
   if (remaining <= 0) return { done: true };
