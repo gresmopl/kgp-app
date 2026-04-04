@@ -109,6 +109,6 @@ async function loadSunTimes(peak) {
       <span>🌅 Wschód: <b style="color:var(--accent)">${sun.sunrise}</b></span>
       <span>🌇 Zachód: <b style="color:var(--accent)">${sun.sunset}</b></span>
     </div>
-    <div style="font-size:11px;color:var(--text2)">Golden hour od ${sun.goldenHour}</div>
+    <div style="font-size:11px;color:var(--text2)">📸 Najlepszy czas na zdjęcia od ${sun.goldenHour}</div>
     ${warning ? `<div style="background:var(--card2);border:1px solid var(--accent)44;border-radius:8px;padding:8px;font-size:12px;color:var(--accent);margin-top:8px">${warning}</div>` : ''}`;
 }

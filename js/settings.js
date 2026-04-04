@@ -54,15 +54,18 @@ function renderSettings() {
       <div style="display:flex;align-items:center;gap:12px">
         <div style="flex:1">
           <input type="range" min="0.7" max="1.5" step="0.05" value="${state.paceMultiplier}"
-            oninput="state.paceMultiplier=parseFloat(this.value);save();document.getElementById('settings-pace').textContent=this.value+'×'"
+            oninput="state.paceMultiplier=parseFloat(this.value);save();updatePaceLabel(this.value)"
             style="width:100%;accent-color:var(--accent)">
           <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text2)">
             <span>Szybki</span><span>Wolny</span>
           </div>
         </div>
-        <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);min-width:50px;text-align:center" id="settings-pace">${state.paceMultiplier}×</div>
+        <div style="min-width:80px;text-align:center" id="settings-pace">
+          <div style="font-family:var(--font-display);font-size:24px;color:var(--accent)">${Math.round(state.paceMultiplier * 100)}%</div>
+          <div style="font-size:10px;color:var(--text2)">${state.paceMultiplier <= 0.85 ? 'szybki' : state.paceMultiplier <= 1.1 ? 'średni' : 'spokojny'}</div>
+        </div>
       </div>
-      <div style="font-size:10px;color:var(--text2);margin-top:4px">1.0× = średnie tempo. Poniżej = szybciej, powyżej = wolniej.</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">100% = standardowy czas przejścia. Mniej = szybciej, więcej = wolniej.</div>
     </div>
 
     <div class="card card-pad">
@@ -108,4 +111,12 @@ function renderSettings() {
       <span style="margin-top:2px;display:inline-block">Projekt: Grzegorz Smoliński</span>
     </div>
   </div>`;
+}
+
+function updatePaceLabel(val) {
+  const pct = Math.round(val * 100);
+  const label = val <= 0.85 ? 'szybki' : val <= 1.1 ? 'średni' : 'spokojny';
+  document.getElementById('settings-pace').innerHTML =
+    `<div style="font-family:var(--font-display);font-size:24px;color:var(--accent)">${pct}%</div>` +
+    `<div style="font-size:10px;color:var(--text2)">${label}</div>`;
 }

@@ -103,9 +103,15 @@
 - [ ] **Polityka prywatnosci** - prosta strona z informacja o zbieranych danych
 - [ ] **Informacja o sync** - komunikat przy pierwszym uzyciu synchronizacji
 
+### Testowanie i jakosc
+- [ ] **Testy E2E (Playwright)** - automatyczne testy regresji w przegladarce. Playwright steruje Chrome/Firefox/Safari programowo - klika, wpisuje, sprawdza elementy. Idealne dla vanilla JS (testuje gotowa strone przez HTTP, zero konfiguracji bundlera). Scenariusze: nawigacja SPA, lista szczytow, oznaczanie zdobytych, planer, zapis/odczyt localStorage, dark/light mode. Odpala sie jednym `npx playwright test` i widac co przeszlo a co padlo. Laczy regresje - zmiana w ui.js od razu pokaze czy lista/mapa/planer nadal dzialaja.
+- [ ] **QA-CHECKLIST.md** - manualna checklista krytycznych sciezek do sprawdzenia przed kazdym merge do main. Szybkie, bez konfiguracji, natychmiastowa wartosc.
+- [ ] **STORIES.md** - user stories z kryteriami akceptacji. Format: "Jako turysta chce X, zeby Y" + checklista warunkow. Kryteria akceptacji staja sie potem checklista testowa. Dla istniejacych i nowych funkcji.
+- [ ] **Mockowanie offline/GPS w testach** - symulacja braku sieci i lokalizacji GPS w Playwright (bardziej zaawansowane, na pozniej)
+
 ### Bugfixy
 - [ ] **Grupowanie parkingow** - jeden parking → wiele szczytow (np. Gorce)
 
 ---
 
-*Ostatnia aktualizacja: 2026-04-03*
+*Ostatnia aktualizacja: 2026-04-04*

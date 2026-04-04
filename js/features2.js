@@ -464,11 +464,6 @@ function renderHistoryEntry() {
         <input class="input" type="text" id="hist-note" placeholder="Pogoda, towarzysze, wspomnienia...">
       </div>
 
-      <div style="margin-bottom:12px">
-        <div class="label">Dedykacja (opcjonalnie)</div>
-        <input class="input" type="text" id="hist-dedication" placeholder="Ten szczyt dedykuję...">
-      </div>
-
       <button class="btn btn-green btn-full" onclick="saveHistoryEntry()">✅ Dodaj do dziennika</button>
     </div>
 
@@ -489,7 +484,6 @@ function saveHistoryEntry() {
   const peak = PEAKS.find(p => p.id === peakId);
   const dateInput = document.getElementById('hist-date').value;
   const note = document.getElementById('hist-note').value || '';
-  const dedication = document.getElementById('hist-dedication').value || '';
   const fileInput = document.getElementById('hist-photo');
 
   const d = parseInputDate(dateInput);
@@ -499,7 +493,7 @@ function saveHistoryEntry() {
     state.conquered.push(peakId);
     const entry = {
       peakId, name: peak.name, height: peak.height, range: peak.range,
-      date: dateStr, time: '', note: note, dedication: dedication,
+      date: dateStr, time: '', note: note,
       photo: photo || null, gpsLat: null, gpsLon: null, historical: true
     };
     state.journal.push(entry);

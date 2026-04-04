@@ -117,6 +117,7 @@ DOCS.md             - dokumentacja projektowa analityczna (architektura, przeply
 - **Najlepsze praktyki** — stosuj sprawdzone wzorce. Nie wymyślaj koła na nowo. Sprawdź jak inni rozwiązali dany problem (inne aplikacje, artykuły, dokumentacja)
 - **Zastanów się dwa razy** — przy każdej decyzji projektowej zadaj sobie pytanie: "Czy to pomoże użytkownikowi w terenie, czy to tylko wygląda fajnie w kodzie?"
 - **Izoluj nowy kod** — duże funkcje w osobnym pliku (np. planner.js), nie w istniejącym rozrośniętym pliku. Łatwiej testować, łatwiej wycofać
+- **Refaktoruj przy okazji** — przy większych zmianach w features.js lub features2.js proponuj wydzielenie zmienianego kodu do nowego pliku o logicznej nazwie (np. przerabiasz SOS → wydziel do sos.js). Nie rób całego refaktoru na raz, plik po pliku. Plan podziału w STORIES.md (REFAKTOR-1)
 - **Nie psuj tego co działa** — nowy kod powinien działać równolegle ze starym aż do momentu świadomego przełączenia
 - **Szukaj inspiracji w internecie** — przed implementacją nowej funkcji sprawdź jak robią to najlepsze aplikacje w branży (Komoot, Furkot, AllTrails). Nie kopiuj ślepo, ale ucz się z ich doświadczeń
 - **Testuj scenariusze rzeczywiste** — czy plan na weekend w Bieszczadach ma sens? Czy ktoś jadący 500km z Szczecina dostanie sensowne sugestie? Myśl jak użytkownik, nie jak programista

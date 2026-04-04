@@ -69,23 +69,30 @@ function renderSOS() {
       ${hasGPS ? `<div style="font-size:11px;color:var(--text2)">Podaj te współrzędne ratownikom przez telefon</div>` : `<div style="font-size:11px;color:var(--red)">⚠️ Włącz GPS! Ratownicy potrzebują Twojej lokalizacji</div>`}
     </div>
 
-    <a href="tel:${gopr.phone}" class="btn" style="background:var(--red);color:#fff;font-size:18px;padding:18px;text-decoration:none">
-      📞 Zadzwoń ${gopr.name} - ${gopr.phone}
-    </a>
-
-    <a href="tel:112" class="btn" style="background:var(--card2);color:var(--text);font-size:16px;text-decoration:none;border:1px solid var(--border)">
-      📞 Numer alarmowy - 112
-    </a>
-
-    <a href="sms:${gopr.phone}?body=${smsBody}" class="btn btn-secondary" style="text-decoration:none">
-      💬 Wyślij SMS z lokalizacją
-    </a>
+    <div class="card card-pad">
+      <div class="section-title">📞 Numery alarmowe</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--red)22;border-radius:10px;margin-bottom:8px">
+        <span style="font-size:24px">📞</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:16px;color:var(--red)">${gopr.name}</div>
+          <div style="font-family:var(--font-display);font-size:22px;color:var(--text);letter-spacing:1px">${gopr.phone}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px">
+        <span style="font-size:24px">📞</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">Numer alarmowy</div>
+          <div style="font-family:var(--font-display);font-size:22px;color:var(--text);letter-spacing:1px">112</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text2);margin-top:4px">Do alarmowania polecamy aplikację <b>Ratunek</b> (GOPR/TOPR) - ma wbudowane zabezpieczenia przed przypadkowym wysłaniem</div>
+    </div>
 
     <div class="card card-pad">
-      <div class="section-title">👤 Kontakt bliskiej osoby</div>
+      <div class="section-title">👤 Kontakt bliskiej osoby (ICE)</div>
       <label class="label">Numer telefonu (na wypadek SOS)</label>
       <input class="input" type="tel" value="${esc(state.iceContact)}" placeholder="np. 600123456" onchange="state.iceContact=this.value;save()">
-      ${iceContact ? `<a href="tel:${iceContact}" class="btn btn-secondary btn-full" style="margin-top:8px;text-decoration:none">📞 Zadzwoń - ${iceContact}</a>` : '<div style="font-size:10px;color:var(--text2);margin-top:4px">Wpisz numer, aby móc szybko zadzwonić</div>'}
+      ${iceContact ? `<div style="margin-top:8px;padding:10px;background:var(--card2);border-radius:8px;font-family:var(--font-display);font-size:18px;letter-spacing:1px">${iceContact}</div>` : '<div style="font-size:10px;color:var(--text2);margin-top:4px">Wpisz numer, aby mieć go pod ręką</div>'}
     </div>
 
     ${nearestShelter ? `
@@ -610,7 +617,7 @@ function renderJournalTimeline() {
               ${entry.photo ? `<img src="${entry.photo}" alt="${entry.name}">` : '<span style="font-size:24px">📷</span>'}
             </div>
             <div style="flex:1">
-              <div style="font-weight:600;font-size:14px">${entry.name} <span style="color:var(--accent);font-family:var(--font-display);font-size:16px">${entry.height}m</span></div>
+              <div style="font-weight:600;font-size:14px">${entry.name}</div>
               <div style="font-size:11px;color:var(--text2)">📅 ${entry.date} o ${entry.time}</div>
               ${entry.note ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;font-style:italic">"${esc(entry.note)}"</div>` : ''}
               ${entry.dedication ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🎁 ${esc(entry.dedication)}</div>` : ''}
@@ -737,7 +744,7 @@ function renderDashboard() {
 
   return `
   <div class="card card-pad">
-    <div class="section-title">📊 Dashboard</div>
+    <div class="section-title">📊 Podsumowanie</div>
 
     <div class="stats-grid" style="margin-bottom:16px">
       <div class="stat-card">

@@ -46,7 +46,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 12px 12px 0 0; padding: 2px 12px;
   font-size: 10px; font-weight: 600; color: var(--ctx-color, var(--text2));
-  white-space: nowrap; z-index: 91; transition: all 0.4s ease;
+  white-space: nowrap; z-index: 91; transition: all 0.4s ease; cursor: pointer;
 }
 .ctx-icon { font-size: 12px; }
 .ctx-label { letter-spacing: 0.5px; }
@@ -150,7 +150,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .map-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 
 /* WEATHER */
-.weather-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.weather-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+@media (min-width: 480px) { .weather-grid { grid-template-columns: repeat(7, 1fr); } }
 .weather-day {
   background: var(--card2); border-radius: 8px; padding: 6px 4px;
   text-align: center; border: 1px solid var(--border);

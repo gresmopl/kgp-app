@@ -223,7 +223,7 @@ function renderStopRow(tripId, dayIdx, stop, idx, total, calcTime) {
   const detail = detailParts.join(' - ');
 
   return `
-  <div class="pl-stop ${idx < total - 1 ? 'pl-stop-border' : ''}">
+  <div class="pl-stop ${idx < total - 1 ? 'pl-stop-border' : ''}" id="stop-${stop.id}">
     <div class="pl-stop-left">
       <div class="pl-stop-dot">${meta.icon}</div>
       ${idx < total - 1 ? '<div class="pl-stop-line"></div>' : ''}
@@ -559,6 +559,7 @@ function addPeakStops(tripId, dayIdx, peakId) {
   day.stops.push(...newStops);
   save();
   goto('plan');
+  setTimeout(() => { document.getElementById('stop-' + newStops[0].id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
   showToast(`🏔️ ${peak.name} dodana do dnia ${dayIdx + 1}`);
 }
 
@@ -569,8 +570,9 @@ function addManualStop(tripId, dayIdx, type) {
   if (!day) return;
 
   const meta = STOP_TYPES[type] || STOP_TYPES.poi;
+  const stopId = 'stop_' + Date.now();
   day.stops.push({
-    id: 'stop_' + Date.now(),
+    id: stopId,
     type,
     name: '',
     notes: ''
@@ -578,6 +580,7 @@ function addManualStop(tripId, dayIdx, type) {
 
   save();
   goto('plan');
+  setTimeout(() => { document.getElementById('stop-' + stopId)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
 }
 
 function moveStop(tripId, dayIdx, stopIdx, direction) {
@@ -1091,8 +1094,9 @@ function confirmMapPick(tripId, dayIdx) {
   const day = trip.days[dayIdx];
   if (!day) return;
 
+  const stopId = 'stop_' + Date.now();
   day.stops.push({
-    id: 'stop_' + Date.now(),
+    id: stopId,
     type: d.type,
     name: d.name,
     lat: d.lat,
@@ -1102,6 +1106,7 @@ function confirmMapPick(tripId, dayIdx) {
   save();
   closeMapPicker();
   goto('plan');
+  setTimeout(() => { document.getElementById('stop-' + stopId)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
   showToast(`📍 ${d.name} dodany do planu`);
 }
 
