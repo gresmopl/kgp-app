@@ -9,22 +9,30 @@ function printPhotos() {
   const entries = state.journal.filter(e => e.photo);
   if (entries.length === 0) { showToast('Brak zdjęć do wydruku'); return; }
 
-  const win = window.open('', '_blank');
-  const styles = '@page{size:A4;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif}.page{page-break-after:always;display:grid;grid-template-columns:1fr 1fr;gap:8mm;padding:5mm}.page:last-child{page-break-after:auto}.photo-card{width:90mm;height:130mm;border:1px dashed #ccc;position:relative;overflow:hidden;break-inside:avoid}.photo-card img{width:100%;height:105mm;object-fit:cover;display:block}.photo-card .caption{padding:3mm;text-align:center;background:#fff}.photo-card .caption .name{font-size:14px;font-weight:700}.photo-card .caption .meta{font-size:10px;color:#666;margin-top:2px}.cut-guide{position:absolute;top:-1px;left:-1px;right:-1px;bottom:-1px;border:1px dashed #aaa;pointer-events:none}@media screen{body{background:#eee;padding:20px}.page{background:#fff;max-width:210mm;margin:0 auto 20px;box-shadow:0 2px 10px #0002}}';
+  const styles = '@page{size:A4;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}.print-body{font-family:Arial,sans-serif;background:#eee;padding:20px}.page{page-break-after:always;display:grid;grid-template-columns:1fr 1fr;gap:8mm;padding:5mm;background:#fff;max-width:210mm;margin:0 auto 20px;box-shadow:0 2px 10px #0002}.page:last-child{page-break-after:auto}.photo-card{width:90mm;height:130mm;border:1px dashed #ccc;position:relative;overflow:hidden;break-inside:avoid}.photo-card img{width:100%;height:105mm;object-fit:cover;display:block}.photo-card .caption{padding:3mm;text-align:center;background:#fff}.photo-card .caption .name{font-size:14px;font-weight:700}.photo-card .caption .meta{font-size:10px;color:#666;margin-top:2px}.cut-guide{position:absolute;top:-1px;left:-1px;right:-1px;bottom:-1px;border:1px dashed #aaa;pointer-events:none}';
 
-  let html = '<!DOCTYPE html><html><head><title>KGP - Wydruk 9x13</title><style>' + styles + '</style></head><body>';
-
+  let pages = '';
   for (let i = 0; i < entries.length; i += 4) {
-    html += '<div class="page">';
+    pages += '<div class="page">';
     for (let j = i; j < Math.min(i + 4, entries.length); j++) {
       const e = entries[j];
-      html += '<div class="photo-card"><img src="' + e.photo + '" alt="' + e.name + '"><div class="caption"><div class="name">' + e.name + ' ' + e.height + 'm</div><div class="meta">' + e.range + ' - ' + e.date + '</div>' + (e.dedication ? '<div class="meta">' + e.dedication + '</div>' : '') + '</div><div class="cut-guide"></div></div>';
+      pages += '<div class="photo-card"><img src="' + e.photo + '" alt="' + esc(e.name) + '"><div class="caption"><div class="name">' + esc(e.name) + ' ' + e.height + 'm</div><div class="meta">' + esc(e.range) + ' - ' + e.date + '</div>' + (e.dedication ? '<div class="meta">' + esc(e.dedication) + '</div>' : '') + '</div><div class="cut-guide"></div></div>';
     }
-    html += '</div>';
+    pages += '</div>';
   }
-  html += '<script>setTimeout(function(){window.print()},500)</script></body></html>';
-  win.document.write(html);
-  win.document.close();
+
+  // Iframe zamiast window.open - nie blokowany jako popup
+  let iframe = document.getElementById('print-iframe');
+  if (iframe) iframe.remove();
+  iframe = document.createElement('iframe');
+  iframe.id = 'print-iframe';
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;border:none;background:#fff';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  doc.open();
+  doc.write('<!DOCTYPE html><html><head><title>KGP - Wydruk 9x13</title><style>' + styles + '</style></head><body class="print-body"><div style="text-align:center;padding:10px;background:#333;color:#fff;position:sticky;top:0;z-index:10"><button onclick="window.print()" style="font-size:16px;padding:8px 24px;border:none;border-radius:8px;background:#f0c040;color:#000;font-weight:600;cursor:pointer;margin-right:10px">🖨️ Drukuj</button><button onclick="parent.document.getElementById(\'print-iframe\').remove()" style="font-size:16px;padding:8px 24px;border:none;border-radius:8px;background:#666;color:#fff;cursor:pointer">✕ Zamknij</button></div>' + pages + '</body></html>');
+  doc.close();
 }
 
 // ============================================================

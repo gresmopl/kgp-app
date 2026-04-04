@@ -129,7 +129,11 @@ async function pullFromCloud() {
     if (error || !data) return false;
     const d = data.data;
     state.conquered = d.conquered || [];
-    state.journal = d.journal || [];
+    state.journal = (d.journal || []).map(j => {
+      // Na innym urządzeniu nie ma base64 - użyj URL z Supabase Storage
+      if (!j.photo && j.photoUrl) j.photo = j.photoUrl;
+      return j;
+    });
     state.paceMultiplier = d.paceMultiplier || 1.0;
     state.homeAddr = d.homeAddr || '';
     state.selectedRoutes = d.selectedRoutes || {};

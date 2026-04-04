@@ -441,7 +441,12 @@ function conquerPeak(peakId) {
   state.journal.unshift(entry);
   save();
   if (state.pendingPhoto) {
-    uploadPhoto(peakId, state.pendingPhoto, 'summit');
+    uploadPhoto(peakId, state.pendingPhoto, 'summit').then(url => {
+      if (url) {
+        entry.photoUrl = url;
+        save();
+      }
+    });
   }
   confetti();
   showToast(`🎉 ${peak.name} zdobyta! ${state.conquered.length}/28`);
