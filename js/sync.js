@@ -12,10 +12,32 @@ function generateSyncCode() {
 function getSyncCode() { return localStorage.getItem('kgp_sync_code'); }
 function getProfileId() { return localStorage.getItem('kgp_profile_id'); }
 
+// Liczy "wagę" danych - ile jest treści (zdobyte, wpisy, wycieczki itd.)
+function dataWeight(d) {
+  if (!d) return 0;
+  return (d.conquered || []).length * 10
+    + (d.journal || []).length * 5
+    + (d.trips || []).length * 3
+    + (d.discoveredPlaces || []).length
+    + Object.keys(d.selectedRoutes || {}).length
+    + Object.keys(d.peakOverrides || {}).length
+    + (d.userName ? 1 : 0)
+    + (d.homeAddr ? 1 : 0);
+}
+
 async function initSync() {
   if (getProfileId()) {
     syncToCloud();
     initAI();
+    return;
+  }
+  // Nie twórz profilu automatycznie - czekaj aż user kliknie "Nowy kod"
+  // lub zaloguje się istniejącym kodem
+}
+
+async function createNewProfile() {
+  if (getProfileId()) {
+    showToast('⚠️ Masz już profil: ' + getSyncCode());
     return;
   }
   let attempts = 0;
@@ -51,7 +73,8 @@ function getStateForSync() {
     discoveredPlaces: state.discoveredPlaces,
     transport: state.transport,
     peakOverrides: JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}'),
-    _stateVersion: STATE_VERSION
+    _stateVersion: STATE_VERSION,
+    _lastSync: Date.now()
   };
 }
 
@@ -62,9 +85,30 @@ async function syncToCloud() {
     return;
   }
   try {
+    const localData = getStateForSync();
+    const localWeight = dataWeight(localData);
+
+    // Sprawdź czy chmura ma bogatsze dane - nie nadpisuj bogatszych pustymi
+    if (localWeight === 0) {
+      console.log('Sync: lokalne dane puste, pomijam push');
+      localStorage.removeItem('kgp_sync_pending');
+      return;
+    }
+
+    const { data: cloudRow } = await sb.from('user_data')
+      .select('data').eq('user_id', profileId).single();
+    const cloudWeight = cloudRow ? dataWeight(cloudRow.data) : 0;
+
+    if (cloudWeight > localWeight) {
+      console.log(`Sync: chmura bogatsza (${cloudWeight} vs ${localWeight}), pomijam push`);
+      localStorage.removeItem('kgp_sync_pending');
+      return;
+    }
+
     const { error } = await sb.from('user_data')
-      .upsert({ user_id: profileId, data: getStateForSync() }, { onConflict: 'user_id' });
+      .upsert({ user_id: profileId, data: localData }, { onConflict: 'user_id' });
     if (error) throw error;
+    console.log(`Sync: wypchnięto (waga: ${localWeight})`);
     localStorage.removeItem('kgp_sync_pending');
   } catch(e) {
     console.error('Sync error:', e);

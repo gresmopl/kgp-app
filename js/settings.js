@@ -105,7 +105,7 @@ function renderSettings() {
           </div>
         ` : `
           <div style="display:flex;gap:8px;margin-bottom:8px">
-            <button class="btn btn-green btn-sm" style="flex:1" onclick="initSync().then(()=>goto('settings'))">🆕 Nowy kod dostępu</button>
+            <button class="btn btn-green btn-sm" style="flex:1" onclick="createNewProfile().then(()=>goto('settings'))">🆕 Nowy kod dostępu</button>
           </div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Masz już kod? Wpisz go poniżej:</div>
           <div style="display:flex;gap:8px">
