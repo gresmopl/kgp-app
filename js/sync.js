@@ -152,6 +152,46 @@ async function pullFromCloud() {
   }
 }
 
+async function repairPhotoUrls() {
+  const profileId = getProfileId();
+  if (!profileId || !navigator.onLine) {
+    showToast('❌ Brak profilu lub internetu');
+    return;
+  }
+  try {
+    showToast('🔄 Szukam zdjęć w chmurze...');
+    const { data: photos, error } = await sb.from('photos')
+      .select('peak_id, storage_path, photo_type')
+      .eq('user_id', profileId);
+    if (error || !photos || photos.length === 0) {
+      showToast('ℹ️ Brak zdjęć w chmurze');
+      return;
+    }
+    let fixed = 0;
+    for (const photo of photos) {
+      if (photo.photo_type !== 'summit') continue;
+      const entry = state.journal.find(j => j.peakId === photo.peak_id);
+      if (!entry) continue;
+      if (entry.photoUrl) continue;
+      const { data: urlData } = sb.storage.from('photos').getPublicUrl(photo.storage_path);
+      if (urlData && urlData.publicUrl) {
+        entry.photoUrl = urlData.publicUrl;
+        if (!entry.photo) entry.photo = urlData.publicUrl;
+        fixed++;
+      }
+    }
+    if (fixed > 0) {
+      save();
+      showToast(`✅ Naprawiono ${fixed} zdjęć`);
+    } else {
+      showToast('ℹ️ Wszystkie zdjęcia OK lub brak do naprawy');
+    }
+  } catch(e) {
+    console.error('Repair photos error:', e);
+    showToast('❌ Błąd naprawy zdjęć');
+  }
+}
+
 async function loginWithCode(code) {
   code = code.toLowerCase().trim();
   const { data, error } = await sb.from('profiles')

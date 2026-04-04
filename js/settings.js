@@ -105,6 +105,7 @@ function renderSettings() {
             <button class="btn btn-primary btn-sm" style="flex:1" onclick="syncToCloud().then(()=>showToast('☁️ Wysłano do chmury'))">⬆️ Wyślij do chmury</button>
             <button class="btn btn-secondary btn-sm" style="flex:1" onclick="pullFromCloud().then(ok=>{if(ok){showToast('⬇️ Pobrano z chmury');goto('settings')}else{showToast('❌ Błąd pobierania')}})">⬇️ Pobierz z chmury</button>
           </div>
+          <button class="btn btn-secondary btn-sm btn-full" style="margin-bottom:8px" onclick="repairPhotoUrls().then(()=>goto('settings'))">🔧 Napraw brakujące zdjęcia z chmury</button>
           <div style="font-size:10px;color:var(--text2)">Zdobyte: ${state.conquered.length}, wpisy: ${state.journal.length}, wycieczki: ${state.trips.length}</div>
         ` : `
           <div style="display:flex;gap:8px;margin-bottom:8px">
