@@ -25,8 +25,8 @@
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); }
 
 /* LAYOUT */
-#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
-#screen { flex: 1; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; transition: opacity 0.15s ease; }
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+#screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; transition: opacity 0.15s ease; }
 #screen::-webkit-scrollbar { display: none; }
 
 /* OFFLINE BAR */
@@ -81,7 +81,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 /* BOTTOM NAV */
 #nav {
-  position: relative;
+  position: relative; flex-shrink: 0;
   background: var(--bg2); border-top: 1px solid var(--border);
   display: flex; padding-bottom: var(--safe-bottom);
   height: calc(var(--tab-h) + var(--safe-bottom));
