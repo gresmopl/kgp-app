@@ -328,6 +328,7 @@ function renderSummit() {
       <div class="summit-peak-name">${peak.name}</div>
       <div class="summit-height">${peak.height} m n.p.m. · ${peak.range}</div>
       <div style="margin-top:8px;font-size:12px;color:var(--text2)">${diffDots(peak.difficulty)} Trudność ${peak.difficulty}/5</div>
+      <button onclick="aiPeakInfo(${peak.id})" style="margin-top:10px;background:var(--accent);color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">🤖 Dowiedz się więcej od AI</button>
     </div>
 
     <div class="card">
