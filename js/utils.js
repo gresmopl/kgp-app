@@ -3,6 +3,15 @@
 // ============================================================
 function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
+function toggleSection(id, card) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  const arrow = card.querySelector('span:last-child');
+  if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
+}
+
 function addMinutes(timeStr, mins) {
   const [h,m] = timeStr.split(':').map(Number);
   const total = h*60+m+mins;

@@ -103,3 +103,42 @@ CREATE TABLE warnings (
 CREATE INDEX idx_warnings_peak_id ON warnings(peak_id);
 ALTER TABLE warnings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all on warnings" ON warnings FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- 10. Tabela app_config (konfiguracja aplikacji - klucze API itp.)
+-- ============================================================
+CREATE TABLE app_config (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key text UNIQUE NOT NULL,
+  value text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE app_config ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow read on app_config" ON app_config FOR SELECT USING (true);
+CREATE TRIGGER app_config_updated_at BEFORE UPDATE ON app_config FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Wstaw klucz Gemini (zamien na swoj klucz!)
+-- INSERT INTO app_config (key, value) VALUES ('gemini_api_key', 'AIza...');
+
+-- ============================================================
+-- 11. Tabela ai_usage (tracking zuzywania AI per user per month)
+-- ============================================================
+CREATE TABLE ai_usage (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  month text NOT NULL,
+  input_tokens int DEFAULT 0,
+  output_tokens int DEFAULT 0,
+  requests int DEFAULT 0,
+  model text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, month)
+);
+
+CREATE INDEX idx_ai_usage_user_month ON ai_usage(user_id, month);
+ALTER TABLE ai_usage ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all on ai_usage" ON ai_usage FOR ALL USING (true) WITH CHECK (true);
+CREATE TRIGGER ai_usage_updated_at BEFORE UPDATE ON ai_usage FOR EACH ROW EXECUTE FUNCTION update_updated_at();

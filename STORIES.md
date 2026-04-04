@@ -103,40 +103,40 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ---
 
-### PLAN-4: Geokodowanie - rozroznialne wyniki 🟡 S
+### PLAN-4: Geokodowanie - rozroznialne wyniki 🟡 S (zrobione)
 **Jako** uzytkownik szukajacy adresu na mapie
 **chce** odroznic wyniki wyszukiwania
 **zeby** wybrac wlasciwy adres a nie losowy.
 
 **Kryteria akceptacji:**
-- [ ] Wyniki geokodowania pokazuja pelny adres (ulica + numer + miasto + powiat)
-- [ ] Jezeli to ten sam adres w roznych miastach - jasne rozroznienie
-- [ ] Wyniki posortowane po odleglosci od pozycji uzytkownika lub adresu domowego
+- [x] Wyniki geokodowania pokazuja pelny adres (ulica + gmina + powiat + region z Mapy.com API)
+- [x] Jezeli to ten sam adres w roznych miastach - jasne rozroznienie
+- [x] Wyniki posortowane po odleglosci (preferNear z API Mapy.com)
 
 ---
 
-### PLAN-5: Lista szczytow z odleglosciami 🟡 S
+### PLAN-5: Lista szczytow z odleglosciami 🟡 S (zrobione)
 **Jako** uzytkownik wybierajacy szczyt do planu
 **chce** widziec odleglosc od mojego adresu domowego
 **zeby** szybko ocenic ktore szczyty sa blisko a ktore daleko.
 
 **Kryteria akceptacji:**
-- [ ] Lista szczytow w "Dodaj z listy" pokazuje odleglosc w km od adresu domowego
-- [ ] Odleglosc liczona w linii prostej * 1.3 (wspolczynnik krętosci drog)
-- [ ] Mozliwosc sortowania po odleglosci lub po nazwie
+- [x] Lista szczytow w "Dodaj z listy" pokazuje odleglosc w km od adresu domowego
+- [x] Odleglosc liczona w linii prostej * 1.3 (wspolczynnik krętosci drog)
+- [x] Posortowane po odleglosci (gdy adres domowy dostepny)
 - [ ] Tylko niezdobyte szczyty (lub oznaczenie zdobytych)
 
 ---
 
-### PLAN-6: Szybki start - pelna lista 🟡 S
+### PLAN-6: Szybki start - pelna lista 🟡 S (zrobione)
 **Jako** uzytkownik ktory chce szybko zaplanowac wyjazd
 **chce** widziec wszystkie niezdobyte szczyty w szybkim starcie
 **zeby** nie musiec szukac w osobnej liscie.
 
 **Kryteria akceptacji:**
-- [ ] Szybki start pokazuje wszystkie niezdobyte szczyty (nie tylko 8 wybranych)
-- [ ] Posortowane po odleglosci od adresu domowego
-- [ ] Jedno klikniecie tworzy gotowy plan (start → przejazd → parking → podejscie → szczyt → zejscie → powrot)
+- [x] Szybki start pokazuje wszystkie niezdobyte szczyty
+- [x] Posortowane po odleglosci od adresu domowego (z odlegloscia w km)
+- [x] Jedno klikniecie tworzy gotowy plan
 
 ---
 
@@ -163,59 +163,59 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ## MAPA - Widok mapy
 
-### MAPA-1: Parkingi na mapie 🟡 M
+### MAPA-1: Parkingi na mapie 🟢 M (zrobione)
 **Jako** turysta przegladajacy mape
 **chce** widziec zapisane parkingi
 **zeby** orientowac sie gdzie zaczac szlak.
 
 **Kryteria akceptacji:**
-- [ ] Parkingi z PEAKS[].routes[].parking wyswietlane na mapie
-- [ ] Ikona: niebieskie kolko z "P"
-- [ ] Klikniecie w parking: nazwa, notatka, nawiguj (Google Maps / Mapy.com)
-- [ ] Parkingi widoczne od odpowiedniego poziomu zoomu (nie zasmiecaja mapy)
-- [ ] Mozliwosc wlaczenia/wylaczenia warstwy parkingow
+- [x] Parkingi z PEAKS[].routes[].parking wyswietlane na mapie
+- [x] Ikona: niebieskie kolko z "P"
+- [x] Klikniecie w parking: nazwa, notatka, nawiguj (Mapy.com)
+- [x] Parkingi widoczne od zoom 10 (nie zasmiecaja mapy)
+- [x] Mozliwosc wlaczenia/wylaczenia warstwy parkingow (checkbox w legendzie)
 
 ---
 
-### MAPA-2: Popup zdobytego szczytu - widok wspomnienia 🟠 M
+### MAPA-2: Popup zdobytego szczytu - widok wspomnienia 🟢 M (zrobione)
 **Jako** turysta ktory zdobyl szczyt
 **chce** po kliknieciu w zielone kolko zobaczyc wspomnienie
 **zeby** poczuc satysfakcje i przypomniesc sobie ten dzien.
 
 **Kryteria akceptacji:**
-- [ ] Zdjecie ze zdobycia (miniaturka z lightboxem)
-- [ ] Data zdobycia
-- [ ] Notatka z dziennika (jesli jest)
-- [ ] Przycisk "Zobacz w dzienniku" (przenosi do osi czasu)
-- [ ] BEZ: combo wyboru szczytu, szlaku glownego, planera, trybu szczytu
-- [ ] Opcjonalnie: przycisk "Planuj ponowne wejscie" (przenosi do planera)
+- [x] Zdjecie ze zdobycia (miniaturka z lightboxem)
+- [x] Data zdobycia
+- [x] Notatka z dziennika (jesli jest, do 80 znaków)
+- [x] Przycisk "Dziennik" (otwiera szczegoly szczytu)
+- [x] BEZ: combo wyboru szczytu, szlaku glownego, planera, trybu szczytu
+- [x] Przycisk ponownego wejscia (ikona 🔄, przenosi do planera)
 
 ---
 
-### MAPA-3: Popup niezdobytego szczytu - lekki i informacyjny 🟠 M
+### MAPA-3: Popup niezdobytego szczytu - lekki i informacyjny 🟢 M (zrobione)
 **Jako** turysta przegladajacy mape
 **chce** szybko zobaczyc kluczowe info o szczycie
 **zeby** zdecydowac czy chce go zdobyc.
 
 **Kryteria akceptacji:**
-- [ ] Nazwa, wysokosc, pasmo, trudnosc
-- [ ] Najblizszy parking lub stacja PKP (wg preferencji transportu z ustawien)
-- [ ] Odleglosc od adresu domowego
-- [ ] Czas przejscia (podejscie + zejscie)
-- [ ] Przycisk "Dodaj do planu" (przenosi do planera)
-- [ ] BEZ: duplikatu planera, trybu szczytu, szczegolowego widoku trasy
+- [x] Nazwa, wysokosc, pasmo, trudnosc (kolorowa etykieta)
+- [x] Najblizszy parking (nazwa)
+- [x] Odleglosc od adresu domowego (~km)
+- [x] Czas przejscia (dystans + czas + przewyzszenie)
+- [x] Przycisk "Dodaj do planu" (przenosi do planera)
+- [x] BEZ: duplikatu planera, trybu szczytu, szczegolowego widoku trasy
 
 ---
 
-### MAPA-4: Ciekawostka na mapie 🟢 S
+### MAPA-4: Ciekawostka na mapie 🟢 S (zrobione)
 **Jako** uzytkownik przegladajacy mape
 **chce** zobaczyc losowa ciekawostke o KGP
 **zeby** sie czegos nauczyc podczas eksploracji.
 
 **Kryteria akceptacji:**
-- [ ] Ciekawostka wyswietlana na gorze zakladki Mapa (nie na dole Dziennika)
-- [ ] Mozliwosc odswiezenia (nowa losowa)
-- [ ] Nie przeszkadza w korzystaniu z mapy (zwijalna lub delikatna)
+- [x] Ciekawostka wyswietlana na mapie (w legendzie, lewy dolny rog)
+- [x] Mozliwosc odswiezenia (klik = nowa losowa)
+- [x] Nie przeszkadza w korzystaniu z mapy (dyskretna, w legendzie)
 
 ---
 
@@ -236,7 +236,7 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ---
 
-### SZCZYT-2: Pieczatki niezalezne od trasy 🟡 S
+### SZCZYT-2: Pieczatki niezalezne od trasy 🟡 M (wymaga zmian w data.js)
 **Jako** turysta ktory przyszedl inna trasa niz domyslna
 **chce** widziec pieczatki istotne dla mojej trasy
 **zeby** nie dostawac informacji o Morskim Oku gdy szedlem od strony slowackiej.
@@ -245,6 +245,10 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 - [ ] Pieczatki pogrupowane per trasa (jesli szczyt ma wiele tras)
 - [ ] Wyswietlane tylko pieczatki na trasie ktora uzytkownik wybral/szedl
 - [ ] Lub: wszystkie pieczatki z oznaczeniem ktorej trasy dotycza
+
+**Uwagi:**
+- Tylko Rysy maja 2 trasy. Wymaga dodania pola `routeIndex` do kazdej pieczatki w data.js
+- Nie da sie zrobic jako quick fix - wymaga zmian struktury danych
 
 ---
 
@@ -262,16 +266,18 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ## DZIENNIK
 
-### DZIENNIK-1: Poprawki interfejsu 🟡 S
+### DZIENNIK-1: Poprawki interfejsu 🟡 S (zrobione)
 **Jako** uzytkownik przegladajacy dziennik
 **chce** aby interfejs byl czytelny i spolny
 **zeby** latwo sie orientowac.
 
 **Kryteria akceptacji:**
-- [ ] "Dashboard" → polska nazwa (np. "Podsumowanie" lub "Przeglad")
-- [ ] Os czasu: bez wysokosci gory przy nazwie (sama nazwa wystarczy)
-- [ ] Tempo szczytow/miesiac: poprawna wartosc obliczenia
-- [ ] Formularz historycznego wejscia: bez pola dedykacji
+- [x] "Dashboard" → "Podsumowanie"
+- [x] Os czasu: bez wysokosci gory przy nazwie
+- [x] Tempo szczytow/miesiac: poprawna wartosc obliczenia
+- [x] Formularz historycznego wejscia: bez pola dedykacji
+- [x] Zwijane sekcje: os czasu, wyzwanie grupowe, historyczne wejscie, druk zdjec
+- [x] Link-karty: "Co dalej?" → planer, "Ustawienia" → settings (spojny styl)
 
 ---
 
@@ -289,16 +295,16 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ---
 
-### USTAW-2: Reorganizacja ustawien 🟡 M
+### USTAW-2: Reorganizacja ustawien 🟡 M (zrobione)
 **Jako** uzytkownik
 **chce** aby najwazniejsze opcje byly na gorze
 **zeby** nie scrollowac w poszukiwaniu potrzebnej funkcji.
 
 **Kryteria akceptacji:**
-- [ ] Kolejnosc: O aplikacji → Synchronizacja → Profil → Adres → Transport → Tempo → Dark mode → (reszta)
-- [ ] "Zainstaluj na telefonie" na koncu (jednorazowa akcja)
-- [ ] "Kopia zapasowa" i "Dane lokalne" zwijane (naglowek widoczny, tresc po kliknieciu)
-- [ ] Wersja / easter egg panelu admina latwiej dostepna (nie na samym dole)
+- [x] Wszystkie sekcje zwijane (accordion) z biezaca wartoscia w naglowku
+- [x] Kolejnosc: sync button → about → profil → adres → transport → tempo → motyw → sync → alarmowe → kopia → dane → instalacja
+- [x] "Zainstaluj na telefonie" na koncu
+- [x] Adres: walidacja geokodowaniem, przycisk GPS, persystowane koordynaty
 
 ---
 
@@ -330,25 +336,24 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ## POGODA
 
-### POGODA-1: Kafelki prognozy na telefonie 🟡 S
+### POGODA-1: Kafelki prognozy na telefonie 🟡 S (zrobione)
 **Jako** uzytkownik na telefonie
 **chce** widziec cala prognoze bez scrollowania w bok
 **zeby** porownac dni i wybrac najlepszy.
 
 **Kryteria akceptacji:**
-- [ ] Kafelki nie wychodza poza ekran na telefonie
-- [ ] Rozwiazanie: 2 linie (4+3) lub ograniczenie do 5 dni
+- [x] Kafelki nie wychodza poza ekran na telefonie (grid 4 kolumn mobile, 7 desktop)
 - [ ] Opcjonalnie: w ustawieniach wybor 3/5/7 dni
 
 ---
 
-### POGODA-2: "Golden hour" po polsku 🟢 S
+### POGODA-2: "Golden hour" po polsku 🟢 S (zrobione)
 **Jako** uzytkownik
 **chce** widziec polskie nazwy w UI
 **zeby** aplikacja byla spojna jezykowo.
 
 **Kryteria akceptacji:**
-- [ ] "Golden hour" → "Najlepszy czas na zdjecia" lub "Zlota godzina"
+- [x] "Golden hour" → "Najlepszy czas na zdjecia"
 
 ---
 
@@ -372,16 +377,19 @@ Zrodlo: QA-FEEDBACK.md + analiza kodu
 
 ## SOS
 
-### SOS-1: Tryb informacyjny zamiast akcji 🟠 S
+### SOS-1: Tryb informacyjny zamiast akcji 🟠 S (zrobione)
 **Jako** uzytkownik
 **chce** aby SOS nie pozwalal na przypadkowe wyslanie SMS/telefonu do GOPR
 **zeby** nie spowodowac falszywego alarmu.
 
 **Kryteria akceptacji:**
-- [ ] Usunac przyciski tel: i sms: (bezposrednie dzwonienie/wysylanie)
-- [ ] Zostaja numery telefonow jako tekst (do recznego przepisania)
-- [ ] Informacja: "Do alarmowania uzyj aplikacji Ratunek (GOPR/TOPR)"
-- [ ] Rozwazyc: przenesienie info SOS do ustawien i zwolnienie miejsca w dolnej nawigacji
+- [x] Usunac przyciski tel: i sms: (bezposrednie dzwonienie/wysylanie)
+- [x] Zostaja numery telefonow jako tekst (do recznego przepisania)
+- [x] Informacja: "Do alarmowania uzyj aplikacji Ratunek (GOPR/TOPR)"
+- [x] Przeniesione do ustawien jako zwijana sekcja "Numery alarmowe"
+- [x] Zwolnione miejsce w dolnej nawigacji (6→5 zakladek)
+- [x] GOPR/TOPR dynamicznie per region (na podstawie nearbyPeak/selectedPeak)
+- [x] Koordynaty GPS widoczne przed numerami
 
 ---
 

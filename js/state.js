@@ -16,10 +16,10 @@ const state = {
   currentPage: localStorage.getItem('kgp_last_page') || 'map',
   paceMultiplier: parseFloat(localStorage.getItem('kgp_pace') || '1.0'),
   homeAddr: localStorage.getItem('kgp_home') || '',
+  _homeGeo: JSON.parse(localStorage.getItem('kgp_home_geo') || 'null'),
   nearbyPeak: null,
   selectedRoutes: JSON.parse(localStorage.getItem('kgp_routes') || '{}'),
   userName: localStorage.getItem('kgp_username') || '',
-  iceContact: localStorage.getItem('kgp_ice') || '',
   savedRoutes: JSON.parse(localStorage.getItem('kgp_saved_routes') || '{}'),
   trips: JSON.parse(localStorage.getItem('kgp_trips') || '[]'),
   discoveredPlaces: JSON.parse(localStorage.getItem('kgp_discovered') || '[]'),
@@ -99,7 +99,6 @@ function save() {
     localStorage.setItem('kgp_home', state.homeAddr);
     localStorage.setItem('kgp_routes', JSON.stringify(state.selectedRoutes));
     localStorage.setItem('kgp_username', state.userName);
-    localStorage.setItem('kgp_ice', state.iceContact);
     localStorage.setItem('kgp_saved_routes', JSON.stringify(state.savedRoutes));
     localStorage.setItem('kgp_trips', JSON.stringify(state.trips));
     localStorage.setItem('kgp_discovered', JSON.stringify(state.discoveredPlaces));

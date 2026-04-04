@@ -14,7 +14,7 @@
 - [x] Ekran Ustawienia (profil, adres, tempo, transport, sync, backup)
 
 ### Bezpieczenstwo
-- [x] Tryb SOS (GPS, GOPR/TOPR, schronisko, SMS, ICE)
+- [x] ~~Tryb SOS~~ → przeniesione do ustawień jako sekcja "Numery alarmowe" (GPS, GOPR/TOPR per region, 112, rekomendacja apki Ratunek)
 - [x] Czas zachodu/wschodu slonca + ostrzezenie przed zmrokiem
 
 ### Planowanie
@@ -33,7 +33,7 @@
 - [x] "Rok temu dzis..." - wspomnienie
 - [x] Wyzwanie grupowe (Supabase)
 - [x] Prognoza ukonczenia KGP
-- [x] Dedykacja zdobycia szczytu
+- [x] ~~Dedykacja zdobycia szczytu~~ (usunięta z UI)
 
 ### UX / Design
 - [x] Onboarding z animacja
@@ -84,7 +84,9 @@
 - [ ] **Live na szczycie** - inni widza kto jest na ktorym szczycie w real-time
 
 ### UX/UI trendy 2026
-- [x] **Adaptive UI (etap 1)** - detekcja kontekstu (home/driving/trail/summit) z badge w nawigacji. Debounce 3 odczytow. Etap 2-3: zmiana layoutu per kontekst.
+- [x] **Adaptive UI (etap 1)** - detekcja kontekstu (home/driving/trail/summit) z badge w nawigacji. Debounce 3 odczytow. Context switcher do testowania (klik w badge). Etap 2-3: zmiana layoutu per kontekst.
+- [x] **Dark/light mode** - ręczny przełącznik w ustawieniach (Jasny/Ciemny/Systemowy), CSS class-based
+- [x] **Reverse geocoding** - Mapy.com rgeocode API, przycisk GPS w ustawieniach adresu, walidacja z koordynatami
 - [ ] **Accessibility** - wysoki kontrast, skalowalne fonty, aria labels, semantic HTML, obsługa czytnika ekranu. Nie feature, a wymóg.
 - [ ] **Onboarding jako quest** - zamiast intro screena, pierwszy szczyt jako "misja treningowa": wybierz szczyt → sprawdź pogodę → zaplanuj → zdobądź → zrób zdjęcie. Grywalizacja od pierwszej minuty.
 
@@ -106,7 +108,8 @@
 ### Testowanie i jakosc
 - [ ] **Testy E2E (Playwright)** - automatyczne testy regresji w przegladarce. Playwright steruje Chrome/Firefox/Safari programowo - klika, wpisuje, sprawdza elementy. Idealne dla vanilla JS (testuje gotowa strone przez HTTP, zero konfiguracji bundlera). Scenariusze: nawigacja SPA, lista szczytow, oznaczanie zdobytych, planer, zapis/odczyt localStorage, dark/light mode. Odpala sie jednym `npx playwright test` i widac co przeszlo a co padlo. Laczy regresje - zmiana w ui.js od razu pokaze czy lista/mapa/planer nadal dzialaja.
 - [ ] **QA-CHECKLIST.md** - manualna checklista krytycznych sciezek do sprawdzenia przed kazdym merge do main. Szybkie, bez konfiguracji, natychmiastowa wartosc.
-- [ ] **STORIES.md** - user stories z kryteriami akceptacji. Format: "Jako turysta chce X, zeby Y" + checklista warunkow. Kryteria akceptacji staja sie potem checklista testowa. Dla istniejacych i nowych funkcji.
+- [x] **STORIES.md** - user stories z kryteriami akceptacji. 22 stories w 10 kategoriach + architektura blokow planera.
+- [x] **QA-FEEDBACK.md** - centralny dokument z uwagami z testowania (bugi, UX, story tell planera)
 - [ ] **Mockowanie offline/GPS w testach** - symulacja braku sieci i lokalizacji GPS w Playwright (bardziej zaawansowane, na pozniej)
 
 ### Bugfixy
@@ -114,4 +117,4 @@
 
 ---
 
-*Ostatnia aktualizacja: 2026-04-04*
+*Ostatnia aktualizacja: 2026-04-04 (sesja 2)*

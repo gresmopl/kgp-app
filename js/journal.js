@@ -117,29 +117,57 @@ function renderJournal() {
 
     ${renderDashboard()}
 
-    ${state.journal.length > 0 ? renderJournalTimeline() : `
+    ${state.journal.length > 0 ? `
+    <div class="card card-pad" onclick="toggleSection('journal-timeline-section',this)" style="cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin:0">📅 Oś czasu - ${state.journal.length} wpisów</div>
+        <span style="font-size:12px;color:var(--text2)">▼</span>
+      </div>
+      <div id="journal-timeline-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+        ${renderJournalTimeline(true)}
+      </div>
+    </div>` : `
     <div style="text-align:center;padding:40px;color:var(--text2)">
       <div style="font-size:48px;margin-bottom:12px">⛰️</div>
       <div style="font-size:14px">Brak wpisów w dzienniku</div>
       <div style="font-size:12px;margin-top:6px">Zdobądź pierwszy szczyt!</div>
     </div>`}
 
-    <div style="text-align:center;margin-bottom:6px">
-      <button class="btn btn-secondary btn-sm" onclick="openHistoryEntry()">📝 Wpisz historyczne wejście</button>
+    <div class="card card-pad" onclick="toggleSection('history-entry-section',this)" style="cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin:0">📝 Wpisz historyczne wejście</div>
+        <span style="font-size:12px;color:var(--text2)">▼</span>
+      </div>
+      <div id="history-entry-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Dodaj szczyt zdobyty w przeszłości do dziennika.</div>
+        <button class="btn btn-secondary btn-full" onclick="openHistoryEntry()">📝 Dodaj wpis</button>
+      </div>
     </div>
 
-    ${renderGroupChallenge()}
+    ${renderGroupChallengeCollapsible()}
 
-    ${done > 0 ? `
-    <div class="card card-pad">
-      <div class="section-title">🤔 Co dalej?</div>
-      ${renderNextSuggestions()}
+    ${state.journal.filter(e => e.photo).length > 0 ? `
+    <div class="card card-pad" onclick="toggleSection('print-section',this)" style="cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin:0">🖨️ Drukuj zdjęcia</div>
+        <span style="font-size:12px;color:var(--text2)">▼</span>
+      </div>
+      <div id="print-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Wydruk zdjęć A4 w formacie 9x13cm z liniami cięcia.</div>
+        <button class="btn btn-secondary btn-full" onclick="printPhotos()">🖨️ Drukuj zdjęcia (A4, 9x13)</button>
+      </div>
     </div>` : ''}
 
-    <div style="text-align:center;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
-      ${state.journal.filter(e => e.photo).length > 0 ? `<button class="btn btn-secondary btn-sm" onclick="printPhotos()">🖨️ Drukuj zdjęcia (A4, 9x13)</button>` : ''}
-      <button class="btn btn-secondary btn-sm" onclick="goto('settings')">⚙️ Ustawienia i synchronizacja</button>
-    </div>
+    ${done > 0 && done < 28 ? `
+    <a class="card card-pad" onclick="goto('plan')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-decoration:none;color:var(--text)">
+      <div class="section-title" style="margin:0">🤔 Co dalej?</div>
+      <span style="font-size:12px;color:var(--text2)">→</span>
+    </a>` : ''}
+
+    <a class="card card-pad" onclick="goto('settings')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-decoration:none;color:var(--text)">
+      <div class="section-title" style="margin:0">⚙️ Ustawienia i synchronizacja</div>
+      <span style="font-size:12px;color:var(--text2)">→</span>
+    </a>
 
   </div>`;
 }

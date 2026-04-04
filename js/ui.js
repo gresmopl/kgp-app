@@ -730,38 +730,6 @@ function openPeakDetail(id) {
   document.body.appendChild(overlay);
 }
 
-// ============================================================
-// NEXT SUGGESTIONS
-// ============================================================
-function renderNextSuggestions() {
-  const todo = getTodo();
-  if (todo.length === 0) return '<div style="color:var(--green);font-weight:600">🏆 Wszystkie szczyty zdobyte!</div>';
-
-  const byDist = state.userLat ? [...todo].sort((a,b)=>dist(state.userLat,state.userLon,a.lat,a.lon)-dist(state.userLat,state.userLon,b.lat,b.lon)) : todo;
-  const nearest = byDist[0];
-  const easiest = [...todo].sort((a,b)=>a.difficulty-b.difficulty)[0];
-  const month = new Date().getMonth()+1;
-  const seasonal = todo.find(p=>p.season.includes(month)) || todo[0];
-
-  const card = (emoji, tag, color, p, desc) => `
-    <div class="next-card" onclick="changePlanPeak(${p.id});goto('plan')" style="margin-bottom:8px">
-      <div style="font-size:28px">${emoji}</div>
-      <div style="flex:1">
-        <div class="next-tag" style="color:${color}">${tag}</div>
-        <div style="font-weight:700;font-size:14px">${p.name} <span style="color:var(--accent)">${p.height}m</span></div>
-        <div style="font-size:11px;color:var(--text2)">${desc}</div>
-      </div>
-      <div style="color:var(--text2)">›</div>
-    </div>`;
-
-  return card('📍','NAJBLIŻSZY','var(--blue)',nearest,
-    state.userLat ? `${Math.round(dist(state.userLat,state.userLon,nearest.lat,nearest.lon)/1000)} km od Ciebie · ${nearest.range}` : nearest.range) +
-  card('😊','NAJŁATWIEJSZY','var(--green)',easiest,
-    `Trudność ${easiest.difficulty}/5 · ${easiest.range}`) +
-  card('🌡️','SEZONOWY','var(--accent)',seasonal,
-    `Polecany na ${new Date().toLocaleString('pl',{month:'long'})} · ${seasonal.range}`);
-}
-
 function renderNextSuggestPage() {
   const lastId = state.conquered[state.conquered.length-1];
   const last = PEAKS.find(p=>p.id===lastId);
@@ -777,10 +745,9 @@ function renderNextSuggestPage() {
       <div style="font-size:14px;color:var(--text2);margin-top:4px">${state.conquered.length} z 28 szczytów Korony</div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="generateConquestCard(${lastId})">🎴 Pobierz kartę zdobycia</button>
     </div>
-    <div class="card card-pad">
-      <div class="section-title">Co dalej?</div>
-      ${renderNextSuggestions()}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-primary btn-full" onclick="goto('plan')">🤔 Co dalej? → Planuj wyprawę</button>
+      <button class="btn btn-secondary btn-full" onclick="goto('journal')">📖 Zobacz dziennik</button>
     </div>
-    <button class="btn btn-secondary btn-full" onclick="goto('journal')">📖 Zobacz dziennik</button>
   </div>`;
 }

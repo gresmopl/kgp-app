@@ -36,6 +36,18 @@ function renderPlanner() {
   return renderTripList();
 }
 
+function getLocationMismatchWarning() {
+  if (!state._homeGeo || !state.userLat || !state.userLon) return '';
+  const d = dist(state._homeGeo.lat, state._homeGeo.lon, state.userLat, state.userLon);
+  if (d < 50000) return ''; // mniej niż 50km - OK
+  const kmAway = Math.round(d / 1000);
+  return `
+    <div style="background:var(--accent)15;border:1px solid var(--accent)44;border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text2);line-height:1.5">
+      📍 Jesteś <b style="color:var(--accent)">${kmAway}km</b> od adresu domowego (${esc(state.homeAddr)}). Odległości liczone są od adresu w ustawieniach.
+      <div style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="goto('settings')">⚙️ Zmień adres</button></div>
+    </div>`;
+}
+
 // ============================================================
 // LISTA WYPRAW
 // ============================================================
@@ -54,6 +66,8 @@ function renderTripList() {
     <button class="btn btn-primary btn-full" onclick="createTrip()" style="margin-bottom:4px">
       + Nowa wyprawa
     </button>
+
+    ${getLocationMismatchWarning()}
 
     ${upcoming.length > 0 ? `
     <div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px">Nadchodzące</div>
@@ -107,15 +121,49 @@ function renderQuickPlanSection() {
   const todo = getTodo();
   if (todo.length === 0) return '';
 
+  const refLat = (state._homeGeo && state._homeGeo.lat) || state.userLat;
+  const refLon = (state._homeGeo && state._homeGeo.lon) || state.userLon;
+  const sorted = [...todo];
+  if (refLat && refLon) {
+    sorted.sort((a, b) => dist(refLat, refLon, a.lat, a.lon) - dist(refLat, refLon, b.lat, b.lon));
+  }
+  const nearest = sorted[0];
+  const easiest = [...todo].sort((a,b) => a.difficulty - b.difficulty)[0];
+  const month = new Date().getMonth() + 1;
+  const seasonal = todo.find(p => p.season.includes(month)) || todo[0];
+
+  const distLabel = (p) => refLat && refLon ? '~' + Math.round(dist(refLat, refLon, p.lat, p.lon) / 1000 * 1.3) + 'km' : p.range;
+
+  const peakRow = (emoji, tag, p, desc) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border-radius:10px;cursor:pointer" onclick="quickTrip(${p.id})">
+      <span style="font-size:24px">${emoji}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">${p.name} <span style="color:var(--accent);font-weight:400">${p.height}m</span></div>
+        <div style="font-size:11px;color:var(--text2)">${tag} · ${desc}</div>
+      </div>
+      <span style="color:var(--text2)">›</span>
+    </div>`;
+
+  // Buduj listę: 3 wyróżnione + reszta
+  const highlighted = [nearest.id];
+  let suggestionsHtml = peakRow('📍', 'Najbliższy', nearest, distLabel(nearest));
+  if (easiest.id !== nearest.id) { suggestionsHtml += peakRow('😊', 'Najłatwiejszy', easiest, 'Trudność ' + easiest.difficulty + '/5 · ' + distLabel(easiest)); highlighted.push(easiest.id); }
+  if (seasonal.id !== nearest.id && seasonal.id !== easiest.id) { suggestionsHtml += peakRow('🌡️', 'Sezonowy', seasonal, 'Polecany na ' + new Date().toLocaleString('pl',{month:'long'}) + ' · ' + distLabel(seasonal)); highlighted.push(seasonal.id); }
+
+  const rest = sorted.filter(p => !highlighted.includes(p.id));
+  const restHtml = rest.map(p => peakRow('⛰️', p.range, p, distLabel(p))).join('');
+
   return `
-  <div class="card card-pad" style="margin-top:8px">
-    <div class="section-title">💡 Szybki start</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Wybierz szczyt aby szybko stworzyć jednodniową wyprawę:</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${todo.slice(0, 8).map(p => `
-        <button class="btn btn-secondary btn-sm" onclick="quickTrip(${p.id})" style="font-size:11px">${p.name}</button>
-      `).join('')}
-      ${todo.length > 8 ? `<span style="font-size:11px;color:var(--text2);align-self:center">+${todo.length - 8} więcej</span>` : ''}
+  <div class="card card-pad" style="margin-top:8px" onclick="toggleSection('whatnext-section',this)" style="cursor:pointer">
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+      <div class="section-title" style="margin:0">🤔 Co dalej? - ${todo.length} niezdobytych</div>
+      <span style="font-size:12px;color:var(--text2)">▼</span>
+    </div>
+    <div id="whatnext-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${suggestionsHtml}
+        ${restHtml}
+      </div>
     </div>
   </div>`;
 }
@@ -508,13 +556,20 @@ function showAddStop(tripId, dayIdx) {
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
 
-  const peakOptions = PEAKS.map(p =>
-    `<div class="peak-item" style="cursor:pointer" onclick="addPeakStops('${tripId}',${dayIdx},${p.id});this.closest('.modal-overlay').remove()">
+  const _rLat = (state._homeGeo && state._homeGeo.lat) || state.userLat;
+  const _rLon = (state._homeGeo && state._homeGeo.lon) || state.userLon;
+  const peaksSorted = [...PEAKS];
+  if (_rLat && _rLon) {
+    peaksSorted.sort((a, b) => dist(_rLat, _rLon, a.lat, a.lon) - dist(_rLat, _rLon, b.lat, b.lon));
+  }
+  const peakOptions = peaksSorted.map(p => {
+    const d = _rLat && _rLon ? Math.round(dist(_rLat, _rLon, p.lat, p.lon) / 1000 * 1.3) : null;
+    return `<div class="peak-item" style="cursor:pointer" onclick="addPeakStops('${tripId}',${dayIdx},${p.id});this.closest('.modal-overlay').remove()">
       <span class="peak-dot ${isDone(p.id) ? 'done' : 'todo'}"></span>
-      <div class="peak-info"><div class="peak-name">${p.name}</div><div class="peak-meta">${p.range}</div></div>
+      <div class="peak-info"><div class="peak-name">${p.name}</div><div class="peak-meta">${p.range}${d ? ' · ~'+d+'km' : ''}</div></div>
       <div class="peak-height">${p.height}m</div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 
   overlay.innerHTML = `
   <div class="modal-sheet">
@@ -964,11 +1019,14 @@ async function mapPickerSearch() {
     resultsDiv.innerHTML = items.map((item, i) => {
       const name = item.name || 'Bez nazwy';
       const label = item.label || '';
+      const loc = item.location ? `${item.location.address || ''}` : '';
+      const region = [item.location?.municipality, item.location?.county, item.location?.region].filter(Boolean).join(', ');
+      const detail = loc || region || label;
       return `<div onclick="mapPickerSelectResult(${i})" style="padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
         <span style="font-size:18px">📍</span>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</div>
-          ${label ? `<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(label)}</div>` : ''}
+          ${detail ? `<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(detail)}</div>` : ''}
         </div>
       </div>`;
     }).join('');

@@ -36,9 +36,9 @@ html { scroll-behavior: smooth; }
   --feature-icon-bg: #fef9ee;
   --green-bg: #dcfce7;
   --green-text: #166534;
-  --cta-bg: #0f0f1a;
-  --cta-bg2: #1a1a2e;
-  --cta-text: #ffffff;
+  --cta-bg: #fef9ee;
+  --cta-bg2: #fef3c7;
+  --cta-text: #1a1a2e;
   --footer-bg: #0f0f1a;
   --footer-text: #9ca3af;
   --footer-text2: #e8e8f0;
@@ -265,7 +265,7 @@ section:nth-child(even) { background: var(--bg-alt); }
 .step p { font-size: 14px; color: var(--text2); }
 
 /* ── CTA section ── */
-.cta-section {
+section.cta-section {
   background: linear-gradient(135deg, var(--cta-bg) 0%, var(--cta-bg2) 100%);
   padding: 80px 0;
   text-align: center;
@@ -278,7 +278,7 @@ section:nth-child(even) { background: var(--bg-alt); }
   letter-spacing: -0.8px;
   color: var(--cta-text);
 }
-.cta-section p { color: var(--text3); font-size: 16px; margin-bottom: 32px; }
+.cta-section p { color: var(--text2); font-size: 16px; margin-bottom: 32px; }
 .cta-section .btn-primary:hover { box-shadow: 0 8px 32px var(--accent-shadow); }
 
 /* ── Footer ── */
@@ -399,32 +399,32 @@ section:nth-child(even) { background: var(--bg-alt); }
       <div class="feature-card animate">
         <div class="feature-icon">🗺️</div>
         <h3>Interaktywna mapa</h3>
-        <p>Mapa z kafelkami outdoorowymi Mapy.com. Wszystkie 28 szczytów, parkingi, schroniska i szlaki w jednym miejscu.</p>
-      </div>
-
-      <div class="feature-card animate delay-1">
-        <div class="feature-icon">📅</div>
-        <h3>Planowanie wypraw</h3>
-        <p>Routing pieszy i samochodowy, czas przejścia, przewyższenia, kalkulator kalorii i najlepsze okno pogodowe.</p>
-      </div>
-
-      <div class="feature-card animate delay-2">
-        <div class="feature-icon">📍</div>
-        <h3>Live tracker</h3>
-        <p>"Ile jeszcze?" - śledzenie postępu na szlaku w czasie rzeczywistym z GPS, ETA i postępem procentowym.</p>
-        <span class="feature-badge">GPS</span>
-      </div>
-
-      <div class="feature-card animate">
-        <div class="feature-icon">🆘</div>
-        <h3>Tryb SOS</h3>
-        <p>Szybki dostęp do GOPR/TOPR, najbliższe schronisko, wysyłanie SMS z lokalizacją GPS i kontakt ICE.</p>
+        <p>Mapa turystyczna ze wszystkimi 28 szczytami. Zdobyte na zielono, pozostałe na pomarańczowo. Klik = szczegóły.</p>
       </div>
 
       <div class="feature-card animate delay-1">
         <div class="feature-icon">🌤️</div>
-        <h3>Prognoza pogody</h3>
-        <p>Aktualna pogoda na każdym szczycie, czas wschodu i zachodu słońca, ostrzeżenie przed zmrokiem.</p>
+        <h3>Pogoda i warunki</h3>
+        <p>Prognoza na każdy szczyt, czas przejścia, zachód słońca, najlepsze okno pogodowe i ostrzeżenia.</p>
+      </div>
+
+      <div class="feature-card animate delay-2">
+        <div class="feature-icon">📋</div>
+        <h3>Planer wypraw</h3>
+        <p>Planuj wielodniowe wyprawy - szczyty, parkingi, noclegi, restauracje. Podpowiedzi co dalej zdobyć.</p>
+        <span class="feature-badge">Nowe</span>
+      </div>
+
+      <div class="feature-card animate">
+        <div class="feature-icon">🆘</div>
+        <h3>Numery alarmowe</h3>
+        <p>Twoje koordynaty GPS i numer właściwej grupy GOPR/TOPR - dopasowany do regionu w którym się znajdujesz.</p>
+      </div>
+
+      <div class="feature-card animate delay-1">
+        <div class="feature-icon">🌓</div>
+        <h3>Jasny i ciemny motyw</h3>
+        <p>Przełączaj ręcznie lub zostaw na automatycznym. Ciemny motyw oszczędza baterię i nie razi po zmroku.</p>
       </div>
 
       <div class="feature-card animate delay-2">
@@ -436,13 +436,13 @@ section:nth-child(even) { background: var(--bg-alt); }
       <div class="feature-card animate">
         <div class="feature-icon">📖</div>
         <h3>Dziennik wypraw</h3>
-        <p>Zapisuj wspomnienia, zdjęcia, dedykacje i notatki. Timeline z osią czasu i "rok temu dziś...".</p>
+        <p>Zapisuj wspomnienia, zdjęcia i notatki. Oś czasu, osiągnięcia, statystyki i "rok temu dziś...".</p>
       </div>
 
       <div class="feature-card animate delay-1">
-        <div class="feature-icon">🔄</div>
-        <h3>Sync między urządzeniami</h3>
-        <p>Prosty kod sync - zaloguj się na telefonie i komputerze. Dane synchronizowane przez Supabase.</p>
+        <div class="feature-icon">☁️</div>
+        <h3>Synchronizacja w chmurze</h3>
+        <p>Prosty kod dostępu - zaloguj się na telefonie i komputerze. Twoje dane bezpiecznie w chmurze.</p>
       </div>
 
       <div class="feature-card animate delay-2">
@@ -466,7 +466,7 @@ section:nth-child(even) { background: var(--bg-alt); }
       <div class="feature-card animate delay-2">
         <div class="feature-icon">👥</div>
         <h3>Wyzwanie grupowe</h3>
-        <p>Rywalizuj ze znajomymi - kto pierwszy zdobędzie Koronę? Wspólne wyzwania przez Supabase.</p>
+        <p>Rywalizuj ze znajomymi - kto pierwszy zdobędzie Koronę? Stwórz grupę i śledź postępy.</p>
       </div>
 
     </div>
@@ -506,14 +506,15 @@ section:nth-child(even) { background: var(--bg-alt); }
   </div>
 </section>
 
-<!-- ── Tech ── -->
-<section id="technologia">
+<!-- ── Why ── -->
+<section id="dlaczego">
   <div class="container text-center">
-    <div class="section-label">Technologia</div>
-    <h2 class="section-heading">Zbudowana na najlepszych technologiach</h2>
+    <div class="section-label">Dlaczego KGP App</div>
+    <h2 class="section-heading">Stworzona z myślą o szlaku</h2>
     <p class="section-desc">
-      Szybka, lekka i niezawodna. Działa na każdym urządzeniu - telefonie, tablecie i komputerze.
-      Nie wymaga instalacji ze sklepu - wystarczy przeglądarka.
+      Działa bez internetu, na każdym telefonie, prosto z przeglądarki.
+      Nie wymaga instalacji ze sklepu, nie zbiera zbędnych danych, nie rozładowuje baterii.
+      Lekka, szybka i przydatna tam gdzie tego potrzebujesz - w górach.
     </p>
   </div>
 </section>

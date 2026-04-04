@@ -15,6 +15,7 @@ function getProfileId() { return localStorage.getItem('kgp_profile_id'); }
 async function initSync() {
   if (getProfileId()) {
     syncToCloud();
+    initAI();
     return;
   }
   let attempts = 0;
@@ -29,6 +30,7 @@ async function initSync() {
       localStorage.setItem('kgp_profile_id', data.id);
       await sb.from('user_data').insert({ user_id: data.id, data: getStateForSync() });
       showToast(`🔗 Twój kod dostępu: ${code}`);
+      initAI();
       return;
     }
     if (error && error.code === '23505') { attempts++; continue; }
@@ -45,10 +47,10 @@ function getStateForSync() {
     homeAddr: state.homeAddr,
     selectedRoutes: state.selectedRoutes,
     userName: state.userName,
-    iceContact: state.iceContact,
     trips: state.trips,
     discoveredPlaces: state.discoveredPlaces,
     transport: state.transport,
+    peakOverrides: JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}'),
     _stateVersion: STATE_VERSION
   };
 }
@@ -88,10 +90,10 @@ async function pullFromCloud() {
     state.homeAddr = d.homeAddr || '';
     state.selectedRoutes = d.selectedRoutes || {};
     state.userName = d.userName || '';
-    state.iceContact = d.iceContact || '';
     state.trips = d.trips || [];
     state.discoveredPlaces = d.discoveredPlaces || [];
     state.transport = d.transport || 'car';
+    if (d.peakOverrides) localStorage.setItem('kgp_peaks_overrides', JSON.stringify(d.peakOverrides));
     _skipSync = true;
     save();
     _skipSync = false;
@@ -115,6 +117,7 @@ async function loginWithCode(code) {
   const pulled = await pullFromCloud();
   if (pulled) {
     showToast(`✅ Zalogowano! Pobrano dane.`);
+    initAI();
     goto(state.currentPage);
   }
   return true;

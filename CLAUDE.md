@@ -22,6 +22,7 @@ js/data.js          - PEAKS[28], klucze API, stałe
 js/state.js         - state, save(), localStorage
 js/utils.js         - esc(), dist(), GPS, toast, confetti, context detection
 js/sync.js          - Supabase sync, login, upload zdjęć
+js/ai.js            - Gemini AI wrapper, autoryzacja, tracking zużycia
 js/weather.js       - prognoza pogody
 js/map.js           - Leaflet mapa, routing Mapy.com
 js/ui.js            - renderList, renderSummit, modal (renderPlan zachowany jako referencja)
@@ -38,7 +39,7 @@ DOCS.md             - dokumentacja projektowa analityczna (architektura, przeply
 
 ## Konwencje kodu
 - Vanilla JS, bez TypeScript, bez modułów ES6 (skrypty ładowane przez `<script src>`)
-- Kolejność ładowania JS ma znaczenie (zależności): data → state → utils → sync → weather → map → ui → journal → settings → features → features2 → planner → router
+- Kolejność ładowania JS ma znaczenie (zależności): data → state → utils → sync → ai → weather → map → ui → journal → settings → features → features2 → planner → router
 - Funkcje renderujące strony zwracają string HTML (np. `renderMap()`, `renderList()`)
 - Nawigacja SPA przez `goto('page')` — router w `router.js`
 - Stan w obiekcie `state`, zapis do localStorage przez `save()`
@@ -89,6 +90,8 @@ DOCS.md             - dokumentacja projektowa analityczna (architektura, przeply
 - **localStorage limit**: ~5MB. Zdjęcia w base64 potrafią to zapchać. Zdjęcia trzymaj w Supabase Storage, w localStorage tylko metadane
 - **Overpass API rate limiting**: 429/504 przy wielu zapytaniach. Nie odpytuj masowo, rób cache
 - **state.departTime i state.transport NIE SĄ persystowane** do localStorage — żyją tylko w sesji. Jeśli planer je potrzebuje trwale, dodaj do save()
+- **state._homeGeo JEST persystowane** w localStorage (kgp_home_geo) — koordynaty zgeokodowanego adresu domowego. Ustawiany przez validateHomeAddr(), detectHomeAddr() i geokodowanie w tle. Czyszczony przy zmianie adresu
+- **toggleSection()** jest w utils.js (nie settings.js) — używane globalnie w ustawieniach, dzienniku i planerze
 
 ## Docelowa grupa użytkowników
 - Turyści górscy, często z ograniczonym zasięgiem w terenie

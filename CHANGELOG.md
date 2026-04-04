@@ -4,6 +4,57 @@ Wszystkie istotne zmiany w projekcie. Format oparty na [Keep a Changelog](https:
 
 ---
 
+## [1.4.0] - 2026-04-04 (dev)
+
+### Dodane
+- Przełącznik dark/light/system mode w ustawieniach (localStorage, per-device)
+- Context switcher - klik w badge kontekstu otwiera popup z wyborem trybu (do testowania)
+- Reverse geocoding adresu domowego (Mapy.com rgeocode API) - przycisk "📍 GPS" w ustawieniach
+- Walidacja adresu domowego z geokodowaniem - zielony status z koordynatami lub czerwony błąd
+- Geokodowanie adresu domowego persystowane w localStorage (`kgp_home_geo`), fallback na GPS
+- Sekcja "Numery alarmowe" w ustawieniach - zwijana, z GPS, GOPR/TOPR dynamicznie per region, 112
+- Sekcja "Co dalej?" w planerze - zwijana lista wszystkich niezdobytych szczytów z odległościami, 3 wyróżnione (najbliższy, najłatwiejszy, sezonowy) + reszta
+- Odległości od domu przy szczytach w planerze (lista "Dodaj z listy" + "Co dalej?")
+- Sortowanie szczytów po odległości od adresu domowego (fallback na GPS)
+- Lepsze wyniki geokodowania - pełny adres (gmina, powiat, region) z Mapy.com API
+- Ciekawostki przeniesione z dziennika na mapę (legenda, klik = nowa losowa)
+- Scroll do nowo dodanej pozycji w planerze (smooth, block: center)
+- Powiadomienie w planerze gdy GPS >50km od adresu domowego (np. urlop w Zakopanem)
+- Warstwa parkingów na mapie - niebieskie "P", widoczne od zoom 10, toggle w legendzie, popup z nawigacją
+- Nowy popup zdobytego szczytu - zdjęcie z lightboxem, data, notatka, przycisk do dziennika
+- Nowy popup niezdobytego szczytu - trudność, parking, czas przejścia, odległość od domu, "Dodaj do planu"
+
+### Zmienione
+- Ustawienia: wszystkie sekcje zwijane (accordion) z bieżącą wartością w nagłówku
+- Ustawienia: nowa kolejność (sync button → about → profil → adres → transport → tempo → motyw → sync → alarmowe → kopia → dane → instalacja)
+- Tempo: 3 przyciski (Szybkie/Normalne/Spokojne) zamiast slidera z mnożnikiem
+- SOS: przeniesione z osobnej zakładki do ustawień, usunięte przyciski tel:/sms:
+- SOS: numery alarmowe dynamicznie per region (TOPR w Tatrach, odpowiednia grupa GOPR w innych pasmach)
+- Dolna nawigacja: 6→5 zakładek (usunięta zakładka SOS)
+- "Dashboard" → "Podsumowanie" (polski język)
+- "Golden hour" → "Najlepszy czas na zdjęcia" (polski język)
+- Oś czasu: usunięta wysokość przy nazwie szczytu
+- Dziennik: zwijane sekcje (oś czasu, wyzwanie grupowe, historyczne wejście, druk zdjęć) - spójny styl z ustawieniami
+- Dziennik: "Co dalej?" i "Ustawienia" jako link-karty ze strzałką (bez luźnych przycisków)
+- Planer: "Co dalej?" zastępuje osobny "Szybki start" i stary "Co dalej?" z dziennika - jedno miejsce, zero duplikacji
+- `toggleSection()` przeniesione z settings.js do utils.js (helper globalny)
+- `renderJournalTimeline(inline)` - parametr inline zwraca zawartość bez wrappera card
+
+### Usunięte
+- Zakładka SOS z dolnej nawigacji (info przeniesione do ustawień)
+- Kontakt ICE (osoba bliska) - niepotrzebny w tego typu aplikacji
+- Pole dedykacji w formularzu historycznego wejścia
+- Ciekawostki z dziennika (przeniesione na mapę)
+- `renderNextSuggestions()` z ui.js (zduplikowana logika, zastąpiona sekcją w planerze)
+- Stary `renderGroupChallenge()` zastąpiony przez `renderGroupChallengeCollapsible()`
+
+### Poprawione
+- Prognoza ukończenia KGP: daySpan liczone od pierwszego wpisu do teraz (nie do ostatniego), minimum 30 dni
+- Kafelki pogody: 4 kolumny na mobile (4+3), 7 na desktop (już było w CSS)
+- `_homeGeo` persystowane w localStorage (wcześniej ginęło po odświeżeniu strony)
+
+---
+
 ## [1.3.0] - 2026-04-03 (dev)
 
 ### Dodane

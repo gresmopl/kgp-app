@@ -1,7 +1,7 @@
 // ============================================================
 // ROUTER
 // ============================================================
-const navMap = {map:'nav-map',list:'nav-list',plan:'nav-plan',summit:'nav-summit',journal:'nav-journal',settings:'nav-settings',sos:'nav-sos'};
+const navMap = {map:'nav-map',list:'nav-list',plan:'nav-plan',summit:'nav-summit',journal:'nav-journal',settings:'nav-settings'};
 
 async function goto(page, skipHistory) {
   if (!skipHistory && state.currentPage !== page) {
@@ -25,7 +25,6 @@ async function goto(page, skipHistory) {
     case 'summit': html = renderSummit(); break;
     case 'journal':html = renderJournal(); break;
     case 'settings': html = renderSettings(); break;
-    case 'sos': html = renderSOS(); break;
     case 'next_suggest': html = renderNextSuggestPage(); break;
     case 'history': html = renderHistoryEntry(); break;
   }
@@ -39,6 +38,9 @@ async function goto(page, skipHistory) {
   // Przycisk "do góry" na długich stronach
   updateScrollTopBtn(screen, page);
 
+  if (page === 'settings') {
+    setTimeout(updateAIBadge, 100);
+  }
   if (page === 'map') {
     setTimeout(() => { initMap(); setTimeout(applyRouteToMap, 100); }, 50);
   }
@@ -57,17 +59,6 @@ async function goto(page, skipHistory) {
       loadSunTimes(planPeak);
       loadWarnings(planPeak.id);
     }
-  }
-  if (page === 'sos') {
-    // Załaduj zachód słońca dla SOS
-    const peak = state.nearbyPeak ? PEAKS.find(p => p.id === state.nearbyPeak) : (state.selectedPeak || PEAKS[0]);
-    fetchSunTimes(peak.lat, peak.lon).then(sun => {
-      if (sun) {
-        state._todaySunset = sun.sunset;
-        const el = document.querySelector('#sun-sos');
-        if (el) el.textContent = `Zachód słońca: ${sun.sunset}`;
-      }
-    });
   }
 }
 
@@ -123,7 +114,7 @@ function installApp() {
 // Scroll-to-top button
 function updateScrollTopBtn(screen, page) {
   let btn = document.getElementById('scroll-top-btn');
-  const longPages = ['plan','journal','settings','list','sos'];
+  const longPages = ['plan','journal','settings','list'];
   if (!longPages.includes(page)) {
     if (btn) btn.style.display = 'none';
     return;
@@ -186,5 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navigator.onLine && getProfileId()) {
     if (localStorage.getItem('kgp_sync_pending')) syncToCloud();
     processPhotoQueue();
+  }
+  // Geokoduj adres domowy w tle (jeśli brak cache)
+  if (state.homeAddr && !state._homeGeo) {
+    geocodeParking(state.homeAddr).then(coords => {
+      if (coords) {
+        state._homeGeo = coords;
+        localStorage.setItem('kgp_home_geo', JSON.stringify(coords));
+      }
+    }).catch(() => {});
   }
 });

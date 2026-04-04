@@ -1,8 +1,8 @@
 // ============================================================
-// FEATURE 1: TRYB SOS
+// NUMERY ALARMOWE (sekcja w ustawieniach)
 // ============================================================
 const GOPR_REGIONS = {
-  'Tatry': { name: 'TOPR', phone: '601100300' },
+  'Tatry': { name: 'TOPR', phone: '601 100 300' },
   'Beskid Żywiecki': { name: 'GOPR Grupa Beskidzka', phone: '985' },
   'Karkonosze': { name: 'GOPR Grupa Karkonoska', phone: '985' },
   'Masyw Śnieżnika': { name: 'GOPR Grupa Wałbrzyska', phone: '985' },
@@ -22,104 +22,16 @@ function getGOPRForRange(range) {
   return GOPR_REGIONS[range] || { name: 'GOPR', phone: '985' };
 }
 
-function renderSOS() {
+function getSOSInfo() {
   const nearPeak = state.nearbyPeak ? PEAKS.find(p => p.id === state.nearbyPeak) : null;
-  const selectedPeak = state.selectedPeak || PEAKS[0];
+  const selectedPeak = state.selectedPeak || null;
   const peak = nearPeak || selectedPeak;
-  const gopr = getGOPRForRange(peak.range);
+  const gopr = peak ? getGOPRForRange(peak.range) : { name: 'GOPR', phone: '985' };
   const hasGPS = state.userLat && state.userLon;
-  const coords = hasGPS ? `${state.userLat.toFixed(6)}, ${state.userLon.toFixed(6)}` : 'Brak GPS';
-  const smsBody = hasGPS
-    ? encodeURIComponent(`SOS! Potrzebuję pomocy. Moja lokalizacja: ${state.userLat.toFixed(6)}, ${state.userLon.toFixed(6)} (okolice ${peak.name}, ${peak.range}). https://maps.google.com/?q=${state.userLat.toFixed(6)},${state.userLon.toFixed(6)}`)
-    : encodeURIComponent(`SOS! Potrzebuję pomocy. Okolice ${peak.name}, ${peak.range}. Brak GPS.`);
-  const iceContact = state.iceContact || '';
-
-  // Znajdź najbliższe schronisko
-  let nearestShelter = null;
-  let nearestDist = Infinity;
-  if (hasGPS) {
-    PEAKS.forEach(p => {
-      (p.stamps || []).forEach(s => {
-        if (s.type === '🏠') {
-          const d = dist(state.userLat, state.userLon, p.lat, p.lon);
-          if (d < nearestDist) {
-            nearestDist = d;
-            nearestShelter = { name: s.name, peak: p.name, dist: d };
-          }
-        }
-      });
-    });
-  }
-
-  // Zachód słońca
-  const sunsetInfo = state._todaySunset
-    ? `Zachód słońca: <b style="color:var(--accent)">${state._todaySunset}</b>`
-    : 'Ładowanie danych o zachodzie...';
-
-  return `
-  <div class="header" style="background:var(--red)22;border-bottom-color:var(--red)44">
-    <span class="header-icon">🆘</span>
-    <div><div class="header-title" style="color:var(--red)">TRYB SOS</div><div class="header-sub">Pomoc w nagłych wypadkach</div></div>
-  </div>
-  <div class="page page-gap" style="padding-bottom:80px">
-
-    <div class="card card-pad" style="border-color:var(--red)44;background:#351a1a">
-      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px">📍 Twoje koordynaty GPS</div>
-      <div style="font-family:var(--font-display);font-size:22px;color:${hasGPS ? 'var(--text)' : 'var(--red)'};letter-spacing:1px;margin-bottom:6px">${coords}</div>
-      ${hasGPS ? `<div style="font-size:11px;color:var(--text2)">Podaj te współrzędne ratownikom przez telefon</div>` : `<div style="font-size:11px;color:var(--red)">⚠️ Włącz GPS! Ratownicy potrzebują Twojej lokalizacji</div>`}
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">📞 Numery alarmowe</div>
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--red)22;border-radius:10px;margin-bottom:8px">
-        <span style="font-size:24px">📞</span>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:16px;color:var(--red)">${gopr.name}</div>
-          <div style="font-family:var(--font-display);font-size:22px;color:var(--text);letter-spacing:1px">${gopr.phone}</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px">
-        <span style="font-size:24px">📞</span>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:14px">Numer alarmowy</div>
-          <div style="font-family:var(--font-display);font-size:22px;color:var(--text);letter-spacing:1px">112</div>
-        </div>
-      </div>
-      <div style="font-size:10px;color:var(--text2);margin-top:4px">Do alarmowania polecamy aplikację <b>Ratunek</b> (GOPR/TOPR) - ma wbudowane zabezpieczenia przed przypadkowym wysłaniem</div>
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">👤 Kontakt bliskiej osoby (ICE)</div>
-      <label class="label">Numer telefonu (na wypadek SOS)</label>
-      <input class="input" type="tel" value="${esc(state.iceContact)}" placeholder="np. 600123456" onchange="state.iceContact=this.value;save()">
-      ${iceContact ? `<div style="margin-top:8px;padding:10px;background:var(--card2);border-radius:8px;font-family:var(--font-display);font-size:18px;letter-spacing:1px">${iceContact}</div>` : '<div style="font-size:10px;color:var(--text2);margin-top:4px">Wpisz numer, aby mieć go pod ręką</div>'}
-    </div>
-
-    ${nearestShelter ? `
-    <div class="card card-pad">
-      <div class="section-title">🏠 Najbliższe schronisko</div>
-      <div style="font-weight:600;font-size:14px">${nearestShelter.name}</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:4px">Okolice ${nearestShelter.peak} · ~${(nearestShelter.dist/1000).toFixed(1)} km w linii prostej</div>
-    </div>` : ''}
-
-    <div class="card card-pad">
-      <div style="font-size:12px;color:var(--text2)">${sunsetInfo}</div>
-    </div>
-
-    <div class="card card-pad">
-      <div style="font-size:11px;color:var(--text2);line-height:1.6">
-        <b>Co robić w sytuacji awaryjnej:</b><br>
-        1. Zachowaj spokój<br>
-        2. Zadzwoń na GOPR/TOPR (985) lub 112<br>
-        3. Podaj swoje współrzędne GPS (powyżej)<br>
-        4. Opisz sytuację i obrażenia<br>
-        5. Pozostań w miejscu - czekaj na ratowników<br>
-        6. Jeśli możesz - zabezpiecz się przed wiatrem i zimnem
-      </div>
-    </div>
-
-  </div>`;
+  const coords = hasGPS ? `${state.userLat.toFixed(6)}, ${state.userLon.toFixed(6)}` : null;
+  return { peak, gopr, hasGPS, coords };
 }
+
 
 // ============================================================
 // FEATURE 2: DEDYKACJA ZDOBYCIA
@@ -586,15 +498,11 @@ function renderAchievements() {
 // ============================================================
 // FEATURE 15: TIMELINE / OŚ CZASU W DZIENNIKU
 // ============================================================
-function renderJournalTimeline() {
+function renderJournalTimeline(inline) {
   if (state.journal.length === 0) return '';
 
   let lastDate = null;
-  return `
-  <div class="card">
-    <div class="card-pad" style="border-bottom:1px solid var(--border)">
-      <div class="section-title">📅 Oś czasu</div>
-    </div>
+  const content = `
     <div class="journal-timeline">
       ${state.journal.map((entry, i) => {
         const d = parsePolishDate(entry.date);
@@ -630,8 +538,9 @@ function renderJournalTimeline() {
           </div>
         </div>`;
       }).join('')}
-    </div>
-  </div>`;
+    </div>`;
+  if (inline) return content;
+  return `<div class="card"><div class="card-pad" style="border-bottom:1px solid var(--border)"><div class="section-title">📅 Oś czasu</div></div>${content}</div>`;
 }
 
 // ============================================================

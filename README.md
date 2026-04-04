@@ -11,7 +11,7 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Dziennik zdobywcy** - historia wejsc ze zdjeciami i statystykami
 - **Synchronizacja** - dane zsynchronizowane miedzy urzadzeniami przez Supabase (kod sync)
 - **Tryb offline** - aplikacja dziala bez internetu, dane synchronizowane po polaczeniu
-- **Tryb SOS** - koordynaty GPS, telefon GOPR/TOPR, SMS z lokalizacja, najblizsze schronisko
+- **Numery alarmowe** - koordynaty GPS, GOPR/TOPR dynamicznie per region, 112 (w ustawieniach)
 - **Wschod/zachod slonca** - ostrzezenie jesli zejscie po zmroku
 - **Kalkulator kalorii** - szacunkowe spalanie na trasie
 - **Passa zdobywcy** - streak, prognoza ukonczenia KGP, porownanie z innymi
@@ -31,6 +31,8 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku
 - **Strona informacyjna** - responsywna strona "O aplikacji" z opisem funkcji (about.html)
 - **Planer wypraw** - wielodniowe wyprawy, przystanki (parking/szlak/szczyt/nocleg/restauracja), timeline z auto-kalkulacja, GPS checkpoint, udostepnianie, wybor punktow z mapy
+- **Dark/light mode** - reczny przelacznik (Jasny/Ciemny/Systemowy), per-device
+- **Reverse geocoding** - wykrywanie adresu z GPS (Mapy.com rgeocode API)
 - **Panel administracyjny** - dashboard, zarzadzanie uzytkownikami, galeria zdjec, ostrzezenia, stan systemu (panel.html)
 
 ## Stos technologiczny
@@ -62,7 +64,7 @@ kgp-app/
 │   ├── ui.js           # Strony: lista, plan, szczyt, modal
 │   ├── journal.js      # Dziennik, eksport/import
 │   ├── settings.js     # Ustawienia
-│   ├── features.js     # SOS, streak, prognoza, onboarding, kalorie, karta, osiagniecia, timeline, lightbox, dashboard
+│   ├── features.js     # GOPR/numery alarmowe, streak, prognoza, onboarding, kalorie, karta, osiagniecia, timeline, lightbox, dashboard
 │   ├── features2.js    # Wydruk, pakowanie, ciekawostki, parking, pogoda, restauracje, grupy, tracker, ostrzezenia
 │   ├── planner.js      # Planer wypraw: lista, edytor, map picker, GPS checkpoint, udostepnianie
 │   └── router.js       # Nawigacja SPA, init

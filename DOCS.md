@@ -34,10 +34,10 @@
 │  │ #screen (dynamiczna tresc)                │  │
 │  │  renderMap / renderList / renderPlan /     │  │
 │  │  renderSummit / renderJournal /            │  │
-│  │  renderSettings / renderSOS               │  │
+│  │  renderSettings                            │  │
 │  └───────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────┐  │
-│  │ #nav (dolna nawigacja - 7 zakladek)       │  │
+│  │ #nav (dolna nawigacja - 5 zakladek)       │  │
 │  │ [ctx-badge] wskaznik kontekstu            │  │
 │  └───────────────────────────────────────────┘  │
 │                                                 │
@@ -139,7 +139,7 @@ Uzytkownik wybiera zdjecie (input[type=file])
 | summit | renderSummit() | ui.js | Tryb zdobywcy - zdjecie, formularz |
 | journal | renderJournal() | journal.js | Dziennik wejsc |
 | settings | renderSettings() | settings.js | Ustawienia |
-| sos | renderSOS() | features.js | Tryb awaryjny |
+| ~~sos~~ | ~~renderSOS()~~ | ~~features.js~~ | Przeniesione do ustawień jako sekcja "Numery alarmowe" |
 
 ### Przeplyw nawigacji
 
@@ -178,7 +178,6 @@ odswiez strone      → hash z URL → goto(page, true)
 | homeAddr | kgp_home | string | Adres startowy |
 | selectedRoutes | kgp_routes | object | Wybrane warianty tras {peakId: idx} |
 | userName | kgp_username | string | Imie / nick |
-| iceContact | kgp_ice | string | Kontakt ICE |
 | savedRoutes | kgp_saved_routes | object | Zapisane trasy z geometria |
 
 ### Pola sesyjne (NIE persystowane)
@@ -193,12 +192,14 @@ odswiez strone      → hash z URL → goto(page, true)
 | transport | Samochod / PKS | Tylko w sesji |
 | context | home/driving/trail/summit | Z context detection |
 | _contextPeak | Najblizszy szczyt kontekstowy | Z context detection |
-| _todaySunset | Cache zachodu slonca | Dla SOS |
+| _todaySunset | Cache zachodu slonca | Dla widoku szczytu |
 
-### Pola filtrowania (localStorage ale nie Supabase)
+### Pola per-device (localStorage, NIE syncowane do Supabase)
 
 | Pole | Klucz | Opis |
 |------|-------|------|
+| _homeGeo | kgp_home_geo | Zgeokodowane koordynaty adresu domowego {lat, lon} |
+| theme | kgp_theme | Motyw: light/dark/system |
 | filter | kgp_filter | Aktywny filtr listy (all/done/todo/region) |
 | currentPage | kgp_last_page | Ostatnia otwarta zakladka |
 

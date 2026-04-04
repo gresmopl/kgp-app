@@ -249,6 +249,60 @@ function renderGroupChallenge() {
   </div>`;
 }
 
+function renderGroupChallengeCollapsible() {
+  const groupCode = localStorage.getItem('kgp_group_code');
+  return `
+  <div class="card card-pad" onclick="toggleSection('group-section',this)" style="cursor:pointer">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="section-title" style="margin:0">👥 Wyzwanie grupowe${groupCode ? ' - ' + groupCode : ''}</div>
+      <span style="font-size:12px;color:var(--text2)">▼</span>
+    </div>
+    <div id="group-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+      ${renderGroupChallengeContent()}
+    </div>
+  </div>`;
+}
+
+function renderGroupChallengeContent() {
+  const groupCode = localStorage.getItem('kgp_group_code');
+  const groupData = JSON.parse(localStorage.getItem('kgp_group_data') || '[]');
+
+  if (!groupCode) {
+    return `
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Rywalizuj z przyjaciółmi! Stwórz grupę lub dołącz do istniejącej.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="createGroup()">🆕 Nowa grupa</button>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">Masz kod grupy? Wpisz go:</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input class="input" id="group-code-input" placeholder="np. EKIPA2026" style="flex:1;font-size:13px">
+        <button class="btn btn-secondary btn-sm" onclick="joinGroup(document.getElementById('group-code-input').value)">Dołącz</button>
+      </div>`;
+  }
+
+  let membersHtml = '';
+  if (groupData.length > 0) {
+    groupData.sort((a,b) => b.count - a.count).forEach((m, i) => {
+      const isMe = m.name === state.userName;
+      membersHtml += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">';
+      membersHtml += '<div style="font-family:var(--font-display);font-size:20px;color:' + (i===0?'var(--accent)':'var(--text2)') + ';width:24px">' + (i+1) + '.</div>';
+      membersHtml += '<div style="flex:1;font-size:13px;font-weight:' + (isMe?'700':'400') + '">' + m.name + (isMe?' (Ty)':'') + '</div>';
+      membersHtml += '<div style="font-family:var(--font-display);font-size:18px;color:var(--accent)">' + m.count + '/28</div></div>';
+    });
+  } else {
+    membersHtml = '<div style="font-size:12px;color:var(--text2)">Brak danych grupy. Synchronizuj aby zobaczyć ranking.</div>';
+  }
+
+  return `
+    <div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
+      <div style="font-size:10px;color:var(--text2)">Kod grupy</div>
+      <div style="font-family:var(--font-display);font-size:22px;color:var(--accent);letter-spacing:1px">${groupCode}</div>
+    </div>
+    ${membersHtml}
+    <button class="btn btn-secondary btn-sm btn-full" style="margin-top:10px" onclick="syncGroupData()">🔄 Synchronizuj grupę</button>
+    <button class="btn btn-sm btn-full" style="margin-top:6px;background:none;color:var(--red);font-size:11px" onclick="leaveGroup()">Opuść grupę</button>`;
+}
+
 function createGroup() {
   const code = 'EKIPA' + Math.random().toString(36).substring(2, 6).toUpperCase();
   localStorage.setItem('kgp_group_code', code);
