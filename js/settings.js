@@ -10,9 +10,7 @@ function renderSettings() {
   </div>
   <div class="page page-gap">
 
-    ${syncCode ? `
-    <button class="btn btn-secondary btn-full" onclick="syncToCloud().then(()=>showToast('☁️ Zsynchronizowano!'))">🔄 Wymuś synchronizację</button>
-    ` : ''}
+    ${''/* usunięto - manualne przyciski sync są w sekcji Synchronizacja */}
 
     <a href="about.html" target="_blank" class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--text);cursor:pointer">
       <div class="section-title" style="margin:0">🏔️ Informacje o aplikacji</div>
