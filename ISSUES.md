@@ -312,4 +312,120 @@ Dla równowagi - rzeczy zrobione dobrze:
 
 ---
 
-*Wygenerowano: 2026-04-12 | Wersja audytu: 1.0*
+---
+
+## 7. ERGONOMIA I UX - AUDYT MOBILNY
+
+> Kontekst oceny: użytkownik w terenie górskim, zimne palce, słońce na ekranie, zmęczenie, słaby zasięg.
+> Ocena ogólna: **6.5/10** - solidna baza, ale kilka poważnych luk dla scenariuszy terenowych.
+
+---
+
+### UX-001 - Przyciski przenoszenia w plannerze są za małe
+**Plik:** `css/style.css` (`.pl-btn-move`)
+**Problem:** `width: 24px; height: 24px` - standard mobilny to min. 44px. W rękawicach lub przy zmęczeniu prawie nie do kliknięcia.
+**Fix:**
+```css
+.pl-btn-move { width: 40px; height: 40px; }
+```
+
+---
+
+### UX-002 - Font w prognozie pogody nieczytelny na słońcu
+**Plik:** `css/style.css` (`.weather-date`, `.weather-score`)
+**Problem:** `.weather-score { font-size: 8px; }` i `.weather-date { font-size: 9px; }` - praktycznie niewidoczne w terenie.
+**Fix:**
+```css
+.weather-date  { font-size: 11px; }
+.weather-score { font-size: 12px; font-weight: 700; }
+```
+
+---
+
+### UX-003 - Brak disabled/loading state na przyciskach akcji
+**Plik:** `planner.js`, `features.js`, `settings.js`
+**Problem:** Po kliknięciu "Utwórz wyprawę", "Wyślij do chmury" itp. przycisk nie zmienia wyglądu. Przy wolnym połączeniu użytkownik nie wie czy akcja działa.
+**Fix:** Wzorzec dla każdego async przycisku:
+```js
+async function createTrip() {
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Tworzę...';
+  try { /* ... */ } finally { btn.disabled = false; btn.textContent = orig; }
+}
+```
+
+---
+
+### UX-004 - Brak wyraźnego "Jesteś na szczycie X" na ekranie Summit
+**Plik:** `js/ui.js` (`renderSummit`)
+**Problem:** Użytkownik nie widzi jednoznacznie, czy aplikacja wykryła właściwy szczyt. Brakuje dużego, czytelnego potwierdzenia lokalizacji GPS.
+**Fix:** Duży baner z nazwą szczytu (min. 32px) i badge GPS w kolorze zielonym gdy pozycja wykryta.
+
+---
+
+### UX-005 - Etykiety dolnej nawigacji za małe
+**Plik:** `css/style.css` (`.nav-btn span`)
+**Problem:** `font-size: 10px` - poniżej progu czytelności na słońcu. Apple HIG rekomenduje min. 11px dla labeli.
+**Fix:** `font-size: 11px`
+
+---
+
+### UX-006 - Brak "Następny szczyt" jako szybka akcja po zdobyciu
+**Plik:** `js/ui.js`, `js/features.js`
+**Problem:** Po zatwierdzeniu zdobycia użytkownik musi sam nawigować do listy/planera żeby znaleźć co dalej. Wymaga 3-4 kliknięć.
+**Fix:** Po potwierdzeniu zdobycia pokazać kartę:
+```html
+<div class="card card-pad">Co dalej? → [Nazwa następnego szczytu] [km] ›</div>
+```
+
+---
+
+### UX-007 - Zbyt wiele informacji naraz na stronie "Plan"
+**Plik:** `js/features2.js`, `js/ui.js`
+**Problem:** Strona Plan zawiera: pogodę, słońce, ostrzeżenia, parking, kalorie, pakowanie, restauracje, kamery, optimizer - wszystko rozwinięte. Scroll 800px+.
+**Fix:** Zwinąć sekcje domyślnie (używać istniejącego `toggleSection()`). Pokazywać domyślnie tylko pogodę i ostrzeżenia.
+
+---
+
+### UX-008 - Kontrast koloru `--text2` poniżej WCAG AA
+**Plik:** `css/style.css`
+**Problem:** `--text2: #9090b0` na ciemnym tle daje kontrast ~4.2:1, WCAG AA wymaga 4.5:1 dla tekstu normalnego.
+**Fix:**
+```css
+:root { --text2: #a0a0c0; }  /* kontrast ~5:1 */
+```
+
+---
+
+### UX-009 - Brak haptic feedback na zdobycie szczytu
+**Plik:** `js/features.js` (funkcja potwierdzenia zdobycia)
+**Problem:** Na mobile brak wibracji - jeden z najbardziej satysfakcjonujących momentów (zdobycie szczytu) jest odczuwalnie "cichy".
+**Fix:**
+```js
+if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 300]);
+```
+
+---
+
+### UX-010 - Terminologia: "Planuj" niejednoznaczne
+**Plik:** `index.html` (bottom nav)
+**Problem:** Przycisk nawigacji "Planuj" prowadzi do planera wielodniowego, ale na stronie szczytu jest też "zaplanuj trasę". Dwuznaczność dla nowego użytkownika.
+**Fix:** Zmienić etykietę nav na "Wyprawy" lub "Plan".
+
+---
+
+### Podsumowanie ergonomii - co działa dobrze
+
+- ✅ Bottom nav ma prawidłowe touch targets (44px+)
+- ✅ Wiersze listy szczytów są czytelne i dobrze klikalne
+- ✅ Paleta kolorów ma dobry kontrast dla głównego tekstu (~13:1 dark mode)
+- ✅ Offline bar jest natychmiast widoczny
+- ✅ Toast notifications działają spójnie
+- ✅ Animacja przejścia między stronami jest płynna
+- ✅ Dark mode działa konsekwentnie w całej aplikacji
+
+---
+
+*Wygenerowano: 2026-04-12 | Wersja audytu: 1.1 (dodano sekcję ergonomii)*
