@@ -78,7 +78,7 @@ function getStateForSync() {
   };
 }
 
-async function syncToCloud() {
+async function syncToCloud(force = false) {
   const profileId = getProfileId();
   if (!profileId || !navigator.onLine) {
     queueSync();
@@ -88,21 +88,21 @@ async function syncToCloud() {
     const localData = getStateForSync();
     const localWeight = dataWeight(localData);
 
-    // Sprawdź czy chmura ma bogatsze dane - nie nadpisuj bogatszych pustymi
-    if (localWeight === 0) {
-      // lokalne dane puste, pomijam push
-      localStorage.removeItem('kgp_sync_pending');
-      return;
-    }
+    if (!force) {
+      // Automatyczny sync: nie nadpisuj bogatszych danych pustymi
+      if (localWeight === 0) {
+        localStorage.removeItem('kgp_sync_pending');
+        return;
+      }
 
-    const { data: cloudRow } = await sb.from('user_data')
-      .select('data').eq('user_id', profileId).single();
-    const cloudWeight = cloudRow ? dataWeight(cloudRow.data) : 0;
+      const { data: cloudRow } = await sb.from('user_data')
+        .select('data').eq('user_id', profileId).single();
+      const cloudWeight = cloudRow ? dataWeight(cloudRow.data) : 0;
 
-    if (cloudWeight > localWeight) {
-      // chmura bogatsza, pomijam push
-      localStorage.removeItem('kgp_sync_pending');
-      return;
+      if (cloudWeight > localWeight) {
+        localStorage.removeItem('kgp_sync_pending');
+        return;
+      }
     }
 
     const { error } = await sb.from('user_data')
@@ -197,6 +197,8 @@ async function loginWithCode(code) {
     .select('id, sync_code').eq('sync_code', code).single();
   if (error || !data) {
     showToast('❌ Nieprawidłowy kod dostępu');
+    const errEl = document.getElementById('sync-code-error');
+    if (errEl) { errEl.textContent = 'Nieprawidłowy kod - sprawdź pisownię'; errEl.style.display = 'block'; }
     return false;
   }
   localStorage.setItem('kgp_sync_code', data.sync_code);

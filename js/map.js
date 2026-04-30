@@ -55,7 +55,7 @@ function applyRouteToMap() {
 }
 
 async function navigateToPeak(peakId) {
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
   const parking = getRoute(peak).parking;
 
@@ -138,10 +138,7 @@ async function navigateToPeak(peakId) {
 
 async function geocodeNear(name, nearLat, nearLon) {
   try {
-    const res = await fetch(`https://api.mapy.com/v1/geocode?query=${encodeURIComponent(name)}&lang=pl&limit=5&apiKey=${MAPY_API_KEY}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    // debug: geocodeNear results
+    const data = await forwardGeocode(name);
     if (!data.items || data.items.length === 0) return null;
     let best = null;
     let bestDist = Infinity;
@@ -160,9 +157,7 @@ async function geocodeNear(name, nearLat, nearLon) {
 
 async function geocodeParking(name) {
   try {
-    const res = await fetch(`https://api.mapy.com/v1/geocode?query=${encodeURIComponent(name + ', Polska')}&lang=pl&limit=1&apiKey=${MAPY_API_KEY}`);
-    if (!res.ok) return null;
-    const data = await res.json();
+    const data = await forwardGeocode(name + ', Polska', { limit: 1 });
     if (data.items && data.items.length > 0) {
       const pos = data.items[0].position;
       return { lat: pos.lat, lon: pos.lon };
@@ -179,6 +174,8 @@ function showNavigationResult(peak, results) {
   _navResults = results;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML = `
     <div class="modal-content">
@@ -328,7 +325,7 @@ function renderMap() {
         <input type="checkbox" id="toggle-parking" checked onchange="toggleParkingLayer(this.checked)" style="margin:0;width:13px;height:13px"> Pokaż parkingi
       </label>
       <button id="btn-coord-picker" onclick="toggleCoordPicker()" style="margin-top:6px;background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--text2);cursor:pointer;width:100%">📌 Ustaw parking</button>
-      <div style="font-size:9px;color:var(--accent);margin-top:6px;border-top:1px solid var(--border);padding-top:6px;max-width:180px;line-height:1.4" onclick="this.innerHTML='💡 '+getRandomFunFact();event.stopPropagation()">💡 ${getRandomFunFact()}</div>
+      <div style="font-size:10px;color:var(--accent);margin-top:6px;border-top:1px solid var(--border);padding-top:6px;max-width:180px;line-height:1.4" onclick="this.innerHTML='💡 '+getRandomFunFact();event.stopPropagation()">💡 ${getRandomFunFact()}</div>
     </div>
     <button id="btn-ai-chat" onclick="openAIChat()" style="position:absolute;bottom:16px;right:16px;z-index:90;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#000;border:none;box-shadow:0 4px 12px rgba(0,0,0,0.3);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.2s" title="Zapytaj AI">🤖</button>
   </div>`;
@@ -397,7 +394,7 @@ function buildPeakPopup(p) {
     const refLat = (state._homeGeo && state._homeGeo.lat) || state.userLat;
     const refLon = (state._homeGeo && state._homeGeo.lon) || state.userLon;
     if (refLat && refLon) {
-      const km = Math.round(dist(refLat, refLon, p.lat, p.lon) / 1000 * 1.3);
+      const km = Math.round(dist(refLat, refLon, p.lat, p.lon) / 1000 * ROAD_FACTOR);
       distHtml = '<div style="font-size:10px;color:var(--text2);margin-top:3px">📍 ~' + km + ' km</div>';
     }
 
@@ -483,11 +480,7 @@ function initMap() {
     attributionControl: true
   });
 
-  L.tileLayer(`https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?lang=pl&apiKey=${MAPY_API_KEY}`, {
-    maxZoom: 18,
-    minZoom: 6,
-    attribution: '&copy; <a href="https://www.mapy.com">Mapy.com</a> &copy; <a href="https://www.openstreetmap.org">OSM</a>'
-  }).addTo(leafletMap);
+  createTileLayer().addTo(leafletMap);
 
   L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
 
@@ -613,6 +606,8 @@ function onCoordPickerClick(e) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = ev => { if (ev.target === overlay) overlay.remove(); };
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:400px;max-height:85vh;overflow-y:auto">
@@ -623,11 +618,11 @@ function onCoordPickerClick(e) {
       <div style="display:flex;gap:8px;margin-bottom:10px">
         <div style="flex:1">
           <label style="font-size:11px;color:var(--text2)">Lat</label>
-          <input id="picker-lat" type="text" value="${lat}" readonly style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace;font-size:12px">
+          <input id="picker-lat" type="text" aria-label="Szerokość geograficzna" value="${lat}" readonly style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace;font-size:12px">
         </div>
         <div style="flex:1">
           <label style="font-size:11px;color:var(--text2)">Lon</label>
-          <input id="picker-lon" type="text" value="${lon}" readonly style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace;font-size:12px">
+          <input id="picker-lon" type="text" aria-label="Długość geograficzna" value="${lon}" readonly style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-family:monospace;font-size:12px">
         </div>
       </div>
       <div id="picker-info" style="background:var(--bg-alt,#f4f4f8);border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:var(--text2);line-height:1.6">
@@ -640,18 +635,18 @@ function onCoordPickerClick(e) {
       </div>
       <div style="margin-bottom:10px">
         <label style="font-size:11px;color:var(--text2)">Przypisz do parkingu</label>
-        <select id="picker-target" onchange="onPickerTargetChange()" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px">
+        <select id="picker-target" aria-label="Przypisz do parkingu" onchange="onPickerTargetChange()" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px">
           <option value="">-- wybierz --</option>
           ${selectOptions}
         </select>
       </div>
       <div id="picker-name-section" style="margin-bottom:10px;display:none">
         <label style="font-size:11px;color:var(--text2)">Nazwa nowego parkingu</label>
-        <input id="picker-name" type="text" placeholder="np. Przełęcz pod Kopą" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px">
+        <input id="picker-name" type="text" aria-label="Nazwa nowego parkingu" placeholder="np. Przełęcz pod Kopą" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px">
       </div>
       <div style="margin-bottom:10px">
         <label style="font-size:11px;color:var(--text2)">Notatka (cena, pojemność, nawierzchnia...)</label>
-        <textarea id="picker-note" rows="2" placeholder="np. 20 zł/dzień, ~50 miejsc, asfalt" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px;resize:vertical">${esc(_lastAreaResult)}</textarea>
+        <textarea id="picker-note" aria-label="Notatka o parkingu" rows="2" placeholder="np. 20 zł/dzień, ~50 miejsc, asfalt" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:12px;resize:vertical">${esc(_lastAreaResult)}</textarea>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:6px">
         <button onclick="startAreaMeasure()" class="btn btn-secondary" style="flex:1;font-size:11px">📐 Zmierz</button>
@@ -784,8 +779,7 @@ async function fetchPickerLocationInfo(lat, lon) {
 
   // 1. Reverse geocode z Mapy.com (regionalStructure)
   try {
-    const rgRes = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&lang=pl&apiKey=${MAPY_API_KEY}`);
-    const rgData = await rgRes.json();
+    const rgData = await reverseGeocode(lat, lon);
     const item = rgData.items && rgData.items[0];
     if (item) {
       const rs = item.regionalStructure || [];
@@ -808,9 +802,7 @@ async function fetchPickerLocationInfo(lat, lon) {
   const categories = ['parking', 'schronisko', 'restauracja', 'hotel', 'kemping'];
   for (const cat of categories) {
     try {
-      const r = await fetch(`https://api.mapy.com/v1/geocode?query=${encodeURIComponent(cat)}&lang=pl&limit=5&near=${lon},${lat}&apiKey=${MAPY_API_KEY}`);
-      if (!r.ok) continue;
-      const data = await r.json();
+      const data = await forwardGeocode(cat, { near: `${lon},${lat}` });
       if (!data.items) continue;
       const catIcons = { parking: '🅿️', schronisko: '🏔️', restauracja: '🍽️', hotel: '🏨', kemping: '⛺' };
       data.items.forEach(item => {
@@ -928,7 +920,7 @@ function savePickerCoords() {
   const lat = parseFloat(document.getElementById('picker-lat').value);
   const lon = parseFloat(document.getElementById('picker-lon').value);
   const note = document.getElementById('picker-note').value.trim();
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
 
   if (isNew) {
@@ -996,7 +988,7 @@ function exportParkingOverrides() {
   const ov = JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}');
   const lines = [];
   Object.entries(ov).forEach(([peakId, changes]) => {
-    const peak = PEAKS.find(p => p.id === parseInt(peakId));
+    const peak = getPeak(peakId);
     if (!peak) return;
     const parkings = changes.routes
       ? changes.routes.map(r => r.parking)
@@ -1096,7 +1088,7 @@ async function aiDescribeParking() {
   let peakName = '';
   if (target) {
     const peakId = parseInt(target.split(':')[0]);
-    const peak = PEAKS.find(p => p.id === peakId);
+    const peak = getPeak(peakId);
     if (peak) peakName = peak.name + ' (' + peak.range + ', ' + peak.height + ' m)';
   }
 

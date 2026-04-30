@@ -24,7 +24,7 @@ function renderSettings() {
       </div>
       <div id="profile-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
         <label class="label">Imię / nick</label>
-        <input class="input" type="text" value="${esc(state.userName)}" placeholder="Jak się nazywasz?" onchange="state.userName=this.value;save()">
+        <input class="input" type="text" aria-label="Imię lub nick" value="${esc(state.userName)}" placeholder="Jak się nazywasz?" onchange="state.userName=this.value;save()">
         <div style="font-size:10px;color:var(--text2);margin-top:4px">Widoczne w dzienniku i kartach zdobycia</div>
       </div>
     </div>
@@ -37,7 +37,7 @@ function renderSettings() {
       <div id="address-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
         <label class="label">Skąd wyruszasz na szlak?</label>
         <div style="display:flex;gap:6px">
-          <input class="input" id="home-addr-input" type="text" value="${esc(state.homeAddr)}" placeholder="Np. Kraków, Warszawa..." onchange="validateHomeAddr(this.value)" style="flex:1">
+          <input class="input" id="home-addr-input" type="text" aria-label="Adres domowy" value="${esc(state.homeAddr)}" placeholder="Np. Kraków, Warszawa..." onchange="validateHomeAddr(this.value)" style="flex:1">
           <button class="btn btn-secondary btn-sm" onclick="detectHomeAddr()" style="white-space:nowrap" title="Użyj GPS">📍 GPS</button>
         </div>
         <div id="home-addr-status" style="font-size:10px;margin-top:4px;${state._homeGeo ? 'color:var(--green)' : 'color:var(--text2)'}">
@@ -102,7 +102,7 @@ function renderSettings() {
             <div style="font-size:10px;color:var(--text2);margin-top:4px">Podaj ten kod na innym urządzeniu</div>
           </div>
           <div style="display:flex;gap:8px;margin-bottom:8px">
-            <button class="btn btn-primary btn-sm" style="flex:1" onclick="syncToCloud().then(()=>showToast('☁️ Wysłano do chmury'))">⬆️ Wyślij do chmury</button>
+            <button class="btn btn-primary btn-sm" style="flex:1" onclick="syncToCloud(true).then(()=>showToast('☁️ Wysłano do chmury'))">⬆️ Wyślij do chmury</button>
             <button class="btn btn-secondary btn-sm" style="flex:1" onclick="pullFromCloud().then(ok=>{if(ok){showToast('⬇️ Pobrano z chmury');goto('settings')}else{showToast('❌ Błąd pobierania')}})">⬇️ Pobierz z chmury</button>
           </div>
           <button class="btn btn-secondary btn-sm btn-full" style="margin-bottom:8px" onclick="repairPhotoUrls().then(()=>goto('settings'))">🔧 Napraw brakujące zdjęcia z chmury</button>
@@ -113,9 +113,10 @@ function renderSettings() {
           </div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Masz już kod? Wpisz go poniżej:</div>
           <div style="display:flex;gap:8px">
-            <input class="input" id="sync-code-input" placeholder="np. turbacz4821" style="flex:1;font-size:13px">
+            <input class="input" id="sync-code-input" aria-label="Kod synchronizacji" placeholder="np. turbacz4821" style="flex:1;font-size:13px" aria-describedby="sync-code-error">
             <button class="btn btn-secondary btn-sm" onclick="loginWithCode(document.getElementById('sync-code-input').value)">Zaloguj</button>
           </div>
+          <div id="sync-code-error" role="alert" style="display:none;font-size:11px;color:var(--red);margin-top:4px"></div>
         `}
       </div>
     </div>
@@ -132,7 +133,7 @@ function renderSettings() {
         <div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
           <div style="font-size:10px;color:var(--text2);margin-bottom:2px">📍 Twoje koordynaty GPS</div>
           <div style="font-family:var(--font-display);font-size:18px;${sos.hasGPS ? 'color:var(--accent)' : 'color:var(--red)'};letter-spacing:1px">${sos.coords || 'Brak GPS'}</div>
-          ${sos.hasGPS ? '<div style="font-size:9px;color:var(--text2);margin-top:2px">Podaj ratownikom przez telefon</div>' : '<div style="font-size:9px;color:var(--red);margin-top:2px">Włącz GPS aby poznać swoje koordynaty</div>'}
+          ${sos.hasGPS ? '<div style="font-size:10px;color:var(--text2);margin-top:2px">Podaj ratownikom przez telefon</div>' : '<div style="font-size:10px;color:var(--red);margin-top:2px">Włącz GPS aby poznać swoje koordynaty</div>'}
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--red)15;border-radius:10px;margin-bottom:6px">
           <span style="font-size:20px">📞</span>
@@ -182,7 +183,7 @@ function renderSettings() {
           <button class="btn btn-secondary btn-sm" style="flex:1" onclick="exportData()">📤 Eksportuj</button>
           <button class="btn btn-secondary btn-sm" style="flex:1" onclick="document.getElementById('import-input-settings').click()">📥 Importuj</button>
         </div>
-        <input type="file" id="import-input-settings" accept=".json" style="display:none" onchange="importData(this)">
+        <input type="file" id="import-input-settings" aria-label="Importuj dane z pliku JSON" accept=".json" style="display:none" onchange="importData(this)">
       </div>
     </div>
 
@@ -224,7 +225,7 @@ function renderParkingOverridesSection() {
   const ov = JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}');
   const entries = [];
   Object.entries(ov).forEach(([peakId, changes]) => {
-    const peak = PEAKS.find(p => p.id === parseInt(peakId));
+    const peak = getPeak(peakId);
     if (!peak) return;
     const parkings = changes.parking || [];
     parkings.forEach((pk, idx) => {
@@ -287,8 +288,13 @@ function applyTheme() {
   const theme = localStorage.getItem('kgp_theme') || 'system';
   document.documentElement.classList.remove('dark-theme', 'light-theme');
   if (theme === 'dark') document.documentElement.classList.add('dark-theme');
-  else if (theme === 'light') document.documentElement.classList.add('light-theme');
+  else if (theme === 'light' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches))
+    document.documentElement.classList.add('light-theme');
 }
+
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+  if ((localStorage.getItem('kgp_theme') || 'system') === 'system') applyTheme();
+});
 
 function setTheme(theme) {
   localStorage.setItem('kgp_theme', theme);
@@ -302,11 +308,9 @@ function getPaceDescription(val) {
   return 'Spokojne tempo - trasa 3h zajmie Ci ok. 4h';
 }
 
-async function reverseGeocode(lat, lon) {
+async function reverseGeocodeCity(lat, lon) {
   try {
-    const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&lang=pl&apiKey=${MAPY_API_KEY}`);
-    if (!res.ok) return null;
-    const data = await res.json();
+    const data = await reverseGeocode(lat, lon);
     const item = data.items?.[0];
     if (!item) return null;
     const loc = item.location || {};
@@ -334,7 +338,7 @@ async function detectHomeAddr() {
       const lon = pos.coords.longitude;
       statusEl.textContent = '⏳ Rozpoznawanie adresu...';
       try {
-        const name = await reverseGeocode(lat, lon);
+        const name = await reverseGeocodeCity(lat, lon);
         if (name) {
           input.value = name;
           state.homeAddr = name;

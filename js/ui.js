@@ -24,12 +24,12 @@ function renderList() {
     <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
   </div>
   <div class="chips">
-    <span class="chip ${state.filter==='all'?'active':''}" onclick="setFilter('all')">Wszystkie (28)</span>
-    <span class="chip ${state.filter==='done'?'active':''}" onclick="setFilter('done')">Zdobyte (${done})</span>
-    <span class="chip ${state.filter==='todo'?'active':''}" onclick="setFilter('todo')">Do zdobycia (${28-done})</span>
-    <span class="chip ${state.filter==='tatry'?'active':''}" onclick="setFilter('tatry')">Karpaty (${PEAKS.filter(_karpaty).length})</span>
-    <span class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety (${PEAKS.filter(_sudety).length})</span>
-    <span class="chip ${state.filter==='inne'?'active':''}" onclick="setFilter('inne')">Inne (${PEAKS.filter(_inne).length})</span>
+    <button class="chip ${state.filter==='all'?'active':''}" onclick="setFilter('all')">Wszystkie (28)</button>
+    <button class="chip ${state.filter==='done'?'active':''}" onclick="setFilter('done')">Zdobyte (${done})</button>
+    <button class="chip ${state.filter==='todo'?'active':''}" onclick="setFilter('todo')">Do zdobycia (${28-done})</button>
+    <button class="chip ${state.filter==='tatry'?'active':''}" onclick="setFilter('tatry')">Karpaty (${PEAKS.filter(_karpaty).length})</button>
+    <button class="chip ${state.filter==='sudety'?'active':''}" onclick="setFilter('sudety')">Sudety (${PEAKS.filter(_sudety).length})</button>
+    <button class="chip ${state.filter==='inne'?'active':''}" onclick="setFilter('inne')">Inne (${PEAKS.filter(_inne).length})</button>
   </div>
   <div class="card" style="margin:0 14px 80px">
     ${peaks.sort((a,b)=>b.height-a.height).map(p => `
@@ -58,7 +58,7 @@ function estimateDriveMin(peak) {
 }
 
 function renderTimeline(peakId, returnHtml=false, startOverride=null) {
-  const peak = PEAKS.find(p=>p.id===Number(peakId));
+  const peak = getPeak(peakId);
   if (!peak) return '';
   const route = getRoute(peak);
   const start = startOverride || state.departTime || '07:00';
@@ -158,7 +158,7 @@ function updatePace(val) {
 function changeRoute(peakId, idx) { state.selectedRoutes[peakId] = parseInt(idx); save(); goto('plan'); }
 function setTransport(t) { state.transport = t; goto('plan'); }
 function changePlanPeak(id) {
-  state.selectedPeak = PEAKS.find(p=>p.id===Number(id));
+  state.selectedPeak = getPeak(id);
   goto('plan');
 }
 
@@ -166,7 +166,7 @@ function changePlanPeak(id) {
 // SUMMIT PAGE
 // ============================================================
 function renderSummit() {
-  const nearby = state.nearbyPeak ? PEAKS.find(p=>p.id===state.nearbyPeak) : null;
+  const nearby = state.nearbyPeak ? getPeak(state.nearbyPeak) : null;
   const peak = nearby || state.selectedPeak || getTodo()[0] || PEAKS[0];
 
   return `
@@ -180,7 +180,7 @@ function renderSummit() {
 
     <div class="card card-pad">
       <div class="label">Aktualny szczyt</div>
-      <select class="input" onchange="changeSummitPeak(this.value)">
+      <select class="input" aria-label="Wybierz szczyt" onchange="changeSummitPeak(this.value)">
         <optgroup label="Do zdobycia">
           ${PEAKS.filter(p=>!isDone(p.id)).map(p=>`<option value="${p.id}" ${peak.id===p.id?'selected':''}>${p.name} (${p.height}m)</option>`).join('')}
         </optgroup>
@@ -234,12 +234,12 @@ function renderSummit() {
         <img id="photo-img" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover">
         <div style="font-size:11px;color:var(--green);margin-top:6px;text-align:center">✅ Zdjęcie zapisane</div>
       </div>
-      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="photoSelected(this,${peak.id})">
+      <input type="file" id="photo-input" aria-label="Zdjęcie ze szczytu" accept="image/*" capture="environment" style="display:none" onchange="photoSelected(this,${peak.id})">
     </div>
 
     <div class="card card-pad">
       <div class="label" style="margin-bottom:8px">Notatka ze szczytu</div>
-      <textarea class="input" id="summit-note" rows="3" placeholder="Pogoda, widoki, towarzysze..." style="resize:none;line-height:1.5"></textarea>
+      <textarea class="input" id="summit-note" aria-label="Notatka ze szczytu" rows="3" placeholder="Pogoda, widoki, towarzysze..." style="resize:none;line-height:1.5"></textarea>
     </div>
 
     <button class="btn btn-green btn-full" id="conquer-btn" onclick="conquerPeak(${peak.id})">
@@ -259,7 +259,7 @@ function renderSummit() {
 }
 
 function changeSummitPeak(id) {
-  state.selectedPeak = PEAKS.find(p=>p.id===Number(id));
+  state.selectedPeak = getPeak(id);
   goto('summit');
 }
 
@@ -301,7 +301,7 @@ function conquerPeak(peakId) {
   if (state.conquered.includes(peakId)) return;
   const note = document.getElementById('summit-note')?.value || '';
   const dedication = document.getElementById('summit-dedication')?.value || '';
-  const peak = PEAKS.find(p=>p.id===peakId);
+  const peak = getPeak(peakId);
   state.conquered.push(peakId);
   const entry = {
     peakId, name: peak.name, height: peak.height, range: peak.range,
@@ -356,7 +356,7 @@ function openEpodroznik(stationName) {
 }
 
 async function returnToParking(peakId) {
-  const p = PEAKS.find(pk=>pk.id===peakId);
+  const p = getPeak(peakId);
   if (!p) return;
   const pk = getRoute(p).parking;
   const coords = await geocodeParking(pk.name);
@@ -372,7 +372,7 @@ async function returnToParking(peakId) {
 // PARKING FINDER - mapa z wyszukiwaniem parkingów
 // ============================================================
 function openParkingFinder(peakId) {
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
 
   const overlay = document.createElement('div');
@@ -402,10 +402,7 @@ function openParkingFinder(peakId) {
       zoom: 14
     });
 
-    L.tileLayer(`https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?lang=pl&apikey=${MAPY_API_KEY}`, {
-      maxZoom: 18,
-      attribution: '© Mapy.com'
-    }).addTo(map);
+    createTileLayer().addTo(map);
 
     window._parkingFinderMap = map;
     window._parkingFinderData = null;
@@ -434,8 +431,7 @@ function openParkingFinder(peakId) {
       selectParkingOnMap(lat, lon, null, null);
       // Reverse geocode
       try {
-        const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&apikey=${MAPY_API_KEY}`);
-        const data = await res.json();
+        const data = await reverseGeocode(lat, lon);
         const name = data.items?.[0]?.name || `Parking (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
         window._parkingFinderData.name = name;
         document.getElementById('parking-finder-name').textContent = '🅿️ ' + name;
@@ -498,19 +494,21 @@ async function fetchOsmParkings(lat, lon, radiusM, map) {
 function saveParkingFromFinder(peakId) {
   const d = window._parkingFinderData;
   if (!d || !d.lat) return;
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML = `
   <div class="modal-content" style="max-width:340px">
     <div style="font-family:var(--font-display);font-size:18px;color:var(--accent);margin-bottom:12px">🅿️ Zapisz parking</div>
     <div class="label">Nazwa</div>
-    <input class="input" type="text" id="save-parking-name" value="${esc(d.name || '')}" placeholder="Nazwa parkingu">
+    <input class="input" type="text" id="save-parking-name" aria-label="Nazwa parkingu" value="${esc(d.name || '')}" placeholder="Nazwa parkingu">
     <div class="label" style="margin-top:8px">Notatka</div>
-    <input class="input" type="text" id="save-parking-note" placeholder="Cena, liczba miejsc, uwagi...">
+    <input class="input" type="text" id="save-parking-note" aria-label="Notatka o parkingu" placeholder="Cena, liczba miejsc, uwagi...">
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn btn-primary" style="flex:1" onclick="confirmSaveParking(${peakId});this.closest('.modal-overlay').remove()">💾 Zapisz</button>
       <button class="btn btn-secondary" style="flex:1" onclick="this.closest('.modal-overlay').remove()">Anuluj</button>
@@ -523,7 +521,7 @@ function saveParkingFromFinder(peakId) {
 function confirmSaveParking(peakId) {
   const d = window._parkingFinderData;
   if (!d || !d.lat) return;
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
 
   const name = document.getElementById('save-parking-name')?.value.trim() || d.name;
@@ -583,7 +581,7 @@ function closeParkingFinder() {
 // PEAK DETAIL MODAL
 // ============================================================
 function openPeakDetail(id) {
-  const p = PEAKS.find(pk=>pk.id===Number(id));
+  const p = getPeak(id);
   const done = isDone(id);
   const journal = state.journal.find(e=>e.peakId===id);
 
@@ -591,6 +589,8 @@ function openPeakDetail(id) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
   overlay.innerHTML = `
   <div class="modal-sheet">
@@ -618,7 +618,7 @@ function openPeakDetail(id) {
           <div style="text-align:center;background:var(--card2);border-radius:8px;padding:8px">
             <div style="font-size:16px">${i}</div>
             <div style="font-family:var(--font-display);font-size:18px;color:var(--accent)">${v}</div>
-            <div style="font-size:9px;color:var(--text2)">${l}</div>
+            <div style="font-size:10px;color:var(--text2)">${l}</div>
           </div>`).join('')}
         </div>
       </div>
@@ -636,7 +636,7 @@ let _undoConquerDeadline = 0;
 
 function renderNextSuggestPage() {
   const lastId = state.conquered[state.conquered.length-1];
-  const last = PEAKS.find(p=>p.id===lastId);
+  const last = getPeak(lastId);
   if (!_undoConquerDeadline) _undoConquerDeadline = Date.now() + 60000;
   const canUndo = Date.now() < _undoConquerDeadline;
   return `

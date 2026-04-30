@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>KGP - Testy</title>
+<style>
+  body { font-family: monospace; background: #1a1a2e; color: #e0e0e0; padding: 20px; }
+  .pass { color: #4caf7d; } .fail { color: #e05555; font-weight: bold; }
+  .group { margin: 16px 0 6px; font-size: 15px; color: #e8a020; }
+  .result { margin: 2px 0 2px 16px; font-size: 13px; }
+  #summary { margin-top: 20px; padding: 12px; border-radius: 8px; font-size: 15px; }
+</style>
+</head>
+<body>
+<h2>KGP Smoke Tests</h2>
+<div id="out"></div>
+<div id="summary"></div>
+
+<script src="js/data.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script>
+let _pass = 0, _fail = 0;
+const out = document.getElementById('out');
+
+function group(name) {
+  out.innerHTML += `<div class="group">${name}</div>`;
+}
+
+function assert(name, condition) {
+  if (condition) { _pass++; out.innerHTML += `<div class="result pass">✓ ${name}</div>`; }
+  else { _fail++; out.innerHTML += `<div class="result fail">✗ ${name}</div>`; }
+}
+
+function assertEq(name, actual, expected) {
+  const ok = actual === expected;
+  if (ok) { _pass++; out.innerHTML += `<div class="result pass">✓ ${name}</div>`; }
+  else { _fail++; out.innerHTML += `<div class="result fail">✗ ${name}: got "${actual}", expected "${expected}"</div>`; }
+}
+
+// ============ dist() ============
+group('dist() - odległość GPS');
+const d = dist(50.0, 20.0, 50.0, 20.01);
+assert('krótki dystans > 0', d > 0);
+assert('krótki dystans < 2km', d < 2000);
+assertEq('ten sam punkt = 0', dist(50, 20, 50, 20), 0);
+const dKrakWawa = dist(50.06, 19.94, 52.23, 21.01);
+assert('Kraków-Warszawa 250-320km', dKrakWawa > 250000 && dKrakWawa < 320000);
+
+// ============ addMinutes() ============
+group('addMinutes() - arytmetyka czasu');
+assertEq('08:00 + 30min', addMinutes('08:00', 30), '08:30');
+assertEq('08:45 + 30min (przekroczenie godz.)', addMinutes('08:45', 30), '09:15');
+assertEq('23:30 + 60min (przekroczenie doby)', addMinutes('23:30', 60), '00:30');
+assertEq('00:00 + 0min', addMinutes('00:00', 0), '00:00');
+
+// ============ fmtTime() ============
+group('fmtTime() - formatowanie czasu');
+assertEq('90 min', fmtTime(90), '1h 30min');
+assertEq('60 min', fmtTime(60), '1h ');
+assertEq('45 min', fmtTime(45), '45 min');
+assertEq('0 min', fmtTime(0), '0 min');
+assertEq('120 min', fmtTime(120), '2h ');
+
+// ============ esc() ============
+group('esc() - escapowanie HTML');
+assertEq('zwykły tekst', esc('hello'), 'hello');
+assert('escapuje tagi HTML', esc('<b>bold</b>').indexOf('<b>') === -1);
+assertEq('ampersand', esc('A&B'), 'A&amp;B');
+assertEq('cudzysłowy zachowane w treści', esc('"test"'), '"test"');
+
+// ============ statCard() ============
+group('statCard() - helper kart statystyk');
+const card1 = statCard(42, 'Test');
+assert('zawiera stat-card class', card1.includes('class="stat-card"'));
+assert('zawiera wartość', card1.includes('>42<'));
+assert('zawiera label', card1.includes('>Test<'));
+const card2 = statCard(7, 'X', 'font-size:22px');
+assert('custom style', card2.includes('style="font-size:22px"'));
+const card3 = statCard(0, 'Y');
+assert('brak style gdy nie podany', !card3.includes('style='));
+
+// ============ getPeak() / PEAKS_BY_ID ============
+group('getPeak() - wyszukiwanie szczytów');
+const rysy = getPeak(1);
+assert('getPeak(1) zwraca obiekt', rysy != null);
+assertEq('Rysy id=1', rysy.name, 'Rysy');
+assert('Rysy ma lat/lon', rysy.lat > 49 && rysy.lon > 20);
+assert('getPeak(999) = undefined', getPeak(999) == null);
+assertEq('PEAKS ma 28 szczytów', PEAKS.length, 28);
+
+// ============ diffDots() ============
+group('diffDots() - kropki trudności');
+const dots3 = diffDots(3);
+assert('zawiera peak-diff', dots3.includes('peak-diff'));
+assert('3 filled dots', (dots3.match(/filled/g) || []).length === 3);
+assert('5 total dots', (dots3.match(/diff-dot/g) || []).length === 5);
+
+// ============ adjTime() ============
+group('adjTime() - korekcja tempa');
+state.paceMultiplier = 1.0;
+assertEq('x1.0: 60min = 60min', adjTime(60), 60);
+state.paceMultiplier = 1.3;
+assertEq('x1.3: 60min = 78min', adjTime(60), 78);
+state.paceMultiplier = 0.8;
+assertEq('x0.8: 60min = 48min', adjTime(60), 48);
+state.paceMultiplier = 1.0;
+
+// ============ PEAKS data integrity ============
+group('PEAKS - integralność danych');
+assert('każdy peak ma id', PEAKS.every(p => typeof p.id === 'number'));
+assert('każdy peak ma name', PEAKS.every(p => typeof p.name === 'string' && p.name.length > 0));
+assert('każdy peak ma lat/lon', PEAKS.every(p => p.lat > 49 && p.lat < 55 && p.lon > 14 && p.lon < 24));
+assert('każdy peak ma height', PEAKS.every(p => p.height > 500 && p.height < 2600));
+assert('unikalne id', new Set(PEAKS.map(p => p.id)).size === 28);
+assert('PEAKS_BY_ID spójny', PEAKS.every(p => PEAKS_BY_ID[p.id] === p));
+
+// ============ Stałe ============
+group('Stałe - poprawność');
+assertEq('MS_PER_DAY', MS_PER_DAY, 86400000);
+assert('ROAD_FACTOR > 1', ROAD_FACTOR > 1);
+assert('MAPY_TILE_URL zawiera mapy.com', MAPY_TILE_URL.includes('mapy.com'));
+assert('APP_VERSION format', /^\d+\.\d+\.\d{6}\.\d{4}$/.test(APP_VERSION));
+
+// ============ Podsumowanie ============
+const sum = document.getElementById('summary');
+const total = _pass + _fail;
+sum.style.background = _fail === 0 ? '#4caf7d22' : '#e0555522';
+sum.style.border = `2px solid ${_fail === 0 ? '#4caf7d' : '#e05555'}`;
+sum.innerHTML = _fail === 0
+  ? `<span class="pass">✓ Wszystkie ${total} testów przeszło</span>`
+  : `<span class="fail">✗ ${_fail}/${total} testów nie przeszło</span> · <span class="pass">${_pass} OK</span>`;
+</script>
+</body>
+</html>

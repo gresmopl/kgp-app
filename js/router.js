@@ -52,7 +52,7 @@ async function goto(page, skipHistory) {
       const dayIdx = Math.min(state._activeDayIdx, (trip.days || []).length - 1);
       const day = trip.days?.[dayIdx];
       const peakStop = day?.stops?.find(s => s.type === 'summit' && s.peakId);
-      if (peakStop) planPeak = PEAKS.find(p => p.id === peakStop.peakId);
+      if (peakStop) planPeak = getPeak(peakStop.peakId);
     }
     if (planPeak) {
       loadWeather(planPeak);

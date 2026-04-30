@@ -80,7 +80,7 @@ function renderPackingList(peak) {
       <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:16px">${i.icon}</span>
         <span style="font-size:13px;flex:1">${i.name}</span>
-        ${i.reason ? `<span style="font-size:9px;color:var(--accent);background:var(--card2);padding:2px 6px;border-radius:4px">${i.reason}</span>` : ''}
+        ${i.reason ? `<span style="font-size:10px;color:var(--accent);background:var(--card2);padding:2px 6px;border-radius:4px">${i.reason}</span>` : ''}
       </div>`).join('')}
   </div>`;
 }
@@ -211,7 +211,7 @@ function renderGroupChallengeContent() {
       </div>
       <div style="font-size:11px;color:var(--text2);margin-top:8px">Masz kod grupy? Wpisz go:</div>
       <div style="display:flex;gap:8px;margin-top:6px">
-        <input class="input" id="group-code-input" placeholder="np. EKIPA2026" style="flex:1;font-size:13px">
+        <input class="input" id="group-code-input" aria-label="Kod grupy" placeholder="np. EKIPA2026" style="flex:1;font-size:13px">
         <button class="btn btn-secondary btn-sm" onclick="joinGroup(document.getElementById('group-code-input').value)">Dołącz</button>
       </div>`;
   }
@@ -294,7 +294,7 @@ async function syncGroupData() {
 let _trackingInterval = null;
 
 function startTrailTracking(peakId) {
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
   if (!state.userLat || !state.userLon) { showToast('Włącz GPS aby śledzić trasę'); return; }
 
@@ -338,10 +338,10 @@ function updateTracker() {
     '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-size:10px;padding:4px 10px" onclick="stopTrailTracking()">Stop</button></div>' +
     '<div class="progress-bar" style="margin-bottom:8px"><div class="progress-fill" style="width:' + progress + '%;background:var(--green)"></div></div>' +
     '<div class="stats-grid">' +
-    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + (distToTarget/1000).toFixed(1) + '</div><div class="stat-label">km do szczytu</div></div>' +
-    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + (etaMin > 0 ? '~' + etaMin : '?') + '</div><div class="stat-label">min pozostało</div></div>' +
-    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + elapsed + '</div><div class="stat-label">min w drodze</div></div>' +
-    '<div class="stat-card"><div class="stat-val" style="font-size:22px">' + progress + '%</div><div class="stat-label">postęp trasy</div></div>' +
+    statCard((distToTarget/1000).toFixed(1), 'km do szczytu', 'font-size:22px') +
+    statCard(etaMin > 0 ? '~' + etaMin : '?', 'min pozostało', 'font-size:22px') +
+    statCard(elapsed, 'min w drodze', 'font-size:22px') +
+    statCard(progress + '%', 'postęp trasy', 'font-size:22px') +
     '</div></div>';
 }
 
@@ -380,11 +380,11 @@ async function loadWarnings(peakId) {
       const ageDays = Math.floor((now - new Date(w.created_at).getTime()) / 86400000);
       const stale = ageDays > 30;
       return '<div style="padding:8px 0;border-bottom:1px solid var(--border);' + (stale ? 'opacity:0.5' : '') + '">' +
-        (stale ? '<div style="font-size:9px;color:var(--red);font-weight:600;margin-bottom:2px">⏳ Stare ostrzeżenie (' + warningAgeLabel(w.created_at) + ')</div>' : '') +
+        (stale ? '<div style="font-size:10px;color:var(--red);font-weight:600;margin-bottom:2px">⏳ Stare ostrzeżenie (' + warningAgeLabel(w.created_at) + ')</div>' : '') +
         '<div style="font-size:12px">' + esc(w.message) + '</div>' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">' +
         '<div style="font-size:10px;color:var(--text2)">' + (w.author || 'Anonim') + ' - ' + warningAgeLabel(w.created_at) + '</div>' +
-        '<button onclick="dismissWarning(' + w.id + ',' + peakId + ')" style="background:none;border:none;font-size:9px;color:var(--text2);cursor:pointer;padding:2px 4px" title="Oznacz jako nieaktualne">❌</button>' +
+        '<button onclick="dismissWarning(' + w.id + ',' + peakId + ')" style="background:none;border:none;font-size:10px;color:var(--text2);cursor:pointer;padding:4px 6px" title="Oznacz jako nieaktualne">❌</button>' +
         '</div></div>';
     }).join('');
   } catch(e) {
@@ -420,7 +420,7 @@ function renderWarningsSection(peakId) {
     '<div class="section-title">⚠️ Ostrzeżenia szlakowe</div>' +
     '<div id="warnings-content" style="margin-bottom:10px"><div style="font-size:12px;color:var(--text2)">Ładowanie...</div></div>' +
     '<div style="display:flex;gap:8px">' +
-    '<input class="input" id="warning-input" placeholder="Np. Brak pieczątki, zamknięty szlak..." style="flex:1;font-size:12px">' +
+    '<input class="input" id="warning-input" aria-label="Treść ostrzeżenia" placeholder="Np. Brak pieczątki, zamknięty szlak..." style="flex:1;font-size:12px">' +
     '<button class="btn btn-secondary btn-sm" onclick="addWarning(' + peakId + ')">Dodaj</button></div></div>';
 }
 
@@ -460,24 +460,24 @@ function renderHistoryEntry() {
 
       <div style="margin-bottom:10px">
         <div class="label">Szczyt</div>
-        <select class="input" id="hist-peak" style="font-size:14px">
+        <select class="input" id="hist-peak" aria-label="Wybierz szczyt" style="font-size:14px">
           ${todo.map(p => `<option value="${p.id}">${p.name} (${p.height}m) - ${p.range}</option>`).join('')}
         </select>
       </div>
 
       <div style="margin-bottom:10px">
         <div class="label">Data wejścia</div>
-        <input class="input" type="date" id="hist-date" value="${new Date().toISOString().split('T')[0]}">
+        <input class="input" type="date" id="hist-date" aria-label="Data wejścia" value="${new Date().toISOString().split('T')[0]}">
       </div>
 
       <div style="margin-bottom:10px">
         <div class="label">Zdjęcie (opcjonalnie)</div>
-        <input type="file" id="hist-photo" accept="image/*" class="input" style="padding:8px">
+        <input type="file" id="hist-photo" aria-label="Zdjęcie ze szczytu" accept="image/*" class="input" style="padding:8px">
       </div>
 
       <div style="margin-bottom:10px">
         <div class="label">Notatka (opcjonalnie)</div>
-        <input class="input" type="text" id="hist-note" placeholder="Pogoda, towarzysze, wspomnienia...">
+        <input class="input" type="text" id="hist-note" aria-label="Notatka o wejściu" placeholder="Pogoda, towarzysze, wspomnienia...">
       </div>
 
       <button class="btn btn-green btn-full" onclick="saveHistoryEntry()">✅ Dodaj do dziennika</button>
@@ -497,7 +497,7 @@ function saveHistoryEntry() {
   const peakId = parseInt(document.getElementById('hist-peak').value);
   if (state.conquered.includes(peakId)) { showToast('Ten szczyt już jest zdobyty'); return; }
 
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   const dateInput = document.getElementById('hist-date').value;
   const note = document.getElementById('hist-note').value || '';
   const fileInput = document.getElementById('hist-photo');

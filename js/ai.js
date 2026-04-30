@@ -249,7 +249,7 @@ function openAIChat() {
         </div>
       </div>
       <div style="padding:8px 16px calc(12px + var(--safe-bottom,0px));display:flex;gap:8px">
-        <input id="ai-chat-input" type="text" placeholder="Zapytaj o szczyty, szlaki, pogodę..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card);color:var(--text);font-size:13px;outline:none" onkeydown="if(event.key==='Enter')sendAIChatMsg()">
+        <input id="ai-chat-input" type="text" aria-label="Wiadomość do asystenta AI" placeholder="Zapytaj o szczyty, szlaki, pogodę..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card);color:var(--text);font-size:13px;outline:none" onkeydown="if(event.key==='Enter')sendAIChatMsg()">
         <button onclick="sendAIChatMsg()" style="width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;color:#000;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">➤</button>
       </div>
     </div>`;
@@ -305,7 +305,7 @@ async function aiPeakInfo(peakId) {
     return;
   }
 
-  const p = PEAKS.find(pk => pk.id === peakId);
+  const p = getPeak(peakId);
   if (!p) return;
 
   const done = isDone(p.id);
@@ -339,6 +339,8 @@ Pisz po polsku, krótko (max 6 zdań), z entuzjazmem ale bez przesady. Krótkie 
   // Pokaż modal z ładowaniem
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = ev => { if (ev.target === overlay) overlay.remove(); };
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:360px">

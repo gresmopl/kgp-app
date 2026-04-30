@@ -13,32 +13,44 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <title>Korona Gór Polski</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script>
+(function(){
+  var t = localStorage.getItem('kgp_theme') || 'system';
+  if (t === 'light' || (t === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches))
+    document.documentElement.classList.add('light-theme');
+  else if (t === 'dark')
+    document.documentElement.classList.add('dark-theme');
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
 <link rel="stylesheet" href="css/style.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js" integrity="sha384-YieCqqg9gQufX7+5HcFvCEg/n3KUEdl8/Jb+A6J0npf1mB740VayvwKjTrtCeUoy" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="app">
   <div id="screen"></div>
   <nav id="nav">
-    <button class="nav-btn active" onclick="goto('map')" id="nav-map">
-      <span class="nav-icon">🗺️</span><span>Mapa</span>
+    <button class="nav-btn active" onclick="goto('map')" id="nav-map" aria-label="Mapa">
+      <span class="nav-icon" aria-hidden="true">🗺️</span><span>Mapa</span>
     </button>
-    <button class="nav-btn" onclick="goto('list')" id="nav-list">
-      <span class="nav-icon">🏞️</span><span>Szczyty</span>
+    <button class="nav-btn" onclick="goto('list')" id="nav-list" aria-label="Szczyty">
+      <span class="nav-icon" aria-hidden="true">🏞️</span><span>Szczyty</span>
     </button>
-    <button class="nav-btn" onclick="goto('plan')" id="nav-plan">
-      <span class="nav-icon">🎒</span><span>Planuj</span>
+    <button class="nav-btn" onclick="goto('plan')" id="nav-plan" aria-label="Planuj">
+      <span class="nav-icon" aria-hidden="true">🎒</span><span>Planuj</span>
     </button>
-    <button class="nav-btn" onclick="goto('summit')" id="nav-summit">
-      <span class="nav-icon">🏔️</span><span>Zdobywaj</span>
+    <button class="nav-btn" onclick="goto('summit')" id="nav-summit" aria-label="Zdobywaj">
+      <span class="nav-icon" aria-hidden="true">🏔️</span><span>Zdobywaj</span>
     </button>
-    <button class="nav-btn" onclick="goto('journal')" id="nav-journal">
-      <span class="nav-icon">📖</span><span>Dziennik</span>
+    <button class="nav-btn" onclick="goto('journal')" id="nav-journal" aria-label="Dziennik">
+      <span class="nav-icon" aria-hidden="true">📖</span><span>Dziennik</span>
     </button>
-    <button class="nav-btn" onclick="goto('settings')" id="nav-settings">
-      <span class="nav-icon">⚙️</span><span>Ustawienia</span>
+    <button class="nav-btn" onclick="goto('settings')" id="nav-settings" aria-label="Ustawienia">
+      <span class="nav-icon" aria-hidden="true">⚙️</span><span>Ustawienia</span>
     </button>
   </nav>
 </div>

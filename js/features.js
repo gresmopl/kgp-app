@@ -23,7 +23,7 @@ function getGOPRForRange(range) {
 }
 
 function getSOSInfo() {
-  const nearPeak = state.nearbyPeak ? PEAKS.find(p => p.id === state.nearbyPeak) : null;
+  const nearPeak = state.nearbyPeak ? getPeak(state.nearbyPeak) : null;
   const selectedPeak = state.selectedPeak || null;
   const peak = nearPeak || selectedPeak;
   const gopr = peak ? getGOPRForRange(peak.range) : { name: 'GOPR', phone: '985' };
@@ -49,7 +49,7 @@ function getStreakInfo() {
   const lastDate = parsePolishDate(lastEntry.date);
   if (!lastDate) return null;
 
-  const daysSinceLast = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+  const daysSinceLast = Math.floor((now - lastDate) / MS_PER_DAY);
 
   // Najdłuższa przerwa
   let maxGap = 0;
@@ -57,7 +57,7 @@ function getStreakInfo() {
     const d1 = parsePolishDate(state.journal[i].date);
     const d2 = parsePolishDate(state.journal[i + 1].date);
     if (d1 && d2) {
-      const gap = Math.floor((d1 - d2) / (1000 * 60 * 60 * 24));
+      const gap = Math.floor((d1 - d2) / MS_PER_DAY);
       if (gap > maxGap) maxGap = gap;
     }
   }
@@ -103,7 +103,7 @@ function getCompletionForecast() {
 
   const firstDate = dates[0];
   const now = new Date();
-  const daySpan = Math.max(30, (now - firstDate) / (1000 * 60 * 60 * 24));
+  const daySpan = Math.max(30, (now - firstDate) / MS_PER_DAY);
   const peaksPerDay = dates.length / daySpan;
   const remaining = 28 - state.conquered.length;
 
@@ -151,7 +151,7 @@ function getBenchmarkComparison() {
 
   const firstDate = dates[0];
   const now = new Date();
-  const monthsActive = Math.max(1, (now - firstDate) / (1000 * 60 * 60 * 24 * 30));
+  const monthsActive = Math.max(1, (now - firstDate) / (MS_PER_DAY * 30));
 
   // Benchmarki (szacunkowe, predefiniowane)
   const AVG_MONTHS = 28; // średni czas ukończenia KGP
@@ -255,7 +255,7 @@ function renderOnboarding() {
     `<div style="font-size:60px;margin-bottom:16px">🏠</div>
     <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);margin-bottom:12px">USTAW ADRES DOMOWY</div>
     <div style="font-size:14px;color:var(--text2);margin-bottom:20px;max-width:300px;line-height:1.6">Aplikacja obliczy odległość do każdego szczytu i zaplanuje trasę dojazdu. Możesz to zmienić później w ustawieniach.</div>
-    <input id="onboarding-addr" type="text" placeholder="np. Warszawa, ul. Marszałkowska 1" style="width:100%;max-width:300px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;margin-bottom:8px;text-align:center">
+    <input id="onboarding-addr" type="text" aria-label="Adres domowy" placeholder="np. Warszawa, ul. Marszałkowska 1" style="width:100%;max-width:300px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;margin-bottom:8px;text-align:center">
     <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Możesz pominąć ten krok</div>`,
 
     `<div style="font-size:60px;margin-bottom:16px">📡</div>
@@ -521,7 +521,7 @@ const ACHIEVEMENTS = [
   { id: 'karpaty', name: 'Pełnia Karpat', icon: '🏔️', desc: 'Zdobyj wszystkie szczyty karpackie', check: () => { const karpatRanges = ['Tatry','Beskid Żywiecki','Gorce','Beskid Sądecki','Beskid Śląski','Beskid Wyspowy','Beskid Niski','Pieniny','Beskid Mały','Beskid Makowski','Bieszczady']; return PEAKS.filter(p => karpatRanges.includes(p.range)).every(p => isDone(p.id)); } },
   { id: 'sudety', name: 'Pan Sudetów', icon: '⛰️', desc: 'Zdobyj wszystkie szczyty sudeckie', check: () => { const sudetRanges = ['Karkonosze','Góry Stołowe','Masyw Śnieżnika','Góry Sowie','Góry Bystrzyckie','Góry Wałbrzyskie','Góry Kamienne','Masyw Ślęży','Góry Opawskie']; return PEAKS.filter(p => sudetRanges.includes(p.range)).every(p => isDone(p.id)); } },
   { id: 'rysy', name: 'Dach Polski', icon: '🇵🇱', desc: 'Zdobyj Rysy (2499m)', check: () => isDone(1) },
-  { id: 'hard', name: 'Twardziel', icon: '💪', desc: 'Zdobyj szczyt o trudności 5/5', check: () => state.conquered.some(id => { const p = PEAKS.find(pk => pk.id === id); return p && p.difficulty === 5; }) },
+  { id: 'hard', name: 'Twardziel', icon: '💪', desc: 'Zdobyj szczyt o trudności 5/5', check: () => state.conquered.some(id => { const p = getPeak(id); return p && p.difficulty === 5; }) },
   { id: 'speed', name: 'Sprinter', icon: '⚡', desc: '3 szczyty w jednym miesiącu', check: () => { const mc = {}; state.journal.forEach(e => { const d = parsePolishDate(e.date); if (d) { const k = d.getFullYear() + '-' + d.getMonth(); mc[k] = (mc[k]||0)+1; } }); return Object.values(mc).some(v => v >= 3); } },
 ];
 
@@ -540,7 +540,7 @@ function renderAchievements() {
         return `<div class="achievement-badge ${done ? 'unlocked' : 'locked'}">
           <div style="font-size:28px;${done ? '' : 'filter:grayscale(1);opacity:0.3'}">${a.icon}</div>
           <div style="font-size:10px;font-weight:600;margin-top:4px;${done ? 'color:var(--accent)' : 'color:var(--text2)'}">${a.name}</div>
-          <div style="font-size:8px;color:var(--text2);margin-top:2px">${a.desc}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${a.desc}</div>
         </div>`;
       }).join('')}
     </div>
@@ -560,7 +560,7 @@ function renderJournalTimeline(inline) {
         const d = parsePolishDate(entry.date);
         let gapHtml = '';
         if (lastDate && d) {
-          const gap = Math.floor((lastDate - d) / (1000 * 60 * 60 * 24));
+          const gap = Math.floor((lastDate - d) / MS_PER_DAY);
           if (gap > 1) {
             gapHtml = `<div class="jtl-gap">${gap} dni przerwy</div>`;
           }
@@ -578,7 +578,7 @@ function renderJournalTimeline(inline) {
             </div>
             <div style="flex:1">
               <div style="font-weight:600;font-size:14px">${entry.name}</div>
-              <div style="font-size:11px;color:var(--text2)">📅 ${entry.date} o ${entry.time}</div>
+              <div style="font-size:11px;color:var(--text2)">📅 ${entry.date}${entry.time ? ' o ' + entry.time : ''}</div>
               ${entry.note ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;font-style:italic">"${esc(entry.note)}"</div>` : ''}
               ${entry.dedication ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🎁 ${esc(entry.dedication)}</div>` : ''}
               <div style="display:flex;gap:6px;margin-top:4px">
@@ -629,7 +629,7 @@ function renderLightbox() {
     </div>
     <div class="lightbox-caption">
       <div style="font-weight:600">${entry.name} ${entry.height}m</div>
-      <div style="font-size:12px;color:var(--text2)">${entry.date} o ${entry.time}</div>
+      <div style="font-size:12px;color:var(--text2)">${entry.date}${entry.time ? ' o ' + entry.time : ''}</div>
     </div>`;
 
   // Swipe support
@@ -680,7 +680,7 @@ function renderDashboard() {
   // Łączne statystyki
   let totalDist = 0, totalAscent = 0, totalDescent = 0;
   state.journal.forEach(e => {
-    const p = PEAKS.find(pk => pk.id === e.peakId);
+    const p = getPeak(e.peakId);
     if (p) {
       const r = getRoute(p);
       totalDist += r.trail.dist;
@@ -691,7 +691,7 @@ function renderDashboard() {
 
   // Trudność
   const avgDiff = state.conquered.length > 0
-    ? (state.conquered.reduce((s, id) => { const p = PEAKS.find(pk => pk.id === id); return s + (p ? p.difficulty : 0); }, 0) / state.conquered.length).toFixed(1)
+    ? (state.conquered.reduce((s, id) => { const p = getPeak(id); return s + (p ? p.difficulty : 0); }, 0) / state.conquered.length).toFixed(1)
     : 0;
 
   // Dzień tygodnia
@@ -708,22 +708,10 @@ function renderDashboard() {
     <div class="section-title">📊 Podsumowanie</div>
 
     <div class="stats-grid" style="margin-bottom:16px">
-      <div class="stat-card">
-        <div class="stat-val">${totalDist.toFixed(0)}</div>
-        <div class="stat-label">km na szlakach</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${(totalAscent/1000).toFixed(1)}</div>
-        <div class="stat-label">km w górę (przewyższenia)</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${avgDiff}</div>
-        <div class="stat-label">Śr. trudność</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${Math.round(totalDist * 1000 * 0.04 + totalAscent * 0.5 + totalDescent * 0.15)}</div>
-        <div class="stat-label">Łączne kcal</div>
-      </div>
+      ${statCard(totalDist.toFixed(0), 'km na szlakach')}
+      ${statCard((totalAscent/1000).toFixed(1), 'km w górę (przewyższenia)')}
+      ${statCard(avgDiff, 'Śr. trudność')}
+      ${statCard(Math.round(totalDist * 1000 * 0.04 + totalAscent * 0.5 + totalDescent * 0.15), 'Łączne kcal')}
     </div>
 
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600">Szczyty na miesiąc</div>

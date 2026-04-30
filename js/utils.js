@@ -70,6 +70,34 @@ function diffDots(n) {
   return `<span class="peak-diff">${Array.from({length:5},(_,i)=>`<span class="diff-dot ${i<n?'filled':''}"></span>`).join('')}</span>`;
 }
 
+function statCard(val, label, style) {
+  return `<div class="stat-card"><div class="stat-val"${style ? ` style="${style}"` : ''}>${val}</div><div class="stat-label">${label}</div></div>`;
+}
+
+// ============================================================
+// MAPY.COM API HELPERS
+// ============================================================
+async function reverseGeocode(lat, lon) {
+  const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&lang=pl&apiKey=${MAPY_API_KEY}`);
+  return await res.json();
+}
+
+async function forwardGeocode(query, opts = {}) {
+  const { limit = 5, near, preferNear } = opts;
+  let url = `https://api.mapy.com/v1/geocode?query=${encodeURIComponent(query)}&lang=pl&limit=${limit}&apiKey=${MAPY_API_KEY}`;
+  if (near) url += `&near=${near}`;
+  if (preferNear) url += `&preferNear=${preferNear}`;
+  const res = await fetch(url);
+  return await res.json();
+}
+
+function createTileLayer() {
+  return L.tileLayer(MAPY_TILE_URL + MAPY_API_KEY, {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.mapy.com">Mapy.com</a>'
+  });
+}
+
 // ============================================================
 // TOAST
 // ============================================================

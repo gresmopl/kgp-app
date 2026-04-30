@@ -66,7 +66,7 @@ async function loadWeather(peak) {
       return `<div class="weather-day ${score}">
         <div class="weather-date">${days[d.getDay()]}</div>
         <div class="weather-icon">${weatherIcon(data.weathercode[i])}</div>
-        <div style="font-size:9px;color:var(--text2)">${Math.round(data.windspeed_10m_max[i])}km/h</div>
+        <div style="font-size:10px;color:var(--text2)">${Math.round(data.windspeed_10m_max[i])}km/h</div>
         <div class="weather-score ${score}">${scoreLabel}</div>
       </div>`;
     }).join('')}

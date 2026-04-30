@@ -1,7 +1,7 @@
 // ============================================================
 // APP VERSION
 // ============================================================
-const APP_VERSION = '1.2.260421.2225';
+const APP_VERSION = '1.5.260430.2117';
 
 // ============================================================
 // DATA - 28 SZCZYTÓW KGP
@@ -180,6 +180,17 @@ const PEAKS = [
     stamps:[{name:"Gościniec pod Lubomirem",type:"🏡",note:"Przy parkingu"},{name:"Obserwatorium Astronomiczne",type:"🔭",note:"Na szczycie, pieczątka dostępna"}],
     photo:"Na szczycie przy tablicy - 40 min od parkingu" }
 ];
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+const MS_PER_DAY = 86400000;
+const ROAD_FACTOR = 1.3;
+const MAPY_TILE_URL = `https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?lang=pl&apiKey=`;
+
+const PEAKS_BY_ID = {};
+for (const p of PEAKS) PEAKS_BY_ID[p.id] = p;
+function getPeak(id) { return PEAKS_BY_ID[Number(id)]; }
 
 // ============================================================
 // API KEYS

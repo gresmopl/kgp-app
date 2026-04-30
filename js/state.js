@@ -66,7 +66,7 @@ migrateState();
 (function applyPeakOverrides() {
   const ov = JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}');
   Object.entries(ov).forEach(([id, changes]) => {
-    const peak = PEAKS.find(p => p.id === parseInt(id));
+    const peak = getPeak(id);
     if (!peak) return;
     if (changes.trail) Object.assign(peak.trail || (peak.trail = {}), changes.trail);
     if (changes.parking) peak.parking = changes.parking;

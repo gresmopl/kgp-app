@@ -4,7 +4,7 @@
 function renderJournal() {
   const done = state.conquered.length;
   const totalAscent = state.journal.reduce((sum,e)=>{
-    const p=PEAKS.find(pk=>pk.id===e.peakId); return sum+(p?getRoute(p).trail.ascent:0);
+    const p=getPeak(e.peakId); return sum+(p?getRoute(p).trail.ascent:0);
   }, 0);
   const everests = (totalAscent / 8849 * 100).toFixed(0);
 
@@ -16,22 +16,10 @@ function renderJournal() {
   <div class="page page-gap" style="padding-bottom:80px">
 
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val">${done}</div>
-        <div class="stat-label">Szczytów zdobytych</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${28-done}</div>
-        <div class="stat-label">Pozostało</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${totalAscent.toLocaleString()}</div>
-        <div class="stat-label">Metrów w górę</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">${everests}%</div>
-        <div class="stat-label">Everestu (8849m)</div>
-      </div>
+      ${statCard(done, 'Szczytów zdobytych')}
+      ${statCard(28-done, 'Pozostało')}
+      ${statCard(totalAscent.toLocaleString(), 'Metrów w górę')}
+      ${statCard(everests+'%', 'Everestu (8849m)')}
     </div>
 
     ${done > 0 ? `
@@ -93,10 +81,10 @@ function renderJournal() {
           <div style="margin-bottom:12px">
             <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Twoja passa</div>
             <div class="stats-grid">
-              <div class="stat-card"><div class="stat-val">${streak.daysSinceLast}</div><div class="stat-label">Dni od ostatniego</div></div>
-              <div class="stat-card"><div class="stat-val">${streak.thisMonthCount}</div><div class="stat-label">Ten miesiąc</div></div>
-              <div class="stat-card"><div class="stat-val">${streak.bestMonth}</div><div class="stat-label">Rekord miesiąca</div></div>
-              <div class="stat-card"><div class="stat-val">${streak.maxGap}</div><div class="stat-label">Najdłuższa przerwa</div></div>
+              ${statCard(streak.daysSinceLast, 'Dni od ostatniego')}
+              ${statCard(streak.thisMonthCount, 'Ten miesiąc')}
+              ${statCard(streak.bestMonth, 'Rekord miesiąca')}
+              ${statCard(streak.maxGap, 'Najdłuższa przerwa')}
             </div>
           </div>`;
         })()}

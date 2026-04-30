@@ -1,4 +1,5 @@
-const CACHE_NAME = 'kgp-v2';
+const CACHE_VERSION = '1.5.260430.2117';
+const CACHE_NAME = 'kgp-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -19,7 +20,13 @@ const STATIC_ASSETS = [
   './js/router.js',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
-  './manifest.json'
+  './manifest.json',
+  './about.html',
+  './panel.html',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js',
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap'
 ];
 
 self.addEventListener('install', e => {
@@ -39,24 +46,41 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-
   if (e.request.method !== 'GET') return;
 
-  if (url.origin !== location.origin) {
+  const url = new URL(e.request.url);
+
+  // API calls (Supabase, Mapy.com, weather) — network only, nie cache'uj
+  if (url.hostname.includes('supabase') || url.hostname.includes('mapy.com') ||
+      url.hostname.includes('open-meteo') || url.hostname.includes('overpass')) {
+    return;
+  }
+
+  // Google Fonts pliki woff2 — cache-first (nigdy się nie zmieniają)
+  if (url.hostname === 'fonts.gstatic.com') {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(res => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          return res;
+        });
+      })
     );
     return;
   }
 
+  // Wszystko inne (lokalne + CDN libs) — stale-while-revalidate
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
+    caches.match(e.request).then(cached => {
+      const fetching = fetch(e.request).then(res => {
         const clone = res.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         return res;
-      })
-      .catch(() => caches.match(e.request))
+      }).catch(() => cached);
+
+      return cached || fetching;
+    })
   );
 });

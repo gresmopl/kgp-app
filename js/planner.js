@@ -99,7 +99,7 @@ function renderTripCard(trip) {
   const days = trip.days || [];
   const peakIds = [];
   days.forEach(d => (d.stops || []).forEach(s => { if (s.type === 'summit' && s.peakId) peakIds.push(s.peakId); }));
-  const peaks = peakIds.map(id => PEAKS.find(p => p.id === id)).filter(Boolean);
+  const peaks = peakIds.map(id => getPeak(id)).filter(Boolean);
   const peakNames = peaks.map(p => p.name).join(', ') || 'Brak szczytów';
   const isPast = new Date(trip.endDate) < new Date();
 
@@ -132,7 +132,7 @@ function renderQuickPlanSection() {
   const month = new Date().getMonth() + 1;
   const seasonal = todo.find(p => p.season.includes(month)) || todo[0];
 
-  const distLabel = (p) => refLat && refLon ? '~' + Math.round(dist(refLat, refLon, p.lat, p.lon) / 1000 * 1.3) + 'km' : p.range;
+  const distLabel = (p) => refLat && refLon ? '~' + Math.round(dist(refLat, refLon, p.lat, p.lon) / 1000 * ROAD_FACTOR) + 'km' : p.range;
 
   const peakRow = (emoji, tag, p, desc) => `
     <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border-radius:10px;cursor:pointer" onclick="quickTrip(${p.id})">
@@ -190,7 +190,7 @@ function renderTripEditor(trip) {
     <div class="card card-pad" style="display:flex;gap:8px;align-items:center">
       <div style="flex:1">
         <div class="label">Data rozpoczęcia</div>
-        <input class="input" type="date" value="${trip.startDate}" onchange="updateTripDates('${trip.id}',this.value)">
+        <input class="input" type="date" aria-label="Data rozpoczęcia wyprawy" value="${trip.startDate}" onchange="updateTripDates('${trip.id}',this.value)">
       </div>
     </div>
 
@@ -250,7 +250,7 @@ function renderTripDay(trip, dayIdx) {
 
 function renderStopRow(tripId, dayIdx, stop, idx, total, calcTime) {
   const meta = STOP_TYPES[stop.type] || STOP_TYPES.poi;
-  const peak = stop.peakId ? PEAKS.find(p => p.id === stop.peakId) : null;
+  const peak = stop.peakId ? getPeak(stop.peakId) : null;
   const displayName = stop.name || (peak ? peak.name : meta.label);
   const timeStr = calcTime || stop.time || '';
   const hasCheckpoint = stop.gpsCheckpoint != null;
@@ -325,10 +325,10 @@ function calcDayTimes(trip, dayIdx) {
     } else if (stop.type === 'summit') {
       currentMin += 30; // domyślnie 30 min na szczycie
     } else if (stop.peakId && stop.type === 'hike_up') {
-      const peak = PEAKS.find(p => p.id === stop.peakId);
+      const peak = getPeak(stop.peakId);
       if (peak) currentMin += adjTime(getRoute(peak).trail.up);
     } else if (stop.peakId && stop.type === 'hike_down') {
-      const peak = PEAKS.find(p => p.id === stop.peakId);
+      const peak = getPeak(stop.peakId);
       if (peak) currentMin += adjTime(getRoute(peak).trail.down);
     }
   }
@@ -344,7 +344,7 @@ function renderDayWeatherCard(trip, dayIdx) {
   const peakStops = (day.stops || []).filter(s => s.type === 'summit' && s.peakId);
   if (peakStops.length === 0) return '';
 
-  const peak = PEAKS.find(p => p.id === peakStops[0].peakId);
+  const peak = getPeak(peakStops[0].peakId);
   if (!peak) return '';
 
   return `
@@ -390,7 +390,7 @@ function createTrip() {
 }
 
 function quickTrip(peakId) {
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
 
   const today = new Date();
@@ -554,6 +554,8 @@ function switchDay(tripId, dayIdx) {
 function showAddStop(tripId, dayIdx) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
 
   const _rLat = (state._homeGeo && state._homeGeo.lat) || state.userLat;
@@ -563,7 +565,7 @@ function showAddStop(tripId, dayIdx) {
     peaksSorted.sort((a, b) => dist(_rLat, _rLon, a.lat, a.lon) - dist(_rLat, _rLon, b.lat, b.lon));
   }
   const peakOptions = peaksSorted.map(p => {
-    const d = _rLat && _rLon ? Math.round(dist(_rLat, _rLon, p.lat, p.lon) / 1000 * 1.3) : null;
+    const d = _rLat && _rLon ? Math.round(dist(_rLat, _rLon, p.lat, p.lon) / 1000 * ROAD_FACTOR) : null;
     return `<div class="peak-item" style="cursor:pointer" onclick="addPeakStops('${tripId}',${dayIdx},${p.id});this.closest('.modal-overlay').remove()">
       <span class="peak-dot ${isDone(p.id) ? 'done' : 'todo'}"></span>
       <div class="peak-info"><div class="peak-name">${p.name}</div><div class="peak-meta">${p.range}${d ? ' · ~'+d+'km' : ''}</div></div>
@@ -598,7 +600,7 @@ function addPeakStops(tripId, dayIdx, peakId) {
   const day = trip.days[dayIdx];
   if (!day) return;
 
-  const peak = PEAKS.find(p => p.id === peakId);
+  const peak = getPeak(peakId);
   if (!peak) return;
   const route = getRoute(peak);
   const parking = route.parking || (peak.parking && peak.parking[0]);
@@ -669,6 +671,8 @@ function editStop(tripId, dayIdx, stopIdx) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
 
   overlay.innerHTML = `
@@ -677,16 +681,16 @@ function editStop(tripId, dayIdx, stopIdx) {
     <div style="padding:16px">
       <div style="font-family:var(--font-display);font-size:20px;color:var(--accent);margin-bottom:12px">${meta.icon} Edytuj przystanek</div>
       <div class="label">Nazwa</div>
-      <input class="input" type="text" id="edit-stop-name" value="${esc(stop.name)}" placeholder="${meta.label}">
+      <input class="input" type="text" id="edit-stop-name" aria-label="Nazwa przystanku" value="${esc(stop.name)}" placeholder="${meta.label}">
       ${stop.type === 'lodge' || stop.type === 'food' || stop.type === 'attraction' ? `
       <div class="label" style="margin-top:8px">Adres</div>
-      <input class="input" type="text" id="edit-stop-addr" value="${esc(stop.addr || '')}" placeholder="Adres lub lokalizacja...">` : ''}
+      <input class="input" type="text" id="edit-stop-addr" aria-label="Adres przystanku" value="${esc(stop.addr || '')}" placeholder="Adres lub lokalizacja...">` : ''}
       <div class="label" style="margin-top:8px">Czas trwania (minuty)</div>
-      <input class="input" type="number" id="edit-stop-duration" value="${stop.duration || ''}" placeholder="Automatycznie">
+      <input class="input" type="number" id="edit-stop-duration" aria-label="Czas trwania w minutach" value="${stop.duration || ''}" placeholder="Automatycznie">
       <div class="label" style="margin-top:8px">Godzina</div>
-      <input class="input" type="time" id="edit-stop-time" value="${stop.time || ''}">
+      <input class="input" type="time" id="edit-stop-time" aria-label="Godzina przystanku" value="${stop.time || ''}">
       <div class="label" style="margin-top:8px">Notatki</div>
-      <textarea class="input" id="edit-stop-notes" rows="2" placeholder="Opcjonalne...">${esc(stop.notes || '')}</textarea>
+      <textarea class="input" id="edit-stop-notes" aria-label="Notatki do przystanku" rows="2" placeholder="Opcjonalne...">${esc(stop.notes || '')}</textarea>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn btn-primary" style="flex:1" onclick="saveStopEdit('${tripId}',${dayIdx},${stopIdx});this.closest('.modal-overlay').remove()">💾 Zapisz</button>
         <button class="btn btn-secondary" style="flex:1" onclick="this.closest('.modal-overlay').remove()">Anuluj</button>
@@ -766,6 +770,8 @@ function gpsCheckpoint(tripId, dayIdx, stopIdx) {
 function showTripMenu(tripId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
 
   overlay.innerHTML = `
@@ -816,7 +822,7 @@ async function shareTrip(tripId) {
       for (const d of trip.days) {
         for (const s of d.stops) {
           if (s.peakId) {
-            const p = PEAKS.find(pk => pk.id === s.peakId);
+            const p = getPeak(s.peakId);
             if (p) return p.name.toLowerCase().replace(/\s+/g, '-').replace(/[ąćęłńóśźż]/g, c =>
               ({ą:'a',ć:'c',ę:'e',ł:'l',ń:'n',ó:'o',ś:'s',ź:'z',ż:'z'}[c] || c)
             );
@@ -892,7 +898,7 @@ function openMapPicker(tripId, dayIdx) {
       <button class="btn btn-primary btn-sm" id="map-picker-confirm" disabled onclick="confirmMapPick('${tripId}',${dayIdx})">Dodaj</button>
     </div>
     <div style="padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:8px">
-      <input type="text" id="map-picker-search" placeholder="Szukaj: parking, schronisko, restauracja..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px">
+      <input type="text" id="map-picker-search" aria-label="Szukaj miejsca na mapie" placeholder="Szukaj: parking, schronisko, restauracja..." style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px">
       <button class="btn btn-primary btn-sm" onclick="mapPickerSearch()" style="white-space:nowrap">🔍 Szukaj</button>
     </div>
     <div id="map-picker-results" style="display:none;background:var(--bg2);border-bottom:1px solid var(--border);max-height:180px;overflow-y:auto"></div>
@@ -917,7 +923,7 @@ function openMapPicker(tripId, dayIdx) {
     // Szukaj szczytu w przystankach dnia
     const peakStop = day.stops.find(s => s.type === 'summit' && s.peakId);
     if (peakStop) {
-      const peak = PEAKS.find(p => p.id === peakStop.peakId);
+      const peak = getPeak(peakStop.peakId);
       if (peak) {
         centerLat = peak.lat;
         centerLon = peak.lon;
@@ -941,10 +947,7 @@ function openMapPicker(tripId, dayIdx) {
       zoom: initZoom
     });
 
-    L.tileLayer(`https://api.mapy.com/v1/maptiles/outdoor/256/{z}/{x}/{y}?lang=pl&apikey=${MAPY_API_KEY}`, {
-      maxZoom: 18,
-      attribution: '© Mapy.com'
-    }).addTo(pickerMap);
+    createTileLayer().addTo(pickerMap);
 
     let pickerMarker = null;
     window._pickerMap = pickerMap;
@@ -976,7 +979,7 @@ function openMapPicker(tripId, dayIdx) {
     if (trip && trip.days[dayIdx]) {
       const peakStop = trip.days[dayIdx].stops.find(s => s.type === 'summit' && s.peakId);
       if (peakStop) {
-        const peak = PEAKS.find(p => p.id === peakStop.peakId);
+        const peak = getPeak(peakStop.peakId);
         if (peak) {
           L.marker([peak.lat, peak.lon], {
             icon: L.divIcon({ className: '', html: `<div style="font-size:24px">🏔️</div>`, iconSize: [28, 28], iconAnchor: [14, 14] })
@@ -1001,13 +1004,8 @@ async function mapPickerSearch() {
     // Użyj aktualnego widoku mapy jako kontekstu wyszukiwania
     const map = window._pickerMap;
     const center = map ? map.getCenter() : null;
-    let url = `https://api.mapy.com/v1/geocode?query=${encodeURIComponent(query)}&lang=pl&limit=6&apiKey=${MAPY_API_KEY}`;
-    if (center) {
-      url += `&preferNear=${center.lng},${center.lat}`;
-    }
-
-    const res = await fetch(url);
-    const data = await res.json();
+    const preferNear = center ? `${center.lng},${center.lat}` : undefined;
+    const data = await forwardGeocode(query, { limit: 6, preferNear });
     const items = data.items || [];
 
     if (items.length === 0) {
@@ -1103,8 +1101,7 @@ async function mapPickerSelectPoint(lat, lon, map, existingMarker, presetName) {
     // Reverse geocode
     document.getElementById('map-picker-name').textContent = 'Szukam nazwy...';
     try {
-      const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&apikey=${MAPY_API_KEY}`);
-      const data = await res.json();
+      const data = await reverseGeocode(lat, lon);
       const name = data.items?.[0]?.name || `Punkt (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
       window._pickerData.name = name;
       document.getElementById('map-picker-name').textContent = name;
