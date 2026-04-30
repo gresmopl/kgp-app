@@ -67,6 +67,8 @@
 - [ ] **Profil wysokosciowy trasy** - wykres przewyzszen (GUGiK NMT API + Canvas). Gdzie stromo, gdzie plask, gdzie odpoczac. NMT daje dokladnosc 1m - lepsza niz OpenElevation.
 - [ ] **Tryb offline z mapami** - cache kafelkow w IndexedDB dla okolic kazdego szczytu. W gorach czesto brak zasiegu. (SW cache'uje zasoby statyczne od v1.5, ale nie kafelki map)
 - [ ] **Wiele zdjec na szczyt** - galeria zamiast jednego zdjecia. Porownanie lato vs zima.
+- [ ] **Odczyt EXIF ze zdjec** - przy dodawaniu zdjecia automatycznie odczytac metadane: DateTimeOriginal (data wykonania) i GPS (koordynaty). Zastosowania: auto-wypelnianie daty zdobycia, weryfikacja lokalizacji (porownanie GPS zdjecia z pozycja szczytu), odczyt daty z archiwalnych zdjec przy wpisywaniu historycznych wejsc. Parsowanie EXIF z ArrayBuffer (bez biblioteki, ~100-150 linii) lub mala biblioteka exif-js (~15KB). Ograniczenia: nie kazde zdjecie ma GPS (wylaczony w aparacie), zdjecia przeslane przez komunikatory (WhatsApp, Messenger) traca EXIF.
+- [ ] **Zdjecia lokalnie w IndexedDB + eksport do chmury** - przeniesienie zdjec z Supabase Storage do IndexedDB na urzadzeniu (pojemnosc setki MB, nie 5MB jak localStorage). Zdjecia zostaja na telefonie - prywatnosc i szybkosc. Opcjonalny eksport/backup do Google Drive, OneDrive lub innego zdalnego nosnika (Google Drive API / OneDrive API / Web Share API). Szyfrowanie zdjec przez Web Crypto API (AES-GCM, klucz z sync code lub osobne haslo) - ochrona przed utrata/kradzieza telefonu. Mozliwosc pelnego backupu (dane + zdjecia) jako zaszyfrowana paczka.
 
 ### Priorytet sredni
 - [ ] **AI Planner (Gemini)** - "weekend 18-19 kwietnia, jade z Krakowa" → AI generuje plan: ktore gory, kolejnosc, noclegi, pogoda
