@@ -154,7 +154,7 @@ function renderQuickPlanSection() {
   const restHtml = rest.map(p => peakRow('⛰️', p.range, p, distLabel(p))).join('');
 
   return `
-  <div class="card card-pad" style="margin-top:8px" onclick="toggleSection('whatnext-section',this)" style="cursor:pointer">
+  <div class="card card-pad" style="margin-top:8px;cursor:pointer" onclick="toggleSection('whatnext-section',this)">
     <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
       <div class="section-title" style="margin:0">🤔 Co dalej? - ${todo.length} niezdobytych</div>
       <span style="font-size:12px;color:var(--text2)">▼</span>
@@ -287,8 +287,8 @@ function renderStopRow(tripId, dayIdx, stop, idx, total, calcTime) {
     </div>
     <div class="pl-stop-actions">
       <div class="pl-actions-col">
-        ${idx > 0 ? `<button class="pl-btn-move" onclick="moveStop('${tripId}',${dayIdx},${idx},-1)">↑</button>` : '<div style="width:24px;height:24px"></div>'}
-        ${idx < total - 1 ? `<button class="pl-btn-move" onclick="moveStop('${tripId}',${dayIdx},${idx},1)">↓</button>` : '<div style="width:24px;height:24px"></div>'}
+        ${idx > 0 ? `<button class="pl-btn-move" onclick="moveStop('${tripId}',${dayIdx},${idx},-1)">↑</button>` : '<div style="width:36px;height:36px"></div>'}
+        ${idx < total - 1 ? `<button class="pl-btn-move" onclick="moveStop('${tripId}',${dayIdx},${idx},1)">↓</button>` : '<div style="width:36px;height:36px"></div>'}
       </div>
       <div class="pl-actions-col">
         <button class="pl-btn-move" onclick="editStop('${tripId}',${dayIdx},${idx})" style="font-size:11px">✏️</button>
@@ -696,6 +696,7 @@ function editStop(tripId, dayIdx, stopIdx) {
   </div>`;
 
   document.body.appendChild(overlay);
+  overlay.querySelector('#edit-stop-name')?.focus();
 }
 
 function saveStopEdit(tripId, dayIdx, stopIdx) {
@@ -784,6 +785,7 @@ function showTripMenu(tripId) {
 }
 
 function deleteTrip(tripId) {
+  if (!confirm('Usunąć tę wyprawę? Nie można cofnąć.')) return;
   state.trips = state.trips.filter(t => t.id !== tripId);
   save();
   closeTripEditor();

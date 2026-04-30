@@ -41,7 +41,7 @@
 - [x] ~~Dedykacja zdobycia szczytu~~ (usunięta z UI)
 
 ### UX / Design
-- [x] Onboarding z animacja
+- [x] Onboarding 3-ekranowy (powitanie → adres domowy → sync/offline)
 - [x] Gorski dark theme (gradient, blur, topograficzny styl)
 - [x] Micro-interactions i animacje (fadeInUp, scale, confetti)
 - [x] Lightbox zdjec (fullscreen, swipe)
@@ -65,7 +65,7 @@
 ### Priorytet wysoki
 - [x] **Planer wyprawy (multi-segment)** - planner.js: lista wypraw, edytor z dniami i przystankami, 11 typów stopów, auto-kalkulacja timeline, GPS checkpoint, map picker (reverse geocode), udostępnianie przez Supabase shared_trips, szybki plan z jednego szczytu, przesuwanie dat, duplikowanie.
 - [ ] **Profil wysokosciowy trasy** - wykres przewyzszen (GUGiK NMT API + Canvas). Gdzie stromo, gdzie plask, gdzie odpoczac. NMT daje dokladnosc 1m - lepsza niz OpenElevation.
-- [ ] **Tryb offline z mapami** - cache kafelkow w IndexedDB dla okolic kazdego szczytu. W gorach czesto brak zasiegu.
+- [ ] **Tryb offline z mapami** - cache kafelkow w IndexedDB dla okolic kazdego szczytu. W gorach czesto brak zasiegu. (SW cache'uje zasoby statyczne od v1.5, ale nie kafelki map)
 - [ ] **Wiele zdjec na szczyt** - galeria zamiast jednego zdjecia. Porownanie lato vs zima.
 
 ### Priorytet sredni
@@ -95,7 +95,7 @@
 - [x] **Adaptive UI (etap 1)** - detekcja kontekstu (home/driving/trail/summit) z badge w nawigacji. Debounce 3 odczytow. Context switcher do testowania (klik w badge). Etap 2-3: zmiana layoutu per kontekst.
 - [x] **Dark/light mode** - ręczny przełącznik w ustawieniach (Jasny/Ciemny/Systemowy), CSS class-based
 - [x] **Reverse geocoding** - Mapy.com rgeocode API, przycisk GPS w ustawieniach adresu, walidacja z koordynatami
-- [ ] **Accessibility** - wysoki kontrast, skalowalne fonty, aria labels, semantic HTML, obsługa czytnika ekranu. Nie feature, a wymóg.
+- [ ] **Accessibility** - wysoki kontrast, skalowalne fonty, aria labels, semantic HTML, obsługa czytnika ekranu. Nie feature, a wymóg. (Częściowo: usunięto user-scalable=no, poprawiono kontrast popupów mapy)
 - [ ] **Onboarding jako quest** - zamiast intro screena, pierwszy szczyt jako "misja treningowa": wybierz szczyt → sprawdź pogodę → zaplanuj → zdobądź → zrób zdjęcie. Grywalizacja od pierwszej minuty.
 
 ### Landing page
@@ -131,6 +131,45 @@
 
 ---
 
+### Plan migracji infrastruktury (2026-04-22)
+
+**Problem:** Obecna architektura (Supabase + Mapy.com) generuje koszty które rosną z liczbą użytkowników:
+- Supabase: zdjęcia w chmurze, sync — storage i bandwidth kosztują
+- Mapy.com: każdy kafelek mapy = 1 kredyt, routing = 4 kredyty (limit 250k free/mc)
+- Konkurenci (Verdant, Korona Gór) zapisują lokalnie = zero kosztów serwera
+
+**Decyzja:** Migracja na własny VPS + SQLite + open-source mapy.
+
+**Etap 1: Backend (SQLite + VPS)**
+- Zastąpić Supabase własnym API (Express/Fastify + SQLite)
+- Endpointy: sync (push/pull user_data), upload zdjęć, auth (sync code)
+- Storage zdjęć: katalog na VPS (+ osobny storage ~$5/mc jeśli potrzeba)
+- Backup: SQLite → cron dump + kopia na zewnętrzny dysk
+- Nakład: ~1-2 tygodnie na backend
+- Korzyść: pełna kontrola, brak limitów, stały koszt niezależny od użytkowników
+
+**Etap 2: Mapy (open-source tiles)**
+- Kafelki: OpenTopoMap (darmowe, topograficzne) LUB self-hosted OSM tiles na VPS
+- Szlaki PTTK: Waymarked Trails overlay (tile.waymarkedtrails.org/hiking/) — darmowy
+- Geocoding: Nominatim (self-hosted lub publiczny, darmowy)
+- Kompromis: routing ZOSTAWIĆ na Mapy.com — mało requestów (4 kredyty/req), mieści się w free tier
+- Pułapka: Mapy.com mają najlepsze dane turystyczne PL (szlaki, schroniska, nazwy po polsku). OpenTopoMap + Waymarked Trails to przybliżenie, nie 1:1 zamiennik
+- Alternatywnie: self-host tile server z danymi OSM + OpenMapTiles (cięższe, ale pełna kontrola)
+
+**Etap 3: Optymalizacje**
+- Cache kafelków w SW/IndexedDB (już częściowo: SW cache'uje statyczne zasoby)
+- Kompresja zdjęć przed uploadem (zmniejszy storage)
+- Lazy loading — nie ładuj wszystkiego na start
+
+**Co zachować z Supabase (na razie):**
+- Wyzwania grupowe (shared state) — do przeniesienia w etapie 1
+- AI usage tracking — do przeniesienia
+- App config (klucze API) — przenieść do env na VPS
+
+**Kolejność:** Etap 2 (mapy) można zrobić niezależnie od etapu 1 (backend). Mapy to szybka zmiana (podmiana URL tile), backend to większy projekt.
+
+---
+
 ### Porownanie API map (research)
 - **Mapy.cz** - 250k darmowych kredytow/mc, 1.6 CZK/1000 kredytow. Najlepsze mapy turystyczne PL (szlaki PTTK, schroniska). Koszty: tiles=1, geocoding/routing/suggest=4 kredyty
 - **Mapbox** - 50k loads/mc free, $0.75-5.00/1000 req. 10-75x drozszy niz Mapy.cz. Lepsze globalne pokrycie ale niepotrzebne dla KGP
@@ -160,4 +199,64 @@
   - Fallback geokodowania parkingów
 - Dokumentacja: https://www.geoportal.gov.pl/wp-media/2023/10/Dokumentacja-uslugi-API-wersja-1.06.pdf
 
-*Ostatnia aktualizacja: 2026-04-05 (sesja 4)*
+### Analiza konkurencji i kierunek rozwoju (research, 2026-04-22)
+
+**Konkurenci (Polska):**
+
+| Aplikacja | Ocena | Pobrania | Siła | Słabość |
+|---|---|---|---|---|
+| Szlaki (W3media) | 4.7 | 100k+ | Kompleksowa mapa+szlaki+30 koron | Premium za offline mapy |
+| Polskie Góry (Celiński) | 4.3 | 100k+ | AR rozpoznawanie szczytów | Archaiczny UI, kolekcja tylko premium |
+| Korony Gór (Mosiejko) | 4.1 | 10k+ | 200+ gór PL/SK/CZ, web sync | Stary interfejs, brak iOS |
+| Korona Polskich Gór (Verdant) | 4.8 | 10k+ | Prosta, lekka (2.5MB) | Crashe, brak synca, brak zdjęć |
+| Korona Gór iOS (Zadorożny) | ~2.8 | mało | Jedyna na iOS | Minimalna, same poprawki GPS |
+
+**Konkurenci (świat - peak bagging):**
+
+| Aplikacja | Model | Wyróżnik |
+|---|---|---|
+| Peakbagger.com | Darmowy (donations) | 750+ list, 20+ lat, brzydki ale działa |
+| Hory.app (CZ) | Freemium | Punkty=wysokość, 340k szczytów, wyzwania |
+| Peakhunter (CH) | Freemium | GPS-only weryfikacja, globalny |
+| Summit Bag | Darmowy (web) | Auto-detekcja szczytów ze Strava |
+| Peaky Baggers (UK) | Darmowy? | XP, leaderboardy, Munros/Wainwrights |
+| HikerNerd (USA) | Freemium $5/mc | AI warunki pogodowe (zielony/żółty/czerwony) |
+
+---
+
+**WNIOSKI STRATEGICZNE:**
+
+**1. Rynek jest podzielony na dwie nisze, a nikt nie łączy ich dobrze:**
+- Niszę A: "dziennik zdobywcy" (Verdant, Korony Gór) — prosty checkbox, GPS, gotowe
+- Niszę B: "narzędzie planowania" (Szlaki, Komoot) — mapy, routing, pogoda
+- KGP App próbuje być A+B jednocześnie. To siła (kompletność), ale i słabość (złożoność). Klucz: rozdzielić te tryby w UI, nie w kodzie.
+
+**2. Prostota bije funkcje — ale tylko w terenie.**
+- Verdant: 2.5 MB, crash przy oznaczaniu, zero synca — i 4.8★. Bo robi jedną rzecz jasno.
+- Peakbagger.com: brzydki jak noc, działa 20+ lat, bo jest UŻYTECZNY.
+- Wniosek: użytkownik w terenie nie szuka funkcji — szuka pewności że "to zadziała". 3 duże przyciski > 30 opcji.
+- ALE w domu, przy planowaniu — bogactwo funkcji to zaleta. Nie kasować, schować kontekstowo.
+
+**3. Trzy rzeczy których nikt nie robi dobrze, a my możemy:**
+- **Sync bez konta** — nasz sync code (turbacz4821) to unikalna przewaga. Konkurenci albo nie mają synca (Verdant — utrata danych!), albo wymagają rejestracji email (Szlaki). Sync code = zero barier.
+- **Offline-first bez sklepu** — PWA działa na Android+iOS+desktop z jednego URL. Żadna konkurencyjna apka KGP tego nie oferuje.
+- **Planowanie + realizacja w jednym** — jedyna apka gdzie planujesz wyprawę Z DOMU (routing, pogoda, czas) i realizujesz W TERENIE (GPS, zdjęcie, oznacz). Inni robią albo jedno albo drugie.
+
+**4. Czego NIE robić (pułapki):**
+- Nie gonić za bazą 340k szczytów (Hory) — to nie nasz rynek. 28 szczytów KGP to siła, nie słabość. Ekspert od jednego tematu > generyk.
+- Nie dodawać subskrypcji — hobby project. Donations model (jak Peakbagger.com) buduje lojalność, nie paywall.
+- Nie kopiować grywalizacji Hory (punkty=wysokość, wyzwania miesięczne) — KGP ma 28 szczytów, nie 340k. Grywalizacja nie skaluje się przy małej bazie. Obecne osiągnięcia (12 odznak) wystarczą.
+- Nie integrować ze Stravą na siłę — nasi użytkownicy to turyści, nie biegacze. GPS z telefonu > import GPX.
+
+**5. Konkretny kierunek: "Prosty w górach, bogaty w domu"**
+- Priorytet 1: Tryb terenowy (Adaptive UI etap 2) — na szlaku/szczycie widać TYLKO: zdobądź, zdjęcie, wróć do auta
+- Priorytet 2: Dopracować core flow — oznacz szczyt → zdjęcie → karta do udostępnienia. Ten flow musi być BEZBŁĘDNY i szybki (3 tapy max)
+- Priorytet 3: Nie dodawać NOWYCH funkcji — dopracować istniejące. 30 funkcji po 80% < 10 funkcji po 100%
+- Opcjonalnie: Nowa KGP (38 szczytów) — nikt tego nie ma, daje buzz i powód do pobrania
+
+**Propozycje do implementacji:**
+- [ ] **Adaptive UI etap 2 - tryb terenowy** - gdy context=TRAIL/SUMMIT, strona Zdobywaj uproszczona: duży przycisk "Zdobywam!", zdjęcie, nawigacja do auta. Bez scrollowania. Pełny UI pod "Pokaż wszystko". Warunkowy render, zero usuwania kodu.
+- [ ] **Core flow audit** - przetestować cały flow: wejście na szczyt → zdjęcie → oznaczenie → karta → udostępnienie. Policzyć tapy, usunąć zbędne kroki, naprawić edge case'y.
+- [ ] **Nowa Korona Polskich Gór (38 szczytów)** - nowa regionalizacja 2025, nikt nie wspiera. Opcjonalny tryb "Nowa KGP" obok klasycznej 28.
+
+*Ostatnia aktualizacja: 2026-04-22 (sesja 5 - PWA, UX fixes, analiza konkurencji)*

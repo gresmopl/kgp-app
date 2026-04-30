@@ -240,25 +240,77 @@ function shouldShowOnboarding() {
   return !localStorage.getItem('kgp_onboarded') && state.conquered.length === 0;
 }
 
+let _onboardingStep = 0;
+
 function renderOnboarding() {
-  return `
-  <div style="position:fixed;inset:0;background:var(--bg);z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center">
-    <div style="font-size:80px;margin-bottom:20px">🏔️</div>
-    <div style="font-family:var(--font-display);font-size:36px;color:var(--accent);letter-spacing:2px;line-height:1.2;margin-bottom:12px">
-      28 SZCZYTÓW<br>JEDNA KORONA
-    </div>
-    <div style="font-size:15px;color:var(--text2);margin-bottom:30px;max-width:300px;line-height:1.6">
-      Twoja przygoda ze zdobywaniem Korony Gór Polski zaczyna się teraz. Planuj, zdobywaj, kolekcjonuj pieczątki.
-    </div>
+  const steps = [
+    `<div style="font-size:80px;margin-bottom:20px">🏔️</div>
+    <div style="font-family:var(--font-display);font-size:36px;color:var(--accent);letter-spacing:2px;line-height:1.2;margin-bottom:12px">28 SZCZYTÓW<br>JEDNA KORONA</div>
+    <div style="font-size:15px;color:var(--text2);margin-bottom:30px;max-width:300px;line-height:1.6">Twoja przygoda ze zdobywaniem Korony Gór Polski zaczyna się teraz. Planuj, zdobywaj, kolekcjonuj pieczątki.</div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
       ${['🗺️ Mapa','📅 Planuj','🏔️ Zdobywaj','📖 Dziennik'].map(t => `
       <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text2)">${t}</div>`).join('')}
+    </div>`,
+
+    `<div style="font-size:60px;margin-bottom:16px">🏠</div>
+    <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);margin-bottom:12px">USTAW ADRES DOMOWY</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px;max-width:300px;line-height:1.6">Aplikacja obliczy odległość do każdego szczytu i zaplanuje trasę dojazdu. Możesz to zmienić później w ustawieniach.</div>
+    <input id="onboarding-addr" type="text" placeholder="np. Warszawa, ul. Marszałkowska 1" style="width:100%;max-width:300px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;margin-bottom:8px;text-align:center">
+    <div style="font-size:11px;color:var(--text2);margin-bottom:20px">Możesz pominąć ten krok</div>`,
+
+    `<div style="font-size:60px;margin-bottom:16px">📡</div>
+    <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);margin-bottom:12px">SYNC I OFFLINE</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px;max-width:300px;line-height:1.6">
+      <div style="display:flex;align-items:start;gap:8px;text-align:left;margin-bottom:12px">
+        <span style="font-size:20px">📶</span><span>Aplikacja działa <b style="color:var(--green)">bez internetu</b> - dane szczytów, trasy i dziennik są zawsze dostępne.</span>
+      </div>
+      <div style="display:flex;align-items:start;gap:8px;text-align:left;margin-bottom:12px">
+        <span style="font-size:20px">🔄</span><span>Załóż konto w ustawieniach, aby <b style="color:var(--accent)">synchronizować dane</b> między telefonem a komputerem.</span>
+      </div>
+      <div style="display:flex;align-items:start;gap:8px;text-align:left">
+        <span style="font-size:20px">📱</span><span>Zainstaluj aplikację na pulpicie - kliknij "Dodaj do ekranu głównego" w przeglądarce.</span>
+      </div>
+    </div>`
+  ];
+
+  return `
+  <div style="position:fixed;inset:0;background:var(--bg);z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center">
+    ${steps[_onboardingStep]}
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      ${steps.map((_, i) => `<div style="width:8px;height:8px;border-radius:50%;background:${i === _onboardingStep ? 'var(--accent)' : 'var(--border)'}"></div>`).join('')}
     </div>
-    <button class="btn btn-primary" style="font-size:16px;padding:16px 40px" onclick="dismissOnboarding()">
-      🚀 Zaczynamy!
+    <button class="btn btn-primary" style="font-size:16px;padding:16px 40px" onclick="onboardingNext()">
+      ${_onboardingStep < steps.length - 1 ? '➡️ Dalej' : '🚀 Zaczynamy!'}
     </button>
-    <div style="font-size:10px;color:var(--text2);margin-top:16px">Korona Gór Polski - Asystent Zdobywcy v1.2.0</div>
+    ${_onboardingStep > 0 ? `<div style="font-size:12px;color:var(--text2);margin-top:12px;cursor:pointer;text-decoration:underline" onclick="onboardingBack()">← Wstecz</div>` : ''}
+    <div style="font-size:10px;color:var(--text2);margin-top:16px">Korona Gór Polski v${APP_VERSION}</div>
   </div>`;
+}
+
+function onboardingNext() {
+  if (_onboardingStep === 1) {
+    const addr = document.getElementById('onboarding-addr')?.value.trim();
+    if (addr) {
+      state.homeAddr = addr;
+      save();
+      validateHomeAddr();
+    }
+  }
+  if (_onboardingStep < 2) {
+    _onboardingStep++;
+    const container = document.querySelector('[style*="z-index:20000"]');
+    if (container) container.outerHTML = renderOnboarding();
+  } else {
+    dismissOnboarding();
+  }
+}
+
+function onboardingBack() {
+  if (_onboardingStep > 0) {
+    _onboardingStep--;
+    const container = document.querySelector('[style*="z-index:20000"]');
+    if (container) container.outerHTML = renderOnboarding();
+  }
 }
 
 function dismissOnboarding() {

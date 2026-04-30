@@ -51,7 +51,7 @@ function migrateState() {
     if (MIGRATIONS[v]) {
       try {
         MIGRATIONS[v]();
-        console.log(`Migracja v${v} → v${v + 1} OK`);
+        // migracja OK
       } catch(e) {
         console.error(`Migracja v${v} → v${v + 1} blad:`, e);
       }

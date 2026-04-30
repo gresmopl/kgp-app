@@ -141,7 +141,7 @@ async function geocodeNear(name, nearLat, nearLon) {
     const res = await fetch(`https://api.mapy.com/v1/geocode?query=${encodeURIComponent(name)}&lang=pl&limit=5&apiKey=${MAPY_API_KEY}`);
     if (!res.ok) return null;
     const data = await res.json();
-    console.log('geocodeNear results:', name, data.items);
+    // debug: geocodeNear results
     if (!data.items || data.items.length === 0) return null;
     let best = null;
     let bestDist = Infinity;
@@ -149,7 +149,7 @@ async function geocodeNear(name, nearLat, nearLon) {
       const d = Math.pow(item.position.lat - nearLat, 2) + Math.pow(item.position.lon - nearLon, 2);
       if (d < bestDist) { bestDist = d; best = item.position; }
     }
-    console.log('geocodeNear best:', best, 'dist:', bestDist);
+    // debug: geocodeNear best
     if (bestDist > 1) return null;
     return { lat: best.lat, lon: best.lon };
   } catch(e) {
@@ -315,6 +315,11 @@ function renderMap() {
   </div>
   <div id="map-container">
     <div id="leaflet-map" style="width:100%;height:100%"></div>
+    <div id="map-offline-msg" style="display:${navigator.onLine?'none':'flex'};position:absolute;top:0;left:0;right:0;bottom:0;z-index:80;background:var(--bg);align-items:center;justify-content:center;text-align:center;padding:32px;flex-direction:column;gap:12px">
+      <div style="font-size:48px">📡</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text)">Brak połączenia z internetem</div>
+      <div style="font-size:12px;color:var(--text2);max-width:280px;line-height:1.5">Mapa wymaga internetu do załadowania kafli. Zapisane trasy i dane szczytów są dostępne offline w zakładce Zdobywaj.</div>
+    </div>
     <div class="map-legend">
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--green)"></div>Zdobyty</div>
       <div class="map-legend-item"><div class="map-legend-dot" style="background:var(--accent)"></div>Do zdobycia</div>
@@ -369,13 +374,13 @@ function buildPeakPopup(p) {
           <div style="font-weight:700;font-size:14px;flex:1">✅ ${esc(p.name)}</div>
           <div style="font-size:13px;font-weight:700;color:${color}">${p.height} m</div>
         </div>
-        <div style="font-size:11px;color:#888">${esc(p.range)} · ${date}</div>
+        <div style="font-size:11px;color:var(--text2)">${esc(p.range)} · ${date}</div>
         ${photoHtml}
-        ${note ? '<div style="font-size:11px;color:#aaa;margin:4px 0;font-style:italic;line-height:1.3">' + note.substring(0, 80) + (note.length > 80 ? '...' : '') + '</div>' : ''}
+        ${note ? '<div style="font-size:11px;color:var(--text2);margin:4px 0;font-style:italic;line-height:1.3">' + note.substring(0, 80) + (note.length > 80 ? '...' : '') + '</div>' : ''}
         <div style="display:flex;gap:6px;margin-top:6px">
-          <button onclick="openPeakDetail(${p.id})" style="flex:1;background:${color};border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;color:#fff">📖 Dziennik</button>
-          <button onclick="aiPeakInfo(${p.id})" style="background:#eee;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer" title="AI opowie więcej">🤖</button>
-          <button onclick="changePlanPeak(${p.id});goto('plan')" style="background:#eee;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer" title="Planuj ponowne wejście">🔄</button>
+          <button onclick="openPeakDetail(${p.id})" style="flex:1;background:${color};border:none;border-radius:8px;padding:10px 8px;font-size:12px;font-weight:600;cursor:pointer;color:#fff">📖 Dziennik</button>
+          <button onclick="aiPeakInfo(${p.id})" style="background:#eee;border:none;border-radius:8px;padding:10px 8px;font-size:12px;cursor:pointer" title="AI opowie więcej">🤖</button>
+          <button onclick="changePlanPeak(${p.id});goto('plan')" style="background:#eee;border:none;border-radius:8px;padding:10px 8px;font-size:12px;cursor:pointer" title="Planuj ponowne wejście">🔄</button>
         </div>
       </div>`;
   } else {
@@ -393,7 +398,7 @@ function buildPeakPopup(p) {
     const refLon = (state._homeGeo && state._homeGeo.lon) || state.userLon;
     if (refLat && refLon) {
       const km = Math.round(dist(refLat, refLon, p.lat, p.lon) / 1000 * 1.3);
-      distHtml = '<div style="font-size:10px;color:#888;margin-top:3px">📍 ~' + km + ' km</div>';
+      distHtml = '<div style="font-size:10px;color:var(--text2);margin-top:3px">📍 ~' + km + ' km</div>';
     }
 
     let trailHtml = '';
@@ -401,7 +406,7 @@ function buildPeakPopup(p) {
       const timeMin = trail.up ? trail.up + trail.down : Math.round(trail.dist * 25);
       const h = Math.floor(timeMin / 60);
       const m = timeMin % 60;
-      trailHtml = '<div style="font-size:10px;color:#888;margin-top:2px">🥾 ' + trail.dist + ' km · ⏱️ ~' + (h > 0 ? h + 'h ' : '') + m + 'min · ↑' + trail.ascent + ' m</div>';
+      trailHtml = '<div style="font-size:10px;color:var(--text2);margin-top:2px">🥾 ' + trail.dist + ' km · ⏱️ ~' + (h > 0 ? h + 'h ' : '') + m + 'min · ↑' + trail.ascent + ' m</div>';
     }
 
     const parkingName = parking ? esc(parking.name.split(' - ')[0].split(' – ')[0]) : '';
@@ -412,14 +417,14 @@ function buildPeakPopup(p) {
           <div style="font-weight:700;font-size:14px;flex:1">${esc(p.name)}</div>
           <div style="font-size:13px;font-weight:700;color:${color}">${p.height} m</div>
         </div>
-        <div style="font-size:11px;color:#888">${esc(p.range)} · <span style="color:${diffColor};font-weight:600">${diffLabel}</span></div>
-        ${parkingName ? '<div style="font-size:10px;color:#888;margin-top:3px">🅿️ ' + parkingName + '</div>' : ''}
+        <div style="font-size:11px;color:var(--text2)">${esc(p.range)} · <span style="color:${diffColor};font-weight:600">${diffLabel}</span></div>
+        ${parkingName ? '<div style="font-size:10px;color:var(--text2);margin-top:3px">🅿️ ' + parkingName + '</div>' : ''}
         ${trailHtml}
         ${distHtml}
         <div style="display:flex;gap:6px;margin-top:8px">
-          <button onclick="changePlanPeak(${p.id});goto('plan')" style="flex:1;background:${color};border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;color:#000">📅 Dodaj do planu</button>
-          <button onclick="aiPeakInfo(${p.id})" style="background:#eee;border:none;border-radius:6px;padding:7px;font-size:11px;cursor:pointer" title="AI opowie więcej">🤖</button>
-          <button onclick="openPeakDetail(${p.id})" style="background:#eee;border:none;border-radius:6px;padding:7px;font-size:11px;cursor:pointer" title="Szczegóły">📋</button>
+          <button onclick="changePlanPeak(${p.id});goto('plan')" style="flex:1;background:${color};border:none;border-radius:8px;padding:10px 8px;font-size:12px;font-weight:600;cursor:pointer;color:#000">📅 Dodaj do planu</button>
+          <button onclick="aiPeakInfo(${p.id})" style="background:#eee;border:none;border-radius:8px;padding:10px 8px;font-size:12px;cursor:pointer" title="AI opowie więcej">🤖</button>
+          <button onclick="openPeakDetail(${p.id})" style="background:#eee;border:none;border-radius:8px;padding:10px 8px;font-size:12px;cursor:pointer" title="Szczegóły">📋</button>
         </div>
       </div>`;
   }
@@ -443,9 +448,9 @@ function addParkingLayer() {
       const popupHtml = `
         <div style="font-family:Inter,sans-serif;min-width:140px;max-width:200px">
           <div style="font-weight:700;font-size:12px;color:#4a90d9;margin-bottom:3px">🅿️ ${name}</div>
-          <div style="font-size:11px;color:#888;margin-bottom:2px">Szczyt: ${esc(p.name)}</div>
-          ${note ? '<div style="font-size:10px;color:#aaa;margin-bottom:6px;line-height:1.3">' + note + '</div>' : ''}
-          <button onclick="navigateToParking('${navName}',${pk.lat},${pk.lon})" style="width:100%;background:#4a90d9;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;color:#fff">🧭 Nawiguj</button>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:2px">Szczyt: ${esc(p.name)}</div>
+          ${note ? '<div style="font-size:10px;color:var(--text2);margin-bottom:6px;line-height:1.3">' + note + '</div>' : ''}
+          <button onclick="navigateToParking('${navName}',${pk.lat},${pk.lon})" style="width:100%;background:#4a90d9;border:none;border-radius:8px;padding:10px 8px;font-size:12px;font-weight:600;cursor:pointer;color:#fff">🧭 Nawiguj</button>
         </div>`;
       const marker = L.marker([pk.lat, pk.lon], { icon: icon });
       marker.bindPopup(popupHtml, { closeButton: false, className: 'kgp-popup' });
@@ -545,6 +550,12 @@ function initMap() {
 
   if (pendingRoute) {
     applyRouteToMap();
+  }
+
+  const offMsg = document.getElementById('map-offline-msg');
+  if (offMsg) {
+    window.addEventListener('online', () => { offMsg.style.display = 'none'; });
+    window.addEventListener('offline', () => { offMsg.style.display = 'flex'; });
   }
 }
 
@@ -996,7 +1007,7 @@ function exportParkingOverrides() {
       }
     });
   });
-  console.log('=== PARKING OVERRIDES ===\n' + lines.join('\n'));
+  // wynik w showToast
   return lines;
 }
 
@@ -1062,9 +1073,7 @@ Odpowiedz w formacie JSON (bez markdown, bez backtick) - tablica obiektów:
     if (pk && r.note) { pk.note = r.note; updated++; }
   });
 
-  console.log('aiBulkDescribeParkings: zaktualizowano ' + updated + '/' + results.length + ' parkingów');
-  console.log('Wyniki:', JSON.stringify(results, null, 2));
-  showToast('🤖 Zaktualizowano ' + updated + ' parkingów! Sprawdź konsolę.');
+  showToast('🤖 Zaktualizowano ' + updated + '/' + results.length + ' parkingów');
   return results;
 }
 

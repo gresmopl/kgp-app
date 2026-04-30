@@ -4,6 +4,47 @@ Wszystkie istotne zmiany w projekcie. Format oparty na [Keep a Changelog](https:
 
 ---
 
+## [1.5.0] - 2026-04-21/22 (dev)
+
+### Dodane
+- Prawdziwe ikony PWA (PNG 192x192, 512x512 + maskable + apple-touch-icon) zamiast SVG data URI
+- Service worker z cache'owaniem offline (network-first, fallback na cache) - wcześniej był wyłączony (pass-through)
+- Screen Wake Lock API - ekran nie gaśnie w trybie Na szlaku / Na szczycie
+- Wibracja przy zdobyciu szczytu (obok confetti)
+- Autofocus na pierwszym polu w modalu edycji przystanku (planner)
+- Parser markdown dla odpowiedzi AI (`mdToHtml()` w utils.js) - bold, italic, listy, nagłówki, code
+- Dynamiczna wersja aplikacji (`APP_VERSION` w data.js, format `1.2.RRMMDD.HHmm`)
+- Skrypt `bump-version.sh` do aktualizacji wersji przed deployem
+- Komunikat offline na mapie - informacja o braku internetu z ikoną 📡, znika automatycznie po powrocie online
+- Undo zdobycia szczytu - przycisk cofnięcia przez 60 sekund po zdobyciu
+- Potwierdzenie usunięcia wyprawy w planerze (confirm dialog)
+
+### Zmienione
+- Manifest PWA: dodano `scope`, prawidłowe ikony PNG, usunięto SVG data URI
+- index.html: favicon PNG zamiast SVG, dodano `<link rel="apple-touch-icon">`
+- index.html: usunięto `user-scalable=no` i `maximum-scale=1.0` (dostępność WCAG)
+- index.html: zakładka "Szczyt" → "Zdobywaj", ikona planera 📅 → 🎒
+- Wersja w ustawieniach i onboardingu pobierana z `APP_VERSION` (nie hardcoded)
+- AI chat i AI opisy szczytów renderują markdown zamiast plain text
+- CSS: `overscroll-behavior: none` (blokada bounce iOS), `touch-action: manipulation` i `-webkit-touch-callout: none` na elementach interaktywnych (nie na mapie)
+- Onboarding: 3-ekranowy (powitanie → adres domowy → sync/offline) zamiast jednego ekranu
+- Dziennik: restrukturyzacja - timeline domyślnie otwarty, sekcje zgrupowane (statystyki, osiągnięcia)
+- Kolapsowalne sekcje: obramowanie w kolorze akcentu gdy otwarte (toggleSection)
+- Ostrzeżenia szlakowe: data relatywna, wygaszenie po 30 dniach, przycisk "nieaktualne"
+
+### Poprawione
+- PWA instalowalna na pulpicie (Chrome wymagał ikon PNG 192+512)
+- Aplikacja działa offline (service worker cache'uje wszystkie zasoby)
+- Przycisk zdobycia szczytu nie wymaga już zdjęcia (zdjęcie opcjonalne)
+- Select szczytu: dwie grupy - "Do zdobycia" i "Zdobyte" z ✓
+- Zapis parkingu z mapy: modal UI zamiast natywnego prompt()
+- Popupy mapy: `var(--text2)` zamiast hardkodowanych `#888`/`#aaa` (lepszy kontrast w light mode)
+- Przyciski w popupach mapy: większe cele dotykowe (min 44px)
+- Przyciski sortowania w planerze: 36x36px zamiast 24x24px
+- Podwójny atrybut `style` na "Co dalej?" w planerze (połączony)
+
+---
+
 ## [1.4.0] - 2026-04-04 (dev)
 
 ### Dodane

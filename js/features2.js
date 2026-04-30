@@ -110,19 +110,6 @@ function getRandomFunFact() {
   return KGP_FUN_FACTS[Math.floor(Math.random() * KGP_FUN_FACTS.length)];
 }
 
-function renderFunFact() {
-  return `
-  <div class="card card-pad" style="border-color:var(--accent)22">
-    <div style="display:flex;gap:10px;align-items:flex-start">
-      <span style="font-size:20px">💡</span>
-      <div>
-        <div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:4px">CIEKAWOSTKA</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.5">${getRandomFunFact()}</div>
-      </div>
-    </div>
-  </div>`;
-}
-
 // ============================================================
 // FEATURE 23: NAWIGACJA POWROTNA "DO AUTA"
 // ============================================================
@@ -148,16 +135,6 @@ function navigateToSavedParking() {
   } else {
     window.open('https://maps.google.com/?q=' + parking.lat + ',' + parking.lon, '_blank');
   }
-}
-
-function renderParkingButtons() {
-  const saved = getSavedParking();
-  let html = '<div style="display:flex;gap:8px;margin-top:8px">';
-  html += '<button class="btn btn-secondary btn-sm" style="flex:1" onclick="saveParkingLocation()">📍 Zapisz parking</button>';
-  if (saved) html += '<button class="btn btn-green btn-sm" style="flex:1" onclick="navigateToSavedParking()">🅿️ Wróć do auta</button>';
-  html += '</div>';
-  if (saved) html += '<div style="font-size:10px;color:var(--text2);margin-top:4px">Zapisany parking: ' + saved.lat.toFixed(4) + ', ' + saved.lon.toFixed(4) + '</div>';
-  return html;
 }
 
 // ============================================================
@@ -206,55 +183,6 @@ function getRestaurantSearchUrl(peak) {
     return 'https://www.google.com/maps/search/restauracja+jedzenie/@' + parking.lat + ',' + parking.lon + ',14z';
   }
   return 'https://www.google.com/maps/search/restauracja+jedzenie+' + encodeURIComponent(parking.name + ', Polska');
-}
-
-// ============================================================
-// FEATURE 26: WYZWANIE GRUPOWE
-// ============================================================
-function renderGroupChallenge() {
-  const groupCode = localStorage.getItem('kgp_group_code');
-  const groupData = JSON.parse(localStorage.getItem('kgp_group_data') || '[]');
-
-  if (!groupCode) {
-    return `
-    <div class="card card-pad">
-      <div class="section-title">👥 Wyzwanie grupowe</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Rywalizuj z przyjaciółmi! Stwórz grupę lub dołącz do istniejącej.</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-green btn-sm" style="flex:1" onclick="createGroup()">🆕 Nowa grupa</button>
-      </div>
-      <div style="font-size:11px;color:var(--text2);margin-top:8px">Masz kod grupy? Wpisz go:</div>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <input class="input" id="group-code-input" placeholder="np. EKIPA2026" style="flex:1;font-size:13px">
-        <button class="btn btn-secondary btn-sm" onclick="joinGroup(document.getElementById('group-code-input').value)">Dołącz</button>
-      </div>
-    </div>`;
-  }
-
-  let membersHtml = '';
-  if (groupData.length > 0) {
-    groupData.sort((a,b) => b.count - a.count).forEach((m, i) => {
-      const isMe = m.name === state.userName;
-      membersHtml += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">';
-      membersHtml += '<div style="font-family:var(--font-display);font-size:20px;color:' + (i===0?'var(--accent)':'var(--text2)') + ';width:24px">' + (i+1) + '.</div>';
-      membersHtml += '<div style="flex:1;font-size:13px;font-weight:' + (isMe?'700':'400') + '">' + m.name + (isMe?' (Ty)':'') + '</div>';
-      membersHtml += '<div style="font-family:var(--font-display);font-size:18px;color:var(--accent)">' + m.count + '/28</div></div>';
-    });
-  } else {
-    membersHtml = '<div style="font-size:12px;color:var(--text2)">Brak danych grupy. Synchronizuj aby zobaczyć ranking.</div>';
-  }
-
-  return `
-  <div class="card card-pad">
-    <div class="section-title">👥 Wyzwanie grupowe</div>
-    <div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
-      <div style="font-size:10px;color:var(--text2)">Kod grupy</div>
-      <div style="font-family:var(--font-display);font-size:22px;color:var(--accent);letter-spacing:1px">${groupCode}</div>
-    </div>
-    ${membersHtml}
-    <button class="btn btn-secondary btn-sm btn-full" style="margin-top:10px" onclick="syncGroupData()">🔄 Synchronizuj grupę</button>
-    <button class="btn btn-sm btn-full" style="margin-top:6px;background:none;color:var(--red);font-size:11px" onclick="leaveGroup()">Opuść grupę</button>
-  </div>`;
 }
 
 function renderGroupChallengeCollapsible() {
@@ -428,24 +356,50 @@ function restoreTracking() {
 // ============================================================
 // FEATURE 28: OSTRZEZENIA OD UZYTKOWNIKOW
 // ============================================================
+function warningAgeLabel(dateStr) {
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (days === 0) return 'dziś';
+  if (days === 1) return 'wczoraj';
+  if (days < 7) return days + ' dni temu';
+  if (days < 30) return Math.floor(days / 7) + ' tyg. temu';
+  return Math.floor(days / 30) + ' mies. temu';
+}
+
 async function loadWarnings(peakId) {
   const el = document.getElementById('warnings-content');
   if (!el) return;
   try {
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data } = await sb.from('warnings').select('*').eq('peak_id', peakId).order('created_at', { ascending: false }).limit(5);
+    const { data } = await sb.from('warnings').select('*').eq('peak_id', peakId).order('created_at', { ascending: false }).limit(10);
     if (!data || data.length === 0) {
       el.innerHTML = '<div style="font-size:12px;color:var(--text2)">Brak ostrzeżeń. Bądź pierwszy!</div>';
       return;
     }
-    el.innerHTML = data.map(w =>
-      '<div style="padding:8px 0;border-bottom:1px solid var(--border)">' +
-      '<div style="font-size:12px">' + esc(w.message) + '</div>' +
-      '<div style="font-size:10px;color:var(--text2);margin-top:4px">' + (w.author || 'Anonim') + ' - ' + new Date(w.created_at).toLocaleDateString('pl-PL') + '</div></div>'
-    ).join('');
+    const now = Date.now();
+    el.innerHTML = data.map(w => {
+      const ageDays = Math.floor((now - new Date(w.created_at).getTime()) / 86400000);
+      const stale = ageDays > 30;
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--border);' + (stale ? 'opacity:0.5' : '') + '">' +
+        (stale ? '<div style="font-size:9px;color:var(--red);font-weight:600;margin-bottom:2px">⏳ Stare ostrzeżenie (' + warningAgeLabel(w.created_at) + ')</div>' : '') +
+        '<div style="font-size:12px">' + esc(w.message) + '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">' +
+        '<div style="font-size:10px;color:var(--text2)">' + (w.author || 'Anonim') + ' - ' + warningAgeLabel(w.created_at) + '</div>' +
+        '<button onclick="dismissWarning(' + w.id + ',' + peakId + ')" style="background:none;border:none;font-size:9px;color:var(--text2);cursor:pointer;padding:2px 4px" title="Oznacz jako nieaktualne">❌</button>' +
+        '</div></div>';
+    }).join('');
   } catch(e) {
     el.innerHTML = '<div style="font-size:12px;color:var(--text2)">Offline - brak dostępu do ostrzeżeń</div>';
   }
+}
+
+async function dismissWarning(warningId, peakId) {
+  if (!confirm('Oznaczyć ostrzeżenie jako nieaktualne?')) return;
+  try {
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    await sb.from('warnings').delete().eq('id', warningId);
+    showToast('Ostrzeżenie usunięte');
+    loadWarnings(peakId);
+  } catch(e) { showToast('Nie udało się usunąć'); }
 }
 
 async function addWarning(peakId) {

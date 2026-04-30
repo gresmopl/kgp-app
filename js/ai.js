@@ -285,7 +285,7 @@ async function sendAIChatMsg() {
 
   if (result && result.text) {
     _aiChatHistory.push({ role: 'assistant', text: result.text });
-    msgs.innerHTML += '<div style="background:var(--card2);border-radius:12px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text);line-height:1.5;max-width:85%">' + esc(result.text).replace(/\n/g, '<br>') + '</div>';
+    msgs.innerHTML += '<div style="background:var(--card2);border-radius:12px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text);line-height:1.5;max-width:85%">' + mdToHtml(result.text) + '</div>';
   } else {
     msgs.innerHTML += '<div style="background:var(--card2);border-radius:12px;padding:10px 14px;margin-bottom:8px;font-size:12px;color:var(--red,#e04040);max-width:85%">Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.</div>';
   }
@@ -361,7 +361,7 @@ Pisz po polsku, krótko (max 6 zdań), z entuzjazmem ale bez przesady. Krótkie 
   if (!contentEl) return;
 
   if (result && result.text) {
-    contentEl.innerHTML = esc(result.text).replace(/\n/g, '<br>');
+    contentEl.innerHTML = mdToHtml(result.text);
   } else {
     contentEl.innerHTML = '<span style="color:var(--red,#e04040)">Nie udało się pobrać opisu. Spróbuj ponownie.</span>';
   }

@@ -44,64 +44,6 @@ function renderJournal() {
     ${renderProgressPanorama()}
 
     ${(() => {
-      const streak = getStreakInfo();
-      if (!streak) return '';
-      return `
-      <div class="card card-pad">
-        <div class="section-title">📊 Twoja passa</div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-val">${streak.daysSinceLast}</div>
-            <div class="stat-label">Dni od ostatniego szczytu</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val">${streak.thisMonthCount}</div>
-            <div class="stat-label">Szczyty w tym miesiącu</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val">${streak.bestMonth}</div>
-            <div class="stat-label">Rekord miesiąca</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-val">${streak.maxGap}</div>
-            <div class="stat-label">Najdłuższa przerwa (dni)</div>
-          </div>
-        </div>
-      </div>`;
-    })()}
-
-    ${(() => {
-      const forecast = getCompletionForecast();
-      if (!forecast) return '';
-      if (forecast.done) return '<div class="card card-pad" style="text-align:center"><div style="font-family:var(--font-display);font-size:24px;color:var(--green)">🏆 Korona zdobyta!</div></div>';
-      return `
-      <div class="card card-pad">
-        <div class="section-title">📈 Prognoza ukończenia</div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.6">
-          Twoje tempo: <b style="color:var(--accent)">${forecast.peaksPerMonth} szczytów/miesiąc</b><br>
-          Przy tym tempie ukończysz KGP za ~<b style="color:var(--green)">${forecast.daysNeeded} dni</b> (${forecast.completionDate})
-        </div>
-      </div>`;
-    })()}
-
-    ${(() => {
-      const bench = getBenchmarkComparison();
-      if (!bench) return '';
-      return `
-      <div class="card card-pad">
-        <div class="section-title">🏅 Na tle innych zdobywców</div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.6">
-          Aktywność: <b style="color:var(--text)">${bench.monthsActive} miesięcy</b><br>
-          Tempo: <b style="color:var(--accent)">${bench.userPace} szczytów/miesiąc</b><br>
-          ${bench.aheadOrBehind >= 0
-            ? `Jesteś <b style="color:var(--green)">+${bench.aheadOrBehind} szczytów</b> przed średnią`
-            : `Jesteś <b style="color:var(--red)">${bench.aheadOrBehind} szczytów</b> za średnią`}<br>
-          Szybciej niż <b style="color:var(--accent)">${bench.percentile}%</b> zdobywców
-        </div>
-      </div>`;
-    })()}
-
-    ${(() => {
       const memory = getYearAgoMemory();
       if (!memory) return '';
       return `
@@ -113,17 +55,10 @@ function renderJournal() {
       </div>`;
     })()}
 
-    ${renderAchievements()}
-
-    ${renderDashboard()}
-
     ${state.journal.length > 0 ? `
-    <div class="card card-pad" onclick="toggleSection('journal-timeline-section',this)" style="cursor:pointer">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="section-title" style="margin:0">📅 Oś czasu - ${state.journal.length} wpisów</div>
-        <span style="font-size:12px;color:var(--text2)">▼</span>
-      </div>
-      <div id="journal-timeline-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+    <div class="card card-pad">
+      <div class="section-title">📅 Oś czasu - ${state.journal.length} wpisów</div>
+      <div style="margin-top:10px">
         ${renderJournalTimeline(true)}
       </div>
     </div>` : `
@@ -141,6 +76,59 @@ function renderJournal() {
       <div id="history-entry-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
         <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Dodaj szczyt zdobyty w przeszłości do dziennika.</div>
         <button class="btn btn-secondary btn-full" onclick="openHistoryEntry()">📝 Dodaj wpis</button>
+      </div>
+    </div>
+
+    ${done > 0 ? `
+    <div class="card card-pad" onclick="toggleSection('journal-stats-section',this)" style="cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin:0">📊 Statystyki i postęp</div>
+        <span style="font-size:12px;color:var(--text2)">▼</span>
+      </div>
+      <div id="journal-stats-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+        ${(() => {
+          const streak = getStreakInfo();
+          if (!streak) return '';
+          return `
+          <div style="margin-bottom:12px">
+            <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">Twoja passa</div>
+            <div class="stats-grid">
+              <div class="stat-card"><div class="stat-val">${streak.daysSinceLast}</div><div class="stat-label">Dni od ostatniego</div></div>
+              <div class="stat-card"><div class="stat-val">${streak.thisMonthCount}</div><div class="stat-label">Ten miesiąc</div></div>
+              <div class="stat-card"><div class="stat-val">${streak.bestMonth}</div><div class="stat-label">Rekord miesiąca</div></div>
+              <div class="stat-card"><div class="stat-val">${streak.maxGap}</div><div class="stat-label">Najdłuższa przerwa</div></div>
+            </div>
+          </div>`;
+        })()}
+        ${(() => {
+          const forecast = getCompletionForecast();
+          if (!forecast || forecast.done) return '';
+          return `
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;padding:10px;background:var(--card2);border-radius:10px">
+            📈 Tempo: <b style="color:var(--accent)">${forecast.peaksPerMonth} szczytów/mc</b> - ukończysz za ~<b style="color:var(--green)">${forecast.daysNeeded} dni</b> (${forecast.completionDate})
+          </div>`;
+        })()}
+        ${(() => {
+          const bench = getBenchmarkComparison();
+          if (!bench) return '';
+          return `
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;padding:10px;background:var(--card2);border-radius:10px">
+            🏅 ${bench.monthsActive} mc aktywności · ${bench.aheadOrBehind >= 0
+              ? `<b style="color:var(--green)">+${bench.aheadOrBehind}</b> przed średnią`
+              : `<b style="color:var(--red)">${bench.aheadOrBehind}</b> za średnią`} · szybciej niż <b style="color:var(--accent)">${bench.percentile}%</b> zdobywców
+          </div>`;
+        })()}
+      </div>
+    </div>` : ''}
+
+    <div class="card card-pad" onclick="toggleSection('journal-achievements-section',this)" style="cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin:0">🏅 Osiągnięcia i wykresy</div>
+        <span style="font-size:12px;color:var(--text2)">▼</span>
+      </div>
+      <div id="journal-achievements-section" style="display:none;margin-top:10px" onclick="event.stopPropagation()">
+        ${renderAchievements()}
+        ${renderDashboard()}
       </div>
     </div>
 

@@ -46,146 +46,7 @@ function renderList() {
 
 function setFilter(f) { state.filter = f; localStorage.setItem('kgp_filter', f); goto('list'); }
 
-// ============================================================
-// PLAN PAGE
-// ============================================================
-async function renderPlan() {
-  const todo = getTodo();
-  const peak = state.selectedPeak || (todo.length > 0 ? todo[0] : PEAKS[0]);
-
-  return `
-  <div class="header">
-    <span class="header-icon">📅</span>
-    <div><div class="header-title">Planuj Wyjazd</div><div class="header-sub">Kalkulator + pogoda + trasa</div></div>
-  </div>
-  <div class="page page-gap" style="padding-bottom:80px">
-
-    <div class="card card-pad">
-      <div class="label">Wybierz szczyt</div>
-      <select class="input" onchange="changePlanPeak(this.value)">
-        ${PEAKS.map(p => `<option value="${p.id}" ${peak.id===p.id?'selected':''}>${p.name} (${p.height}m) ${isDone(p.id)?'✅':''}</option>`).join('')}
-      </select>
-    </div>
-
-    ${peak.routes && peak.routes.length > 1 ? `
-    <div class="card card-pad">
-      <div class="label">Wariant trasy</div>
-      <select class="input" onchange="changeRoute(${peak.id}, this.value)">
-        ${peak.routes.map((r, i) => `<option value="${i}" ${(state.selectedRoutes[peak.id]||0)===i?'selected':''}>${r.name}</option>`).join('')}
-      </select>
-    </div>` : ''}
-
-    <div class="card card-pad">
-      <div class="label">Skąd wyjeżdżasz?</div>
-      <input class="input" type="text" id="startAddr" value="${state.homeAddr}" placeholder="Np. Kraków, Warszawa..." onfocus="this.select()" onchange="state.homeAddr=this.value;save()">
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn btn-secondary btn-sm" onclick="setTransport('car')" id="btn-car" style="flex:1;${state.transport!=='pks'?'border-color:var(--accent);color:var(--accent)':''}">🚗 Samochód</button>
-        <button class="btn btn-secondary btn-sm" onclick="setTransport('pks')" id="btn-pks" style="flex:1;${state.transport==='pks'?'border-color:var(--accent);color:var(--accent)':''}">🚂 Komunikacja</button>
-      </div>
-    </div>
-
-    <div class="card card-pad">
-      <div class="label">Godzina wyjazdu</div>
-      <input class="input" type="time" id="startTime" value="${state.departTime||'07:00'}" onchange="state.departTime=this.value;renderTimeline('${peak.id}')">
-    </div>
-
-    <div id="timeline-section">
-      ${renderTimeline(peak.id, true)}
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">Parking / Dojazd</div>
-      ${(() => { const route = getRoute(peak); return state.transport === 'pks' ? `
-        <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:10px">
-          <div style="font-weight:600;font-size:13px">🚂 ${route.station.name}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:4px">${route.station.info}</div>
-        </div>
-        <button class="btn btn-secondary btn-full" onclick="openEpodroznik('${route.station.name.replace(/'/g,'`')}')">🔗 Otwórz e-podróżnik.pl</button>
-      ` : getParkingList(peak).map(pk => `
-        <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px">
-          <div style="font-weight:600;font-size:13px">🅿️ ${pk.name}</div>
-          <div style="font-size:12px;color:var(--accent);margin-top:3px">⚠️ ${pk.note}</div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="navigateToParking('${pk.name.replace(/'/g,'`')}',${pk.lat||'null'},${pk.lon||'null'})">🚗 Wyznacz dojazd</button>
-        </div>
-      `).join(''); })()}
-      <button class="btn btn-secondary btn-full" onclick="openParkingFinder(${peak.id})" style="margin-top:8px">
-        🗺️ Pokaż parkingi na mapie
-      </button>
-      <div style="margin-top:10px">
-        <div class="label">Punkt pośredni (opcjonalnie)</div>
-        <input class="input" type="text" id="via-point" placeholder="Np. schronisko, przełęcz...">
-        <div style="font-size:10px;color:var(--text2);margin-top:3px">Trasa przejdzie przez to miejsce (np. schronisko na odpoczynek)</div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="margin-top:8px;background:var(--blue,#4a90d9)">
-        🗺️ Wyznacz trasę
-      </button>
-    </div>
-
-    <div class="card card-pad" id="weather-section">
-      <div class="section-title">🌤️ Prognoza 7 dni</div>
-      <div id="weather-content"><div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">Ładowanie prognozy... ☁️</div></div>
-    </div>
-
-    <div class="card card-pad" id="sun-section">
-      <div class="section-title">🌅 Wschód / zachód słońca</div>
-      <div id="sun-content" style="font-size:13px;color:var(--text2)">Ładowanie...</div>
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">🔥 Szacunkowe spalanie kalorii</div>
-      <div style="font-family:var(--font-display);font-size:28px;color:var(--accent)">${estimateCalories(peak)} kcal</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">Szacunek dla ~70kg osoby (podejście + zejście). Tempo: ${state.paceMultiplier}×</div>
-    </div>
-
-    <div id="best-weather-section"></div>
-
-    ${renderPackingList(peak)}
-
-    ${renderWarningsSection(peak.id)}
-
-    <div class="card card-pad">
-      <div class="section-title">📷 Kamery górskie</div>
-      <a href="${getCameraSearchUrl(peak)}" target="_blank" class="btn btn-secondary btn-full" style="text-decoration:none">
-        📹 Szukaj kamer - ${peak.name}
-      </a>
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">🍽️ Gdzie zjeść po zejściu</div>
-      ${getNearbyFood(peak.id) ? `
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <span style="font-size:24px">${getNearbyFood(peak.id).type}</span>
-        <div>
-          <div style="font-weight:600;font-size:13px">${getNearbyFood(peak.id).name}</div>
-          <div style="font-size:11px;color:var(--text2)">${getNearbyFood(peak.id).dist}</div>
-        </div>
-      </div>` : ''}
-      <a href="${getRestaurantSearchUrl(peak)}" target="_blank" class="btn btn-secondary btn-full" style="text-decoration:none">
-        🍴 Szukaj restauracji w okolicy
-      </a>
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">🧠 Optimizer Weekendu</div>
-      ${renderOptimizer(peak)}
-    </div>
-
-    <div class="card card-pad">
-      <div class="section-title">📐 Kalibracja tempa</div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="flex:1">
-          <input type="range" min="0.7" max="1.5" step="0.05" value="${state.paceMultiplier}" oninput="updatePace(this.value)" style="width:100%;accent-color:var(--accent)">
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:4px"><span>Szybko (×0.7)</span><span>Normalnie</span><span>Wolno (×1.5)</span></div>
-        </div>
-        <div style="text-align:center;min-width:50px">
-          <div style="font-family:var(--font-display);font-size:24px;color:var(--accent)" id="pace-display">${state.paceMultiplier}×</div>
-          <div style="font-size:10px;color:var(--text2)">Twoje tempo</div>
-        </div>
-      </div>
-    </div>
-
-  </div>`;
-}
+// PLAN PAGE — przeniesiona do planner.js jako renderPlanner()
 
 function estimateDriveMin(peak) {
   if (!state.homeAddr || !state.homeAddr.trim()) return null;
@@ -197,7 +58,7 @@ function estimateDriveMin(peak) {
 }
 
 function renderTimeline(peakId, returnHtml=false, startOverride=null) {
-  const peak = PEAKS.find(p=>p.id==peakId);
+  const peak = PEAKS.find(p=>p.id===Number(peakId));
   if (!peak) return '';
   const route = getRoute(peak);
   const start = startOverride || state.departTime || '07:00';
@@ -297,7 +158,7 @@ function updatePace(val) {
 function changeRoute(peakId, idx) { state.selectedRoutes[peakId] = parseInt(idx); save(); goto('plan'); }
 function setTransport(t) { state.transport = t; goto('plan'); }
 function changePlanPeak(id) {
-  state.selectedPeak = PEAKS.find(p=>p.id==id);
+  state.selectedPeak = PEAKS.find(p=>p.id===Number(id));
   goto('plan');
 }
 
@@ -320,7 +181,12 @@ function renderSummit() {
     <div class="card card-pad">
       <div class="label">Aktualny szczyt</div>
       <select class="input" onchange="changeSummitPeak(this.value)">
-        ${PEAKS.filter(p=>!isDone(p.id)).map(p=>`<option value="${p.id}" ${peak.id===p.id?'selected':''}>${p.name} (${p.height}m)</option>`).join('')}
+        <optgroup label="Do zdobycia">
+          ${PEAKS.filter(p=>!isDone(p.id)).map(p=>`<option value="${p.id}" ${peak.id===p.id?'selected':''}>${p.name} (${p.height}m)</option>`).join('')}
+        </optgroup>
+        <optgroup label="Zdobyte">
+          ${PEAKS.filter(p=>isDone(p.id)).map(p=>`<option value="${p.id}" ${peak.id===p.id?'selected':''}>${p.name} ✓</option>`).join('')}
+        </optgroup>
       </select>
     </div>
 
@@ -349,6 +215,13 @@ function renderSummit() {
       </div>
     </div>
 
+    ${isDone(peak.id) ? `
+    <div class="card card-pad" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:6px">✅</div>
+      <div style="font-weight:600;color:var(--green);font-size:15px">Szczyt zdobyty!</div>
+      ${(()=>{ const e=state.journal.find(j=>j.peakId===peak.id); return e ? '<div style="font-size:12px;color:var(--text2);margin-top:4px">'+e.date+(e.note?' - '+esc(e.note):'')+'</div>' : ''; })()}
+    </div>
+    ` : `
     <div class="card card-pad">
       <div class="section-title">📸 Gdzie zrobić zdjęcie</div>
       <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:12px">
@@ -369,10 +242,10 @@ function renderSummit() {
       <textarea class="input" id="summit-note" rows="3" placeholder="Pogoda, widoki, towarzysze..." style="resize:none;line-height:1.5"></textarea>
     </div>
 
-    <button class="btn btn-green btn-full" id="conquer-btn" onclick="conquerPeak(${peak.id})" disabled>
+    <button class="btn btn-green btn-full" id="conquer-btn" onclick="conquerPeak(${peak.id})">
       ✅ Oznacz jako zdobyty
     </button>
-    <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:-6px">Zrób najpierw zdjęcie aby aktywować</div>
+    `}
 
     <button class="btn btn-primary btn-full" onclick="navigateToPeak(${peak.id})" style="background:var(--blue,#4a90d9)">
       🗺️ Wyznacz trasę
@@ -386,7 +259,7 @@ function renderSummit() {
 }
 
 function changeSummitPeak(id) {
-  state.selectedPeak = PEAKS.find(p=>p.id==id);
+  state.selectedPeak = PEAKS.find(p=>p.id===Number(id));
   goto('summit');
 }
 
@@ -416,7 +289,6 @@ function photoSelected(input, peakId) {
     const img = document.getElementById('photo-img');
     img.src = compressed;
     document.getElementById('photo-preview').style.display = 'block';
-    document.getElementById('conquer-btn').disabled = false;
     document.getElementById('photo-btn').textContent = '📷 Zmień zdjęcie';
     state.pendingPhoto = compressed;
     state.pendingPeakId = peakId;
@@ -449,6 +321,7 @@ function conquerPeak(peakId) {
     });
   }
   confetti();
+  if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
   showToast(`🎉 ${peak.name} zdobyta! ${state.conquered.length}/28`);
   setTimeout(() => {
     state.pendingPhoto = null;
@@ -618,22 +491,45 @@ async function fetchOsmParkings(lat, lon, radiusM, map) {
     });
   } catch (e) {
     // Overpass może nie odpowiedzieć - nie krytyczne
-    console.log('OSM parking search failed:', e);
+    console.error('OSM parking search failed:', e);
   }
 }
 
 function saveParkingFromFinder(peakId) {
   const d = window._parkingFinderData;
   if (!d || !d.lat) return;
-
   const peak = PEAKS.find(p => p.id === peakId);
   if (!peak) return;
 
-  const name = prompt('Nazwa parkingu:', d.name || '');
-  if (name === null) return;
-  const note = prompt('Notatka (cena, miejsc, uwagi):', '') || '';
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+  <div class="modal-content" style="max-width:340px">
+    <div style="font-family:var(--font-display);font-size:18px;color:var(--accent);margin-bottom:12px">🅿️ Zapisz parking</div>
+    <div class="label">Nazwa</div>
+    <input class="input" type="text" id="save-parking-name" value="${esc(d.name || '')}" placeholder="Nazwa parkingu">
+    <div class="label" style="margin-top:8px">Notatka</div>
+    <input class="input" type="text" id="save-parking-note" placeholder="Cena, liczba miejsc, uwagi...">
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" style="flex:1" onclick="confirmSaveParking(${peakId});this.closest('.modal-overlay').remove()">💾 Zapisz</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="this.closest('.modal-overlay').remove()">Anuluj</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#save-parking-name')?.focus();
+}
 
-  const newParking = { name: name || d.name, lat: d.lat, lon: d.lon, note };
+function confirmSaveParking(peakId) {
+  const d = window._parkingFinderData;
+  if (!d || !d.lat) return;
+  const peak = PEAKS.find(p => p.id === peakId);
+  if (!peak) return;
+
+  const name = document.getElementById('save-parking-name')?.value.trim() || d.name;
+  const note = document.getElementById('save-parking-note')?.value.trim() || '';
+
+  const newParking = { name, lat: d.lat, lon: d.lon, note };
 
   // Zapisz jako override w localStorage
   const ov = JSON.parse(localStorage.getItem('kgp_peaks_overrides') || '{}');
@@ -687,7 +583,7 @@ function closeParkingFinder() {
 // PEAK DETAIL MODAL
 // ============================================================
 function openPeakDetail(id) {
-  const p = PEAKS.find(pk=>pk.id==id);
+  const p = PEAKS.find(pk=>pk.id===Number(id));
   const done = isDone(id);
   const journal = state.journal.find(e=>e.peakId===id);
 
@@ -736,9 +632,13 @@ function openPeakDetail(id) {
   document.body.appendChild(overlay);
 }
 
+let _undoConquerDeadline = 0;
+
 function renderNextSuggestPage() {
   const lastId = state.conquered[state.conquered.length-1];
   const last = PEAKS.find(p=>p.id===lastId);
+  if (!_undoConquerDeadline) _undoConquerDeadline = Date.now() + 60000;
+  const canUndo = Date.now() < _undoConquerDeadline;
   return `
   <div class="header">
     <span class="header-icon">🎉</span>
@@ -754,6 +654,21 @@ function renderNextSuggestPage() {
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-primary btn-full" onclick="goto('plan')">🤔 Co dalej? → Planuj wyprawę</button>
       <button class="btn btn-secondary btn-full" onclick="goto('journal')">📖 Zobacz dziennik</button>
+      ${canUndo ? `<button class="btn btn-full" style="background:none;color:var(--text2);border:1px solid var(--border);font-size:12px" onclick="undoConquer(${lastId})">↩️ Cofnij zdobycie (pomyłka)</button>` : ''}
     </div>
   </div>`;
+}
+
+function undoConquer(peakId) {
+  if (Date.now() > _undoConquerDeadline) {
+    showToast('Czas na cofnięcie minął');
+    return;
+  }
+  if (!confirm('Cofnąć oznaczenie tego szczytu jako zdobyty?')) return;
+  state.conquered = state.conquered.filter(id => id !== peakId);
+  state.journal = state.journal.filter(j => j.peakId !== peakId);
+  save();
+  _undoConquerDeadline = 0;
+  showToast('Zdobycie cofnięte');
+  goto('summit');
 }

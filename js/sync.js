@@ -90,7 +90,7 @@ async function syncToCloud() {
 
     // Sprawdź czy chmura ma bogatsze dane - nie nadpisuj bogatszych pustymi
     if (localWeight === 0) {
-      console.log('Sync: lokalne dane puste, pomijam push');
+      // lokalne dane puste, pomijam push
       localStorage.removeItem('kgp_sync_pending');
       return;
     }
@@ -100,7 +100,7 @@ async function syncToCloud() {
     const cloudWeight = cloudRow ? dataWeight(cloudRow.data) : 0;
 
     if (cloudWeight > localWeight) {
-      console.log(`Sync: chmura bogatsza (${cloudWeight} vs ${localWeight}), pomijam push`);
+      // chmura bogatsza, pomijam push
       localStorage.removeItem('kgp_sync_pending');
       return;
     }
@@ -108,7 +108,6 @@ async function syncToCloud() {
     const { error } = await sb.from('user_data')
       .upsert({ user_id: profileId, data: localData }, { onConflict: 'user_id' });
     if (error) throw error;
-    console.log(`Sync: wypchnięto (waga: ${localWeight})`);
     localStorage.removeItem('kgp_sync_pending');
   } catch(e) {
     console.error('Sync error:', e);

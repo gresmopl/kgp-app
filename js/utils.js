@@ -3,6 +3,40 @@
 // ============================================================
 function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
+function mdToHtml(raw) {
+  const lines = esc(raw).split('\n');
+  let html = '', inList = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += '<br>';
+      continue;
+    }
+    const li = trimmed.match(/^[\*\-]\s+(.+)/);
+    if (li) {
+      if (!inList) { html += '<ul style="margin:4px 0 4px 18px">'; inList = true; }
+      html += '<li>' + inline(li[1]) + '</li>';
+      continue;
+    }
+    if (inList) { html += '</ul>'; inList = false; }
+    const h3 = trimmed.match(/^###\s+(.+)/);
+    if (h3) { html += '<div style="font-weight:700;margin-top:8px">' + inline(h3[1]) + '</div>'; continue; }
+    const h2 = trimmed.match(/^##\s+(.+)/);
+    if (h2) { html += '<div style="font-weight:700;font-size:14px;margin-top:8px;color:var(--accent)">' + inline(h2[1]) + '</div>'; continue; }
+    html += '<div>' + inline(trimmed) + '</div>';
+  }
+  if (inList) html += '</ul>';
+  return html;
+
+  function inline(s) {
+    return s
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code style="background:var(--card2);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
+  }
+}
+
 function toggleSection(id, card) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -10,6 +44,7 @@ function toggleSection(id, card) {
   el.style.display = isOpen ? 'none' : 'block';
   const arrow = card.querySelector('span:last-child');
   if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
+  card.style.borderColor = isOpen ? '' : 'var(--accent)';
 }
 
 function addMinutes(timeStr, mins) {
@@ -29,11 +64,6 @@ function dist(lat1,lon1,lat2,lon2) {
   const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-function distFromUser(peak) {
-  if (!state.userLat) return null;
-  return dist(state.userLat, state.userLon, peak.lat, peak.lon);
 }
 
 function diffDots(n) {
@@ -185,6 +215,7 @@ function updateContext() {
   }
 
   updateContextBadge();
+  updateWakeLock(next);
 
   // Toast przy zmianie kontekstu
   const meta = CTX_META[next];
@@ -269,3 +300,28 @@ function setContextOverride(val) {
   const modeLabel = val ? CTX_META[val].icon + ' ' + CTX_META[val].label : '🔄 Auto';
   showToast(`Tryb: ${modeLabel}${val ? ' (test)' : ''}`);
 }
+
+// ============================================================
+// SCREEN WAKE LOCK
+// ============================================================
+let _wakeLock = null;
+
+async function updateWakeLock(ctx) {
+  const needsLock = ctx === CTX.TRAIL || ctx === CTX.SUMMIT;
+  if (needsLock && !_wakeLock) {
+    try {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+    } catch(e) {}
+  } else if (!needsLock && _wakeLock) {
+    _wakeLock.release();
+    _wakeLock = null;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && _wakeLock === null) {
+    const ctx = state.context || CTX.HOME;
+    if (ctx === CTX.TRAIL || ctx === CTX.SUMMIT) updateWakeLock(ctx);
+  }
+});

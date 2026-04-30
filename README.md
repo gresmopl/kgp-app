@@ -10,12 +10,14 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Tryb szczytowy** - nawigacja GPS, pieczatki, zdjecia, notatki ze szczytu
 - **Dziennik zdobywcy** - historia wejsc ze zdjeciami i statystykami
 - **Synchronizacja** - dane zsynchronizowane miedzy urzadzeniami przez Supabase (kod sync)
-- **Tryb offline** - aplikacja dziala bez internetu, dane synchronizowane po polaczeniu
+- **Tryb offline** - service worker cache'uje zasoby, aplikacja dziala bez internetu
+- **Instalacja PWA** - instalowalna na pulpicie i Home Screen (ikony PNG, manifest, standalone)
+- **Screen Wake Lock** - ekran nie gasnie na szlaku i szczycie
 - **Numery alarmowe** - koordynaty GPS, GOPR/TOPR dynamicznie per region, 112 (w ustawieniach)
 - **Wschod/zachod slonca** - ostrzezenie jesli zejscie po zmroku
 - **Kalkulator kalorii** - szacunkowe spalanie na trasie
 - **Passa zdobywcy** - streak, prognoza ukonczenia KGP, porownanie z innymi
-- **Onboarding** - ekran powitalny dla nowych uzytkownikow
+- **Onboarding** - 3-ekranowy (powitanie, adres domowy, sync/offline) dla nowych uzytkownikow
 - **Karta zdobycia** - generowana grafika PNG ze zdjeciem, nazwa szczytu, postepem - do udostepnienia
 - **System osiagniec** - 12 odznak (Zimowy wojownik, Maraton, Dach Polski i inne)
 - **Timeline** - wizualna os czasu w dzienniku z miniaturkami zdjec i przerwami miedzy wejsciami
@@ -28,7 +30,7 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Okno pogodowe** - automatyczna rekomendacja najlepszego dnia na wyjscie
 - **Restauracje** - wyszukiwanie miejsc do jedzenia w okolicy parkingu (Google Maps)
 - **Wyzwanie grupowe** - rywalizacja ze znajomymi w zdobywaniu KGP
-- **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku
+- **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku z automatycznym wygasaniem po 30 dniach
 - **Strona informacyjna** - responsywna strona "O aplikacji" z opisem funkcji (about.html)
 - **Planer wypraw** - wielodniowe wyprawy, przystanki (parking/szlak/szczyt/nocleg/restauracja), timeline z auto-kalkulacja, GPS checkpoint, udostepnianie, wybor punktow z mapy
 - **Dark/light mode** - reczny przelacznik (Jasny/Ciemny/Systemowy), per-device
@@ -55,9 +57,9 @@ kgp-app/
 ├── css/
 │   └── style.css       # Wszystkie style CSS
 ├── js/
-│   ├── data.js         # PEAKS[], klucze API, stale
+│   ├── data.js         # APP_VERSION, PEAKS[], klucze API, stale
 │   ├── state.js        # Stan aplikacji, localStorage, save()
-│   ├── utils.js        # Funkcje pomocnicze, GPS, toast, confetti
+│   ├── utils.js        # Funkcje pomocnicze, GPS, toast, confetti, wake lock, mdToHtml
 │   ├── sync.js         # Supabase sync, login, upload zdjec
 │   ├── weather.js      # Prognoza pogody (Open-Meteo API)
 │   ├── map.js          # Leaflet mapa, Mapy.com routing
@@ -68,8 +70,10 @@ kgp-app/
 │   ├── features2.js    # Wydruk, pakowanie, ciekawostki, parking, pogoda, restauracje, grupy, tracker, ostrzezenia
 │   ├── planner.js      # Planer wypraw: lista, edytor, map picker, GPS checkpoint, udostepnianie
 │   └── router.js       # Nawigacja SPA, init
+├── icons/              # Ikony PWA (PNG 192, 512, maskable, apple-touch)
 ├── manifest.json       # Konfiguracja PWA
-├── sw.js               # Service Worker
+├── sw.js               # Service Worker (cache offline)
+├── bump-version.sh     # Skrypt aktualizacji wersji
 ├── schema.sql          # Schemat bazy danych Supabase
 ├── IDEAS.md            # Pomysly i plan rozwoju
 ├── DOCS.md             # Dokumentacja projektowa analityczna

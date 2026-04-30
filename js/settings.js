@@ -210,7 +210,7 @@ function renderSettings() {
     </div>` : ''}
 
     <div style="text-align:center;padding:12px;font-size:10px;color:var(--text2)" onclick="adminTap()">
-      Korona Gór Polski v1.2.0<br>
+      Korona Gór Polski v${APP_VERSION}<br>
       <span style="margin-top:2px;display:inline-block">Projekt: Grzegorz Smoliński</span>
     </div>
   </div>`;
@@ -303,12 +303,17 @@ function getPaceDescription(val) {
 }
 
 async function reverseGeocode(lat, lon) {
-  const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&lang=pl&apiKey=${MAPY_API_KEY}`);
-  const data = await res.json();
-  const item = data.items?.[0];
-  if (!item) return null;
-  const loc = item.location || {};
-  return loc.municipality || loc.city || item.name || null;
+  try {
+    const res = await fetch(`https://api.mapy.com/v1/rgeocode?lon=${lon}&lat=${lat}&lang=pl&apiKey=${MAPY_API_KEY}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const item = data.items?.[0];
+    if (!item) return null;
+    const loc = item.location || {};
+    return loc.municipality || loc.city || item.name || null;
+  } catch(e) {
+    return null;
+  }
 }
 
 async function detectHomeAddr() {

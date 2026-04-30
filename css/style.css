@@ -22,7 +22,8 @@
  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); overscroll-behavior: none; }
+button, a, .nav-btn, .btn, .card, .peak-item, [onclick] { touch-action: manipulation; -webkit-touch-callout: none; }
 
 /* LAYOUT */
 #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
@@ -361,7 +362,7 @@ select.input { appearance: none; }
 .pl-stop-border { padding-bottom: 10px; margin-bottom: 2px; border-bottom: 1px solid var(--border); }
 .pl-stop-actions { display: flex; gap: 4px; align-items: flex-start; padding-top: 4px; }
 .pl-actions-col { display: flex; flex-direction: column; gap: 2px; }
-.pl-btn-move { width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 6px; background: var(--card2); color: var(--text2); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.pl-btn-move { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 8px; background: var(--card2); color: var(--text2); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
 .pl-btn-move:active { background: var(--accent); color: #000; }
 
 /* Górski dark theme - gradient */
