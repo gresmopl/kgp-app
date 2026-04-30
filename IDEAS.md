@@ -95,7 +95,7 @@
 - [x] **Adaptive UI (etap 1)** - detekcja kontekstu (home/driving/trail/summit) z badge w nawigacji. Debounce 3 odczytow. Context switcher do testowania (klik w badge). Etap 2-3: zmiana layoutu per kontekst.
 - [x] **Dark/light mode** - ręczny przełącznik w ustawieniach (Jasny/Ciemny/Systemowy), CSS class-based
 - [x] **Reverse geocoding** - Mapy.com rgeocode API, przycisk GPS w ustawieniach adresu, walidacja z koordynatami
-- [ ] **Accessibility** - wysoki kontrast, skalowalne fonty, aria labels, semantic HTML, obsługa czytnika ekranu. Nie feature, a wymóg. (Częściowo: usunięto user-scalable=no, poprawiono kontrast popupów mapy)
+- [x] **Accessibility (WCAG 2.1 AA) - etap 1** - focus-visible indicators, kontrast text2/accent poprawiony (4.5:1+), touch targets 44px (chips, btn-sm, pl-btn-move), min fonty 10-11px, filter chips span→button, aria-label na ~30 inputach, role="dialog" aria-modal na 8 modalach, aria-hidden/aria-label na nav, inline error (sync code), input focus ring. Pozostaje: 58× div onclick→button (niskopriorytetowe)
 - [ ] **Onboarding jako quest** - zamiast intro screena, pierwszy szczyt jako "misja treningowa": wybierz szczyt → sprawdź pogodę → zaplanuj → zdobądź → zrób zdjęcie. Grywalizacja od pierwszej minuty.
 
 ### Landing page
@@ -121,6 +121,7 @@
 - [ ] **QA-CHECKLIST.md** - manualna checklista krytycznych sciezek do sprawdzenia przed kazdym merge do main. Szybkie, bez konfiguracji, natychmiastowa wartosc.
 - [x] **STORIES.md** - user stories z kryteriami akceptacji. 22 stories w 10 kategoriach + architektura blokow planera.
 - [x] **QA-FEEDBACK.md** - centralny dokument z uwagami z testowania (bugi, UX, story tell planera)
+- [x] **Smoke testy (test.html)** - 43 przegladarkowe testy: dist(), addMinutes(), fmtTime(), esc(), statCard(), getPeak(), diffDots(), adjTime(), PEAKS integrity, stale. Laduje data.js+state.js+utils.js, zero zewnetrznych zaleznosci
 - [ ] **Mockowanie offline/GPS w testach** - symulacja braku sieci i lokalizacji GPS w Playwright (bardziej zaawansowane, na pozniej)
 
 ### Bugfixy
@@ -259,4 +260,4 @@
 - [ ] **Core flow audit** - przetestować cały flow: wejście na szczyt → zdjęcie → oznaczenie → karta → udostępnienie. Policzyć tapy, usunąć zbędne kroki, naprawić edge case'y.
 - [ ] **Nowa Korona Polskich Gór (38 szczytów)** - nowa regionalizacja 2025, nikt nie wspiera. Opcjonalny tryb "Nowa KGP" obok klasycznej 28.
 
-*Ostatnia aktualizacja: 2026-04-22 (sesja 5 - PWA, UX fixes, analiza konkurencji)*
+*Ostatnia aktualizacja: 2026-04-30 (sesja 7 - tech debt phase 4, WCAG 2.1 AA accessibility, smoke testy)*

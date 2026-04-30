@@ -33,8 +33,9 @@ Progresywna aplikacja webowa (PWA) wspierajaca zdobywcow Korony Gor Polski - zes
 - **Ostrzezenia szlakowe** - spolecznosciowe ostrzezenia o warunkach na szlaku z automatycznym wygasaniem po 30 dniach
 - **Strona informacyjna** - responsywna strona "O aplikacji" z opisem funkcji (about.html)
 - **Planer wypraw** - wielodniowe wyprawy, przystanki (parking/szlak/szczyt/nocleg/restauracja), timeline z auto-kalkulacja, GPS checkpoint, udostepnianie, wybor punktow z mapy
-- **Dark/light mode** - reczny przelacznik (Jasny/Ciemny/Systemowy), per-device
+- **Dark/light mode** - reczny przelacznik (Jasny/Ciemny/Systemowy), per-device, JS-driven theme detection (FOUC-free)
 - **Reverse geocoding** - wykrywanie adresu z GPS (Mapy.com rgeocode API)
+- **Dostepnosc (WCAG 2.1 AA)** - focus indicators, kontrast 4.5:1+, touch targets 44px, aria-label na inputach, role="dialog" na modalach, inline error messages
 - **Panel administracyjny** - dashboard, zarzadzanie uzytkownikami, galeria zdjec, ostrzezenia, stan systemu (panel.html)
 
 ## Stos technologiczny
@@ -59,7 +60,7 @@ kgp-app/
 ├── js/
 │   ├── data.js         # APP_VERSION, PEAKS[], klucze API, stale
 │   ├── state.js        # Stan aplikacji, localStorage, save()
-│   ├── utils.js        # Funkcje pomocnicze, GPS, toast, confetti, wake lock, mdToHtml
+│   ├── utils.js        # Funkcje pomocnicze, GPS, toast, confetti, wake lock, mdToHtml, statCard
 │   ├── sync.js         # Supabase sync, login, upload zdjec
 │   ├── weather.js      # Prognoza pogody (Open-Meteo API)
 │   ├── map.js          # Leaflet mapa, Mapy.com routing
@@ -73,6 +74,7 @@ kgp-app/
 ├── icons/              # Ikony PWA (PNG 192, 512, maskable, apple-touch)
 ├── manifest.json       # Konfiguracja PWA
 ├── sw.js               # Service Worker (cache offline)
+├── test.html           # Smoke testy (przeglądarkowe, 43 testy)
 ├── bump-version.sh     # Skrypt aktualizacji wersji
 ├── schema.sql          # Schemat bazy danych Supabase
 ├── IDEAS.md            # Pomysly i plan rozwoju
