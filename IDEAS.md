@@ -98,6 +98,9 @@
 - [x] **Dark/light mode** - ręczny przełącznik w ustawieniach (Jasny/Ciemny/Systemowy), CSS class-based
 - [x] **Reverse geocoding** - Mapy.com rgeocode API, przycisk GPS w ustawieniach adresu, walidacja z koordynatami
 - [x] **Accessibility (WCAG 2.1 AA) - etap 1** - focus-visible indicators, kontrast text2/accent poprawiony (4.5:1+), touch targets 44px (chips, btn-sm, pl-btn-move), min fonty 10-11px, filter chips span→button, aria-label na ~30 inputach, role="dialog" aria-modal na 8 modalach, aria-hidden/aria-label na nav, inline error (sync code), input focus ring. Pozostaje: 58× div onclick→button (niskopriorytetowe)
+- [ ] **Pogoda dostepna wczesniej** - prognoza pogody widoczna nie tylko przy planowaniu trasy, ale tez z poziomu listy szczytow i mapy (np. ikonka pogody na karcie szczytu, szybki podglad bez wchodzenia w planer)
+- [ ] **Karta zdobycia dla juz zdobytych** - mozliwosc generowania karty zdobycia (PDF/PNG ze zdjeciem i informacjami) takze z poziomu dziennika dla wczesniej zdobytych szczytow, nie tylko w momencie zdobywania
+- [ ] **Wielokolekcyjnosc - inne kolekcje gor** - rozszerzenie aplikacji poza KGP (28 szczytow) o: Diadem Gor Polskich, Tiara Gor, Korona Sudetow i inne. Wymaga przebudowy struktury danych (PEAKS per kolekcja, state per kolekcja, przelacznik aktywnej kolekcji). Duza zmiana architekturalna
 - [ ] **Onboarding jako quest** - zamiast intro screena, pierwszy szczyt jako "misja treningowa": wybierz szczyt → sprawdź pogodę → zaplanuj → zdobądź → zrób zdjęcie. Grywalizacja od pierwszej minuty.
 
 ### Landing page
@@ -128,6 +131,8 @@
 
 ### Bugfixy
 - [ ] **Grupowanie parkingow** - jeden parking → wiele szczytow (np. Gorce)
+- [ ] **Parkingi - bledne wspolrzedne** - czesc zahardkodowanych lokalizacji parkingow w data.js nie zgadza sie z rzeczywistoscia. Do zweryfikowania w terenie lub na mapie i poprawienia
+- [ ] **Dodawanie nowego parkingu nie dziala** - bug w funkcji zapisywania nowego parkingu (do zbadania: showSaveParking/confirmSaveParking w ui.js, map picker w map.js)
 - [x] **Drukowanie zdjec blokowane jako popup** - window.open zamienione na iframe z przyciskami Drukuj/Zamknij
 - [x] **Bottom nav niewidoczny na tablecie Samsung** - flex-shrink:0 na nav, min-height:0 na screen, overflow:hidden na app
 - [x] **Sync nadpisywal dane pustymi** - dataWeight() porownuje bogactwo danych, puste nie nadpisza bogatszych

@@ -499,6 +499,7 @@ function generateConquestCard(peakId) {
 
   if (entry.photo) {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => drawCard(img);
     img.onerror = () => drawCard(null);
     img.src = entry.photo;
@@ -582,7 +583,7 @@ function renderJournalTimeline(inline) {
               ${entry.note ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;font-style:italic">"${esc(entry.note)}"</div>` : ''}
               ${entry.dedication ? `<div style="font-size:11px;color:var(--accent);margin-top:2px">🎁 ${esc(entry.dedication)}</div>` : ''}
               <div style="display:flex;gap:6px;margin-top:4px">
-                ${entry.photo ? `<button onclick="generateConquestCard(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">🎴 Karta</button>` : ''}
+                <button onclick="generateConquestCard(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">🎴 Karta</button>
                 ${entry.photo ? `<button onclick="downloadPhoto(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px">⬇️ Zdjęcie</button>` : ''}
                 <button onclick="removePeak(${entry.peakId})" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px;color:var(--red)">× Usuń</button>
               </div>

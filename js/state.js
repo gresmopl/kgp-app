@@ -86,7 +86,11 @@ function getRoute(peak) {
 }
 
 function getParkingList(peak) {
-  if (peak.routes) return [getRoute(peak).parking];
+  if (peak.routes) {
+    const routeParkings = [getRoute(peak).parking];
+    if (peak.parking) return [...routeParkings, ...peak.parking];
+    return routeParkings;
+  }
   return peak.parking;
 }
 

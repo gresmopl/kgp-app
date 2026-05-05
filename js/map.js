@@ -433,9 +433,10 @@ function addParkingLayer() {
   const icon = makeParkingIcon();
 
   PEAKS.forEach(p => {
-    const parkings = p.routes
-      ? p.routes.map(r => r.parking)
-      : (p.parking || []);
+    const parkings = [
+      ...(p.routes ? p.routes.map(r => r.parking) : []),
+      ...(p.parking || [])
+    ];
 
     parkings.forEach(pk => {
       if (!pk || !pk.lat || !pk.lon) return;
@@ -1060,7 +1061,7 @@ Odpowiedz w formacie JSON (bez markdown, bez backtick) - tablica obiektów:
   results.forEach(r => {
     const peak = PEAKS.find(p => p.name === r.peak);
     if (!peak) return;
-    const parkings = peak.routes ? peak.routes.map(rt => rt.parking) : (peak.parking || []);
+    const parkings = [...(peak.routes ? peak.routes.map(rt => rt.parking) : []), ...(peak.parking || [])];
     const pk = parkings.find(p => p.name === r.parking);
     if (pk && r.note) { pk.note = r.note; updated++; }
   });
